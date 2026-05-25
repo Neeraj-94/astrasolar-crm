@@ -73,10 +73,49 @@ export const DASHBOARDS: DashboardDef[] = [
     iconKey: "Magnet",
     sortOrder: 10,
     tabs: [
-      { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
-      { key: "new", name: "New Lead", sortOrder: 20 },
-      { key: "pipeline", name: "Pipeline", sortOrder: 30 },
-      { key: "reports", name: "Reports", sortOrder: 40 },
+      {
+        key: "leads-schedule",
+        name: "Leads Schedule",
+        description: "Schedule and manage consultant appointments and leads.",
+        sortOrder: 10,
+        isDefault: true,
+      },
+      {
+        key: "bloome-leads",
+        name: "Bloome Leads",
+        description: "Incoming Bloome leads — view, assign, and disposition.",
+        sortOrder: 20,
+      },
+      {
+        key: "team-availability",
+        name: "Team Availability",
+        description: "Consultant and team availability management.",
+        sortOrder: 30,
+      },
+      {
+        key: "sheets-sync",
+        name: "Sheets Sync",
+        description: "Google Sheets / external spreadsheet integrations.",
+        sortOrder: 40,
+      },
+      {
+        key: "no-answers",
+        name: "No Answers",
+        description: "Leads that could not be contacted or need follow-up.",
+        sortOrder: 50,
+      },
+      {
+        key: "consultant-contacts",
+        name: "Consultant Contacts",
+        description: "Consultant directory with quick call and SMS actions.",
+        sortOrder: 60,
+      },
+      {
+        key: "sms-integration",
+        name: "SMS Integration",
+        description: "SMS provider, templates, automations, and logs.",
+        sortOrder: 70,
+      },
     ],
   },
   {
@@ -204,6 +243,18 @@ const ENTITY_PERMISSIONS: PermissionDef[] = [
   { key: "leads.update", name: "Update leads" },
   { key: "leads.delete", name: "Delete leads" },
   { key: "leads.assign", name: "Assign leads to consultants" },
+  { key: "leads.schedule", name: "Schedule and reschedule lead appointments" },
+  { key: "leads.reassign", name: "Reassign leads between consultants" },
+
+  { key: "leads.sheets.sync", name: "Trigger or configure sheet syncs" },
+  { key: "leads.sheets.configure", name: "Configure sheet mappings" },
+
+  { key: "leads.sms.send", name: "Send SMS messages to leads/consultants" },
+  { key: "leads.sms.template.manage", name: "Create or edit SMS templates" },
+  { key: "leads.sms.automation.manage", name: "Configure SMS automation rules" },
+
+  { key: "leads.availability.manage", name: "Manage consultant availability" },
+  { key: "leads.availability.override", name: "Admin override on availability" },
 
   { key: "sales.create", name: "Create sales" },
   { key: "sales.update", name: "Update sales" },
@@ -329,6 +380,15 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     ...allKeysForDashboards("manager", "leads", "sales"),
     "leads.assign",
     "leads.update",
+    "leads.reassign",
+    "leads.schedule",
+    "leads.availability.manage",
+    "leads.availability.override",
+    "leads.sms.send",
+    "leads.sms.template.manage",
+    "leads.sms.automation.manage",
+    "leads.sheets.sync",
+    "leads.sheets.configure",
     "sales.update",
   ],
 
@@ -336,6 +396,10 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     ...allKeysForDashboards("leads"),
     "leads.create",
     "leads.update",
+    "leads.schedule",
+    "leads.sms.send",
+    "leads.sheets.sync",
+    "leads.availability.manage",
   ],
 
   sales_consultant: [
