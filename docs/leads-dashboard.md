@@ -60,6 +60,15 @@ Features:
 
 Manages consultant and team availability.
 
+Users can:
+
+- View consultant availability for the current week and the following week.
+- Select one or multiple consultants.
+- Select a specific day for the chosen consultant(s).
+- Update each consultant's availability for that day in hourly slots from 8 AM to 8 PM.
+
+The availability view shows each hourly slot as **Available**, **Unavailable**, or **Partial** (when multiple consultants are selected and only some are available). Updates sync with the Leads Schedule so unavailable consultants cannot be booked for those times.
+
 Features:
 
 - Consultant availability schedules
@@ -70,6 +79,20 @@ Features:
 - Availability conflict detection
 - Integration with Leads Schedule
 - Admin override functionality
+
+**Implementation:**
+
+| Concern | File |
+| --- | --- |
+| Prisma model + enum | `prisma/schema.prisma` — `AvailabilitySlot`, `AvailabilityStatus` |
+| Server lib (read / write / booking check) | `src/lib/availability.ts` |
+| API — list slots, upsert slots | `src/app/api/leads/availability/route.ts` |
+| API — consultant directory | `src/app/api/leads/consultants/route.ts` |
+| Server tab (initial data fetch) | `src/components/leads/team-availability-tab.tsx` |
+| Client UI (interactive grid) | `src/components/leads/team-availability-client.tsx` |
+| Booking conflict check (used by Leads Schedule) | `canBookConsultant()` in `src/lib/availability.ts` |
+
+Storage is sparse: a row in `AvailabilitySlot` only exists when a manager has explicitly overridden the default (which is `AVAILABLE` during 8 AM–8 PM). Toggling a slot creates or updates a row; the booking check looks for any `UNAVAILABLE` row overlapping the booked window.
 
 ### 4. Sheets Sync
 

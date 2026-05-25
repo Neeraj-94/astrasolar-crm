@@ -8,8 +8,9 @@
  *   npm run grant-role -- neeraj@astrasolar.com.au super_admin
  *   npm run grant-role -- jane@example.com sales_consultant
  *
- * Available roleKeys: super_admin, ceo, finance, manager, lead_gen,
- *                     sales_consultant, admin, installer, customer
+ * Available roleKeys: super_admin, ceo, finance, sales_manager,
+ *                     operations_manager, lead_gen, sales_consultant,
+ *                     admin, installer, customer
  */
 import { PrismaClient } from "@prisma/client";
 

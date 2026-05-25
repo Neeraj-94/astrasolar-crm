@@ -3,11 +3,13 @@ import { DASHBOARDS } from "@/lib/permissions";
 import { requireTab } from "@/components/dashboard-shell";
 import { TabPlaceholder } from "@/components/tab-placeholder";
 
-interface Props { params: { tab: string } }
+interface Props {
+  params: { tab: string };
+}
 
-export default async function ManagerTabPage({ params }: Props) {
-  await requireTab("manager", params.tab);
-  const dash = DASHBOARDS.find((d) => d.key === "manager")!;
+export default async function SalesManagerTabPage({ params }: Props) {
+  await requireTab("sales-manager", params.tab);
+  const dash = DASHBOARDS.find((d) => d.key === "sales-manager")!;
   const tab = dash.tabs.find((t) => t.key === params.tab);
   if (!tab) notFound();
   return (

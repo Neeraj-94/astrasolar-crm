@@ -12,6 +12,7 @@
     "db:seed": "dotenv -e .env -e .env.local -- tsx prisma/seed.ts",
     "db:studio": "dotenv -e .env -e .env.local -- prisma studio",
     "grant-role": "dotenv -e .env -e .env.local -- tsx prisma/grant-role.ts",
+    "migrate:rename-manager": "dotenv -e .env -e .env.local -- tsx prisma/migrate-rename-manager.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

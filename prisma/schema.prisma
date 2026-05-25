@@ -35,6 +35,9 @@ model User {
   installer    Installer?
   consultant   Consultant?
 
+  // Availability slots where this user IS the consultant whose availability is set
+  availabilitySlots AvailabilitySlot[] @relation("ConsultantAvailability")
+
   @@index([email])
   @@index([firebaseUid])
 }
@@ -285,4 +288,34 @@ model Consultant {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------
+// Consultant availability
+// Sparse storage: a row only exists when the default state for a
+// (consultant, date, hour) tuple has been explicitly overridden.
+// Default state = AVAILABLE during working hours (8..19 local time).
+// ----------------------------------------------------------------------------
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model AvailabilitySlot {
+  id           String             @id @default(cuid())
+  consultantId String             // User.id of the consultant
+  date         DateTime           @db.Date
+  hour         Int                // 8..19 — start hour of the 1-hour slot, local time
+  status       AvailabilityStatus
+  note         String?
+  createdById  String?            // user who made the change (audit)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  consultant   User               @relation("ConsultantAvailability", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  @@unique([consultantId, date, hour])
+  @@index([date])
+  @@index([consultantId, date])
 }

@@ -26,7 +26,11 @@ interface Props {
  * Anything else (permission gating, top-nav rendering, default-tab redirect)
  * happens automatically via the shared dashboard shell.
  */
-const TAB_COMPONENTS: Record<string, () => JSX.Element> = {
+// Tab components may be sync (placeholder modules) or async server components
+// (modules that need to fetch data, like Team Availability).
+type TabComponent = () => JSX.Element | Promise<JSX.Element>;
+
+const TAB_COMPONENTS: Record<string, TabComponent> = {
   "leads-schedule": LeadsScheduleTab,
   "bloome-leads": BloomeLeadsTab,
   "team-availability": TeamAvailabilityTab,

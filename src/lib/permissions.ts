@@ -11,7 +11,8 @@
 export type DashboardKey =
   | "leads"
   | "sales"
-  | "manager"
+  | "sales-manager"
+  | "operations-manager"
   | "ceo"
   | "finance"
   | "admin"
@@ -22,7 +23,8 @@ export type RoleKey =
   | "super_admin"
   | "ceo"
   | "finance"
-  | "manager"
+  | "sales_manager"
+  | "operations_manager"
   | "lead_gen"
   | "sales_consultant"
   | "admin"
@@ -132,11 +134,24 @@ export const DASHBOARDS: DashboardDef[] = [
     ],
   },
   {
-    key: "manager",
-    name: "Manager",
+    key: "sales-manager",
+    name: "Sales Manager",
     description: "Team-level oversight across leads and sales.",
     iconKey: "Users",
     sortOrder: 30,
+    tabs: [
+      { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
+      { key: "team", name: "Team", sortOrder: 20 },
+      { key: "performance", name: "Performance", sortOrder: 30 },
+      { key: "approvals", name: "Approvals", sortOrder: 40 },
+    ],
+  },
+  {
+    key: "operations-manager",
+    name: "Operations Manager",
+    description: "Cross-functional oversight across admin, leads, sales, installer, and customer operations.",
+    iconKey: "Workflow",
+    sortOrder: 35,
     tabs: [
       { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
       { key: "team", name: "Team", sortOrder: 20 },
@@ -301,9 +316,14 @@ export const ROLES: RoleDef[] = [
     description: "Access to all dashboards except CEO.",
   },
   {
-    key: "manager",
-    name: "Manager",
+    key: "sales_manager",
+    name: "Sales Manager",
     description: "Oversees consultants and lead generation teams.",
+  },
+  {
+    key: "operations_manager",
+    name: "Operations Manager",
+    description: "Oversees operations across admin, leads, sales, installer, and customer functions.",
   },
   {
     key: "lead_gen",
@@ -362,7 +382,8 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     ...allKeysForDashboards(
       "leads",
       "sales",
-      "manager",
+      "sales-manager",
+      "operations-manager",
       "finance",
       "admin",
       "customer",
@@ -375,9 +396,9 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     "admin.audit.view",
   ],
 
-  manager: [
+  sales_manager: [
     // "all consultant dashboards and all leads dashboards"
-    ...allKeysForDashboards("manager", "leads", "sales"),
+    ...allKeysForDashboards("sales-manager", "leads", "sales"),
     "leads.assign",
     "leads.update",
     "leads.reassign",
@@ -390,6 +411,35 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     "leads.sheets.sync",
     "leads.sheets.configure",
     "sales.update",
+  ],
+
+  operations_manager: [
+    // Oversees admin, leads, sales, installer, and customer dashboards plus
+    // their own operations-manager dashboard.
+    ...allKeysForDashboards(
+      "operations-manager",
+      "admin",
+      "leads",
+      "sales",
+      "installer",
+      "customer",
+    ),
+    // Lead operations
+    "leads.assign",
+    "leads.update",
+    "leads.reassign",
+    "leads.schedule",
+    "leads.availability.manage",
+    "leads.availability.override",
+    "leads.sms.send",
+    "leads.sms.template.manage",
+    "leads.sms.automation.manage",
+    "leads.sheets.sync",
+    "leads.sheets.configure",
+    // Sales updates (no create/delete by default)
+    "sales.update",
+    // Admin: read-only audit visibility, not user/role management
+    "admin.audit.view",
   ],
 
   lead_gen: [
