@@ -1,15 +1,16 @@
 import { redirect } from "next/navigation";
 import { accessibleDashboards, getCurrentUser } from "@/lib/rbac";
 import { ROLES } from "@/lib/permissions";
-import { SideNav } from "@/components/side-nav";
-import { UserMenu } from "@/components/user-menu";
+import { DashboardChrome } from "@/components/dashboard-chrome";
 
 /**
  * Shared layout for every dashboard route.
  *
  * - Verifies the user is signed in (otherwise redirect to /login).
  * - Computes which dashboards they can access.
- * - Shows the side nav only when they have access to MORE than one.
+ * - Renders the client-side chrome (collapsible side nav + header).
+ *   The side nav is only shown if the user has access to more than one
+ *   dashboard.
  */
 export default async function DashboardLayout({
   children,
@@ -29,34 +30,21 @@ export default async function DashboardLayout({
     .sort();
 
   return (
-    <div className="min-h-screen flex">
-      {showSideNav && (
-        <SideNav
-          dashboards={dashboards.map((d) => ({
-            key: d.key,
-            name: d.name,
-            iconKey: d.iconKey,
-          }))}
-        />
-      )}
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b bg-card flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="flex items-center gap-3 min-w-0">
-            {!showSideNav && (
-              <span className="font-semibold tracking-tight">AstraSolar</span>
-            )}
-          </div>
-          <UserMenu
-            email={user.email}
-            displayName={user.displayName}
-            avatarUrl={user.avatarUrl}
-            roleLabels={roleLabels}
-          />
-        </header>
-
-        <main className="flex-1 px-6 py-6">{children}</main>
-      </div>
-    </div>
+    <DashboardChrome
+      showSideNav={showSideNav}
+      dashboards={dashboards.map((d) => ({
+        key: d.key,
+        name: d.name,
+        iconKey: d.iconKey,
+      }))}
+      user={{
+        email: user.email,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+      }}
+      roleLabels={roleLabels}
+    >
+      {children}
+    </DashboardChrome>
   );
 }

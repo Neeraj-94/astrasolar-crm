@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SunMedium } from "lucide-react";
+import { SunMedium, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardIcon } from "@/components/dashboard-icon";
 
@@ -14,24 +14,72 @@ interface NavDashboard {
 
 interface Props {
   dashboards: NavDashboard[];
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
-export function SideNav({ dashboards }: Props) {
+export function SideNav({ dashboards, collapsed, onToggle }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex w-60 flex-col border-r bg-card">
-      <div className="h-16 flex items-center gap-2 px-6 border-b">
-        <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-          <SunMedium className="h-4 w-4" />
+    <aside
+      className={cn(
+        "hidden md:flex flex-col border-r bg-card transition-[width] duration-200 ease-out",
+        collapsed ? "w-16" : "w-60",
+      )}
+    >
+      <div
+        className={cn(
+          "h-16 flex items-center border-b",
+          collapsed ? "justify-center px-2" : "justify-between px-4",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-2 min-w-0",
+            collapsed && "justify-center",
+          )}
+        >
+          <div className="h-8 w-8 shrink-0 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+            <SunMedium className="h-4 w-4" />
+          </div>
+          {!collapsed && (
+            <span className="font-semibold tracking-tight truncate">
+              AstraSolar
+            </span>
+          )}
         </div>
-        <span className="font-semibold tracking-tight">AstraSolar</span>
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="Collapse sidebar"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
-        <p className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-          Dashboards
-        </p>
+      {collapsed && (
+        <div className="flex justify-center py-2 border-b">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="Expand sidebar"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+        {!collapsed && (
+          <p className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+            Dashboards
+          </p>
+        )}
         {dashboards.map((d) => {
           const href = `/${d.key}`;
           const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -39,23 +87,30 @@ export function SideNav({ dashboards }: Props) {
             <Link
               key={d.key}
               href={href}
+              title={collapsed ? d.name : undefined}
+              aria-label={d.name}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                "flex items-center rounded-md text-sm transition-colors",
+                collapsed
+                  ? "justify-center h-10 w-10 mx-auto"
+                  : "gap-3 px-3 py-2",
                 active
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
             >
-              <DashboardIcon iconKey={d.iconKey} className="h-4 w-4" />
-              {d.name}
+              <DashboardIcon iconKey={d.iconKey} className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">{d.name}</span>}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-3 text-[11px] text-muted-foreground border-t">
-        v0.1.0 — internal use only
-      </div>
+      {!collapsed && (
+        <div className="p-3 text-[11px] text-muted-foreground border-t">
+          v0.1.0 — internal use only
+        </div>
+      )}
     </aside>
   );
 }

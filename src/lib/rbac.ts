@@ -3,7 +3,12 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { adminAuth } from "@/lib/firebase/admin";
-import { DASHBOARDS, type DashboardKey, permKey } from "@/lib/permissions";
+import {
+  DASHBOARDS,
+  type DashboardKey,
+  type RoleKey,
+  permKey,
+} from "@/lib/permissions";
 
 const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME || "__astra_session";
 
@@ -116,4 +121,40 @@ export function defaultTabFor(user: CurrentUser | null, dashboard: DashboardKey)
   const tabs = accessibleTabs(user, dashboard);
   if (tabs.length === 0) return null;
   return tabs.find((t) => t.isDefault) ?? tabs[0];
+}
+
+/**
+ * Maps each role to the dashboard that role "owns" — i.e. the page a user
+ * with that role should land on at login. Higher-up roles come first so a
+ * user with multiple roles lands on the most senior one (e.g. a CEO who is
+ * also a sales consultant lands on /ceo, not /sales).
+ */
+const ROLE_HOME_DASHBOARD: Array<{ role: RoleKey; dashboard: DashboardKey }> = [
+  { role: "super_admin", dashboard: "admin" },
+  { role: "ceo", dashboard: "ceo" },
+  { role: "operations_manager", dashboard: "operations-manager" },
+  { role: "sales_manager", dashboard: "sales-manager" },
+  { role: "finance", dashboard: "finance" },
+  { role: "admin", dashboard: "admin" },
+  { role: "sales_consultant", dashboard: "sales" },
+  { role: "lead_gen", dashboard: "leads" },
+  { role: "installer", dashboard: "installer" },
+  { role: "customer", dashboard: "customer" },
+];
+
+/**
+ * Returns the dashboard the user should land on after logging in, based on
+ * their assigned roles. Falls back to the first dashboard they can access.
+ */
+export function primaryDashboardFor(
+  user: CurrentUser | null,
+): DashboardKey | null {
+  if (!user) return null;
+  for (const { role, dashboard } of ROLE_HOME_DASHBOARD) {
+    if (user.roleKeys.includes(role) && canAccessDashboard(user, dashboard)) {
+      return dashboard;
+    }
+  }
+  const accessible = accessibleDashboards(user);
+  return accessible[0]?.key ?? null;
 }
