@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Astra brand tokens
+ *
+ * Dark-first theme matching the legacy astrasolar-app (gold accent on a
+ * near-black surface). All shadcn primitives consume these HSL CSS variables,
+ * so every component inherits the brand automatically.
+ *
+ * Source palette (hex → HSL):
+ *   bg        #0a0a0f → 240 22% 5%
+ *   surface   #111118 → 240 17% 8%
+ *   surface2  #16161f → 240 17% 11%
+ *   border    surface +6L     → 240 10% 14%
+ *   text      #e8e4dc → 40 22% 89%
+ *   gold      #f0b429 → 42 87% 55%
+ *   green     #2dce6e → 140 65% 49%
+ *   red       #e84545 →   0 78% 59%
+ *   blue      #4a9eff → 214 100% 65%
+ */
+
+@layer base {
+  :root {
+    /* Astra DARK (default) */
+    --background: 240 22% 5%;
+    --foreground: 40 22% 89%;
+
+    --card: 240 17% 8%;
+    --card-foreground: 40 22% 89%;
+
+    --popover: 240 17% 10%;
+    --popover-foreground: 40 22% 89%;
+
+    /* Primary = Astra gold */
+    --primary: 42 87% 55%;
+    --primary-foreground: 240 22% 5%;
+
+    --secondary: 240 17% 11%;
+    --secondary-foreground: 40 22% 89%;
+
+    --muted: 240 17% 11%;
+    --muted-foreground: 40 14% 62%;
+
+    /* Accent = subtle surface lift used by shadcn for outline/ghost hover.
+       Brand gold lives on --primary; keep accent neutral so ghost buttons
+       don't blast the eye on hover. */
+    --accent: 240 17% 14%;
+    --accent-foreground: 40 22% 89%;
+
+    --destructive: 0 78% 59%;
+    --destructive-foreground: 40 22% 96%;
+
+    --success: 140 65% 49%;
+    --success-foreground: 240 22% 5%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 240 22% 5%;
+    --info: 214 100% 65%;
+    --info-foreground: 240 22% 5%;
+
+    --border: 240 10% 14%;
+    --input: 240 10% 14%;
+    --ring: 42 87% 55%;
+
+    --radius: 0.875rem; /* 14px to match legacy */
+
+    /* Chart palette (gold, green, blue, violet, red) */
+    --chart-1: 42 87% 55%;
+    --chart-2: 140 65% 49%;
+    --chart-3: 214 100% 65%;
+    --chart-4: 268 70% 65%;
+    --chart-5: 0 78% 59%;
+  }
+
+  /*
+   * Light mode — kept as an option for users that toggle. Palette mirrors the
+   * legacy `.light` block: warm off-white surface, deeper gold for accent.
+   */
+  .light {
+    --background: 40 22% 95%;
+    --foreground: 240 10% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 11%;
+
+    --primary: 42 80% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 18% 92%;
+    --secondary-foreground: 240 10% 11%;
+
+    --muted: 40 18% 92%;
+    --muted-foreground: 240 8% 38%;
+
+    --accent: 40 18% 88%;
+    --accent-foreground: 240 10% 11%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 140 73% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+    --info: 214 80% 45%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 240 8% 88%;
+    --input: 240 8% 88%;
+    --ring: 42 80% 45%;
+  }
+
+  /*
+   * Legacy `.dark` class kept as an alias for `:root` so existing components
+   * that hardcode `dark:` Tailwind variants continue to render correctly when
+   * the class is present (which it is by default via the bootstrap script).
+   */
+  .dark {
+    --background: 240 22% 5%;
+    --foreground: 40 22% 89%;
+    --card: 240 17% 8%;
+    --card-foreground: 40 22% 89%;
+    --popover: 240 17% 10%;
+    --popover-foreground: 40 22% 89%;
+    --primary: 42 87% 55%;
+    --primary-foreground: 240 22% 5%;
+    --secondary: 240 17% 11%;
+    --secondary-foreground: 40 22% 89%;
+    --muted: 240 17% 11%;
+    --muted-foreground: 40 14% 62%;
+    --accent: 240 17% 14%;
+    --accent-foreground: 40 22% 89%;
+    --destructive: 0 78% 59%;
+    --destructive-foreground: 40 22% 96%;
+    --border: 240 10% 14%;
+    --input: 240 10% 14%;
+    --ring: 42 87% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  /* Headings: gold accent + tighter tracking, matching the legacy CEO chrome */
+  h1, h2, h3 { letter-spacing: -0.01em; }
+
+  /* Custom scrollbars on dark surfaces */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Smooth light/dark transition — added briefly while the theme toggle
+     runs, then removed so it never affects ordinary hover/focus animations.
+     Mirrors the .theme-transition helper in astrasolar-app. */
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition:
+      background-color 300ms ease,
+      border-color 300ms ease,
+      color 200ms ease,
+      fill 200ms ease,
+      stroke 200ms ease !important;
+  }
+}
+
+@layer utilities {
+  /* Brand gradient — used for hero text, KPI sparkles, etc. */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(42 87% 65%), hsl(42 87% 45%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}

@@ -1,0 +1,495 @@
+// ============================================================================
+// AstraSolar CRM - Prisma Schema
+// PostgreSQL with role + permission-based access control.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Identity
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(cuid())
+  firebaseUid  String     @unique
+  email        String     @unique
+  displayName  String?
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  roles        UserRole[]
+  auditLogs    AuditLog[]
+  phones       UserPhone[]
+
+  // Domain joins (one user may be a Customer, Installer, Consultant, etc.)
+  customer     Customer?
+  installer    Installer?
+  consultant   Consultant?
+
+  // Availability slots where this user IS the consultant whose availability is set
+  availabilitySlots AvailabilitySlot[] @relation("ConsultantAvailability")
+  availabilitySubmissions AvailabilitySubmission[] @relation("ConsultantAvailabilitySubmissions")
+
+  // Appointments where this user IS the consultant the appointment is booked with
+  consultantAppointments Appointment[] @relation("ConsultantAppointments")
+
+  @@index([email])
+  @@index([firebaseUid])
+}
+
+// Multiple phone numbers per user (mobile, work, home, etc.)
+model UserPhone {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String   @default("mobile") // "mobile" | "work" | "home" | "other"
+  number    String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// RBAC
+// ----------------------------------------------------------------------------
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // e.g. "ceo", "sales_consultant"
+  name        String                    // Display name
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique // e.g. "dashboard.leads.view", "leads.update"
+  name        String
+  description String?
+  // Optional grouping helpers — useful for the admin UI.
+  dashboard   String?          // e.g. "leads" | "sales" | "ceo" | ...
+  tab         String?          // e.g. "overview" | "reports"
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+
+  @@index([dashboard])
+  @@index([dashboard, tab])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  assignedAt   DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId],       references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String?  // userId of the admin who granted the role
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+// ----------------------------------------------------------------------------
+// Dashboard / Tab catalog
+// Keeps the menu structure in the DB so future dashboards or tabs can be added
+// from an admin screen without code changes.
+// ----------------------------------------------------------------------------
+
+model Dashboard {
+  id           String   @id @default(cuid())
+  key          String   @unique // "leads", "sales", "ceo", ...
+  name         String
+  description  String?
+  iconKey      String?  // lucide icon name
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+
+  tabs         DashboardTab[]
+}
+
+model DashboardTab {
+  id            String    @id @default(cuid())
+  dashboardId   String
+  key           String    // unique per dashboard
+  name          String
+  description   String?
+  sortOrder     Int       @default(0)
+  isDefault     Boolean   @default(false)
+  isActive      Boolean   @default(true)
+
+  dashboard     Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@unique([dashboardId, key])
+}
+
+// ----------------------------------------------------------------------------
+// Audit log
+// ----------------------------------------------------------------------------
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ROLE_ASSIGN
+  ROLE_REVOKE
+  PERMISSION_GRANT
+  PERMISSION_REVOKE
+  STATUS_CHANGE
+  PAYMENT
+  EXPORT
+  OTHER
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  actorId     String?     // user who took the action
+  action      AuditAction
+  entityType  String      // "Lead" | "Sale" | "Invoice" | "User" | ...
+  entityId    String?
+  summary     String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  actor       User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+// ----------------------------------------------------------------------------
+// Domain entities (slim — extend later)
+// ----------------------------------------------------------------------------
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  WON
+  LOST
+}
+
+// ----------------------------------------------------------------------------
+// Lead — the single primary record for each prospect/customer journey.
+//
+// Each lead has ONE record identified by `id` (the leadID). All information
+// related to that lead — scheduling history, sales details, admin status,
+// install status, finance status, post-install status — lives inside this
+// record as JSONB objects. This avoids duplicating lead/customer data across
+// the database.
+//
+// References to other people (consultants, lead-gen reps, etc.) are stored
+// by ID + cached display name only. Full user profiles are fetched from the
+// User collection when needed.
+// ----------------------------------------------------------------------------
+
+model Lead {
+  id                String     @id @default(cuid()) // The canonical leadID
+
+  // ---- Base lead data (flat columns for indexing / fast search) ----
+  fullName          String
+  firstName         String?
+  lastName          String?
+  email             String?
+  phone             String?
+  alternatePhone    String?
+
+  // Address (flat for search; addressDetails JSONB holds anything extra)
+  addressLine1      String?
+  addressLine2      String?
+  suburb            String?
+  state             String?
+  postcode          String?
+  country           String?    @default("Australia")
+
+  // Classification
+  companyOrType     String?    // company name or customer type
+  source            String?    // lead source (web, referral, expo, etc.)
+
+  // Ownership / routing
+  status            LeadStatus @default(NEW)
+  disposition       String?    // free-form disposition label (Sold, No Answer, …)
+  ownerUserId       String?    // lead-gen user who owns it
+  ownerUserName     String?    // cached display name for the owner
+  assignedToId      String?    // sales consultant userId
+  assignedToName    String?    // cached display name for the consultant
+
+  // Lead generation rep (often the same as owner, but tracked explicitly)
+  leadGenUserId     String?
+  leadGenUserName   String?
+
+  // Created-by (audit)
+  createdById       String?    // userId of the person who created the lead
+  createdByName     String?    // cached display name at time of creation
+
+  // ---- Extra grouped detail blobs (JSONB) ----
+  customerDetails   Json?      // any extra customer info beyond the flat fields
+  contactDetails    Json?      // additional contact channels, preferences, etc.
+  addressDetails    Json?      // extended address metadata (lat/lng, NMI, etc.)
+
+  // ---- Lifecycle / workflow objects (JSONB) ----
+  scheduleLog       Json?      // array of ScheduleLogEntry — append-only audit
+  sales             Json?      // SalesObject — generated when disposition = Sold
+  adminStatus       Json?      // AdminStatus workflow object
+  installStatus     Json?      // InstallStatus workflow object (after sale ready for booking)
+  financeStatus     Json?      // FinanceStatus workflow object (after install complete)
+  postInstallStatus Json?      // PostInstallStatus workflow object (after install complete)
+
+  // ---- Legacy / housekeeping ----
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relational Sale rows are retained for cross-lead reporting. The JSONB
+  // `sales` object on this Lead remains the canonical source of truth per the
+  // lead-centric model.
+  saleRecords       Sale[]     @relation("LeadSaleRecords")
+
+  // Current appointment (if booked into the schedule). At most one per lead;
+  // rescheduling updates this row in place. Historical date/time changes live
+  // in scheduleLog (JSONB) for audit.
+  appointment       Appointment?
+
+  @@index([status])
+  @@index([disposition])
+  @@index([ownerUserId])
+  @@index([assignedToId])
+  @@index([leadGenUserId])
+  @@index([createdById])
+  @@index([email])
+  @@index([phone])
+  @@index([postcode])
+  @@index([createdAt])
+}
+
+enum SaleStatus {
+  DRAFT
+  PROPOSAL
+  CONTRACT_SENT
+  SIGNED
+  INSTALLED
+  CANCELLED
+}
+
+model Sale {
+  id              String     @id @default(cuid())
+  leadId          String?
+  consultantId    String?    // consultant user id
+  customerId      String?
+  systemSizeKw    Decimal?   @db.Decimal(8, 2)
+  totalPrice      Decimal?   @db.Decimal(12, 2)
+  deposit         Decimal?   @db.Decimal(12, 2)
+  status          SaleStatus @default(DRAFT)
+  signedAt        DateTime?
+  installScheduled DateTime?
+  installedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  lead            Lead?      @relation("LeadSaleRecords", fields: [leadId], references: [id], onDelete: SetNull)
+  invoices        Invoice[]
+
+  @@index([status])
+  @@index([consultantId])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  saleId      String
+  number      String        @unique
+  amount      Decimal       @db.Decimal(12, 2)
+  status      InvoiceStatus @default(DRAFT)
+  issuedAt    DateTime?
+  dueAt       DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  sale        Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+// Domain "profile" models that link to User
+model Customer {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  address   String?
+  postcode  String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Installer {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String?
+  licenseNo   String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Consultant {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  region    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------
+// Consultant availability
+// Sparse storage: a row only exists when the default state for a
+// (consultant, date, hour) tuple has been explicitly overridden.
+// Default state = AVAILABLE during working hours (8..19 local time).
+// ----------------------------------------------------------------------------
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  HOLIDAY
+}
+
+// Week-level submission record — one row per (consultant, weekStart).
+// When this row exists, the Leads Schedule treats only AVAILABLE slots within
+// the week as bookable. Holiday days mark entire days off.
+model AvailabilitySubmission {
+  id              String   @id @default(cuid())
+  consultantId    String
+  consultantName  String   // snapshot at submission time
+  weekStart       DateTime @db.Date
+  weekEnd         DateTime @db.Date
+  holidayDays     String[] // ISO date strings of days fully marked Holiday
+  slotsCount      Int      @default(0) // count of selected hourly AVAILABLE slots
+  submitted       Boolean  @default(true)
+  submittedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  updatedById     String?
+  updatedByName   String?
+
+  consultant      User     @relation("ConsultantAvailabilitySubmissions", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  @@unique([consultantId, weekStart])
+  @@index([weekStart])
+  @@index([consultantId])
+}
+
+// ----------------------------------------------------------------------------
+// Lead Appointment
+// One Lead may have at most one current Appointment — the time slot it is
+// booked into on a consultant's schedule. Rescheduling updates this row in
+// place (audit history is appended to Lead.scheduleLog).
+//
+// Slot semantics mirror AvailabilitySlot: `hour` is the start of the slot in
+// local time (8..19) and `minute` is 0 or 30 to support the 30-minute slots
+// used by the legacy Leads Schedule.
+// ----------------------------------------------------------------------------
+
+model Appointment {
+  id                String   @id @default(cuid())
+  leadId            String   @unique
+  consultantId      String   // User.id of the sales consultant
+
+  date              DateTime @db.Date
+  hour              Int      // 8..19 — start hour, local time
+  minute            Int      @default(0) // 0 or 30
+  durationMinutes   Int      @default(60)
+
+  // Disposition snapshot for the schedule cell. Mirrors Lead.disposition but
+  // kept here so the schedule view doesn't have to join on every read.
+  disposition       String?
+
+  // Booker / source attribution
+  bookedByUserId    String?
+  bookedByName      String?
+  source            String?  // Brighte | Referral | Website | Bloome | ...
+  company           String?  // Astra | DC ELEC | ...
+  bills             String?  // kWh estimate (free-form text in the legacy app)
+  notes             String?
+
+  // Reschedule audit (only most recent move; full history is in Lead.scheduleLog)
+  originalDate      DateTime? @db.Date
+  originalHour      Int?
+  originalMinute    Int?
+  rescheduleReason  String?
+  rescheduledAt     DateTime?
+
+  // Overflow / status flags
+  isAdditional      Boolean   @default(false)
+  cancelPending     String?   // 'cancel' | 'dnq' | 'not_interested'
+  cancelPendingAt   DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  lead              Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  consultant        User      @relation("ConsultantAppointments", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  @@unique([consultantId, date, hour, minute])
+  @@index([date])
+  @@index([consultantId, date])
+  @@index([disposition])
+}
+
+model AvailabilitySlot {
+  id           String             @id @default(cuid())
+  consultantId String             // User.id of the consultant
+  date         DateTime           @db.Date
+  hour         Int                // 8..19 — start hour of the 1-hour slot, local time
+  status       AvailabilityStatus
+  note         String?
+  createdById  String?            // user who made the change (audit)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  consultant   User               @relation("ConsultantAvailability", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  @@unique([consultantId, date, hour])
+  @@index([date])
+  @@index([consultantId, date])
+}
