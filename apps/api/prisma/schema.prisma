@@ -1,0 +1,796 @@
+// ============================================================================
+//  CRM — Prisma Schema
+//  Stack: PostgreSQL + Prisma (NestJS backend)
+//
+//  Covers:
+//    - RBAC with runtime-editable roles (Role/Permission as DATA, not enum)
+//    - Multi-role users (a user holds many roles; access = UNION of grants)
+//    - Contacts / Accounts (B2B-friendly)
+//    - Leads with a TWO-STAGE disposition model (intake -> post-booking)
+//    - Bookings as first-class records (consultant + who booked it)
+//    - Sales as SEPARATE entities, born when a consultation is SOLD
+//    - Installations & Customer (narrow Tier-3 roles)
+//    - Disposition history + audit log (fuel for analytics + future AI)
+//
+//  Access rules live as PERMISSION DATA + a getEffectivePermissions() /
+//  getVisibilityScope() policy in NestJS. See permission-matrix.md for the
+//  full capability list and role mapping. pgvector embeddings (future AI
+//  phase) are added later via a raw migration, not here.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  // Dedicated output so the API client does NOT collide with the legacy web
+  // app's Prisma client (both default to node_modules/.prisma/client). The API
+  // imports this via the `src/db.ts` barrel.
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+//  RBAC — roles & permissions as runtime-editable DATA
+//
+//    - Permission.key vocabulary is fixed in code (something must ENFORCE each
+//      key), but admins compose Roles from that vocabulary at runtime.
+//    - A user holds many roles (UserRole). Effective access = UNION of all
+//      permissions across all their roles ("union always wins").
+//    - The 10 built-in roles are SEED DATA, flagged isSystem so they can't be
+//      deleted. Admins may create additional roles.
+// ============================================================================
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String                          // bcrypt hash
+  name          String
+  isActive      Boolean  @default(true)
+
+  // Team membership / management (drives manager-level visibility scope)
+  teamId        String?
+  team          Team?    @relation("TeamMembers", fields: [teamId], references: [id])
+  managedTeam   Team?    @relation("TeamManager")
+
+  refreshToken  String?                          // hashed refresh token
+
+  // Roles (many-to-many)
+  roles         UserRole[]
+
+  // Domain relations
+  ownedLeads    Lead[]          @relation("LeadOwner")
+  currentLeads  Lead[]          @relation("LeadCurrentConsultant")
+  consultations Booking[]       @relation("Consultant")
+  bookingsMade  Booking[]       @relation("BookedBy")
+  ownedSales    Sale[]          @relation("SaleOwner")
+  handledIssues PostInstallIssue[] @relation("IssueHandler")
+  activities    Activity[]
+  installs      Installation[]  @relation("Installer")
+  customer      Customer?
+
+  sortOrder     Int?                             // manual drag-and-drop row order (null = default sort)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([teamId])
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  managerId String?  @unique
+  manager   User?    @relation("TeamManager", fields: [managerId], references: [id])
+  members   User[]   @relation("TeamMembers")
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique          // "Super Admin", "Sales Manager", ...
+  description String?
+  isSystem    Boolean          @default(false)   // protect the 10 built-in roles
+  users       UserRole[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique           // "leads:read:team", "system:admin", ...
+  description String?
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+// ============================================================================
+//  CONTACTS & ACCOUNTS
+// ============================================================================
+
+model Account {
+  id        String    @id @default(uuid())
+  name      String
+  contacts  Contact[]
+  createdAt DateTime  @default(now())
+}
+
+model Contact {
+  id            String     @id @default(uuid())
+  firstName     String
+  surname       String
+  email         String?
+  phone         String?
+
+  // Address
+  streetAddress String?
+  state         String?
+  postcode      String?
+
+  // Company is a real business entity (multiple contacts per account)
+  accountId     String?
+  account       Account?   @relation(fields: [accountId], references: [id])
+
+  leads         Lead[]
+  sales         Sale[]
+  customer      Customer?
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([email])
+  @@index([phone])
+  @@index([surname])
+}
+
+// ============================================================================
+//  LEADS — two-stage status model
+//
+//    stage        : where in the journey (drives which tab/board)
+//    outcome      : LEAD-GEN's result at the intake stage
+//    disposition  : SALES CONSULTANT's result at the post-booking stage
+//
+//  Triggers (each a single DB transaction):
+//    outcome     -> BOOKED : create Booking, stage -> BOOKED
+//    disposition -> SOLD   : create Sale,    stage -> CONVERTED
+// ============================================================================
+
+model Lead {
+  id            String             @id @default(uuid())
+  contactId     String
+  contact       Contact            @relation(fields: [contactId], references: [id])
+
+  source        LeadSource         @default(MANUAL)
+  externalRef   String?                              // Google Sheets row id (dedupe)
+  company       Company                              // our brand the lead belongs to (reporting label)
+
+  stage         LeadStage          @default(INTAKE)
+  outcome       LeadOutcome?       @default(NEW)      // set by lead-gen (intake)
+  disposition   SalesDisposition?                     // set by consultant (post-booking)
+
+  booking       Booking?
+
+  convertedAt   DateTime?
+  sale          Sale?
+
+  // Ownership — the Lead's "main data" carries the LATEST state directly, kept
+  // in sync with the newest LeadStateLog row (same transaction). The lead is the
+  // current truth; the log is the copied-from history (never read back into it).
+  ownerId            String                         // latest lead-gen (intake owner)
+  owner              User    @relation("LeadOwner", fields: [ownerId], references: [id])
+  currentConsultantId String?                       // latest consultant (mirrors booking)
+  currentConsultant  User?   @relation("LeadCurrentConsultant", fields: [currentConsultantId], references: [id])
+
+  // Qualification / process fields
+  dials         Int                @default(0)        // number of call attempts
+  billSpend     Decimal?           @db.Decimal(12, 2) // prospect's current monthly bill
+  estValue      Decimal?           @db.Decimal(12, 2)
+
+  // Notes — kept separate by author/stage
+  notes         String?                               // lead-gen notes (intake)
+  consultantNotes String?                             // consultant notes (post-booking)
+
+  stateLog      LeadStateLog[]
+  activities    Activity[]
+
+  sortOrder     Int?                                  // manual drag-and-drop row order (null = default sort)
+
+  createdAt     DateTime           @default(now())    // system entry timestamp
+  leadDate      DateTime           @db.Date           // date the lead actually came in
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([source, externalRef])                     // prevents double-import from Sheets
+  @@index([stage])
+  @@index([ownerId])
+  @@index([currentConsultantId])
+  @@index([outcome])
+  @@index([disposition])
+  @@index([leadDate])
+  @@index([company])
+}
+
+enum LeadSource {
+  MANUAL
+  GOOGLE_SHEETS
+}
+
+// Our internal brand/business entity the lead/sale belongs to. Reporting label
+// only — does NOT affect visibility (everyone sees both companies).
+enum Company {
+  ASTRA
+  DC
+}
+
+enum LeadStage {
+  INTAKE
+  BOOKED
+  CONVERTED
+  CLOSED
+}
+
+// Lead-gen's intake result ("outcome")
+enum LeadOutcome {
+  NEW
+  CONTACTED
+  NOT_INTERESTED
+  NOT_QUALIFIED
+  BOOKED            // -> triggers Booking + stage = BOOKED
+}
+
+// Sales consultant's post-booking result ("disposition")
+enum SalesDisposition {
+  NO_ANSWER
+  TO_BE_RESCHEDULED
+  RESCHEDULED
+  DID_NOT_QUALIFY
+  CANCELLED
+  NOT_INTERESTED
+  SOLD              // -> triggers Sale + stage = CONVERTED
+}
+
+// ============================================================================
+//  BOOKINGS — first-class records
+// ============================================================================
+
+model Booking {
+  id              String    @id @default(uuid())
+  leadId          String    @unique
+  lead            Lead      @relation(fields: [leadId], references: [id])
+
+  consultantId    String
+  consultant      User      @relation("Consultant", fields: [consultantId], references: [id])
+
+  bookedById      String
+  bookedBy        User      @relation("BookedBy", fields: [bookedById], references: [id])
+
+  scheduledAt     DateTime
+  rescheduledFrom DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([consultantId])
+  @@index([scheduledAt])
+}
+
+// ============================================================================
+//  SALES — separate entity, own lifecycle, traces back to exactly one lead.
+//  Closing/editing a sale is gated by OWNERSHIP (sales:manage:own), NOT by a
+//  manager's team scope — only the owning consultant (break-glass: super admin)
+//  may mark SOLD or edit the sale.
+// ============================================================================
+
+// ============================================================================
+//  PRODUCT CATALOGUE
+//  Common fields + category-specific specs (nullable per category). "Delete" is
+//  a soft ARCHIVE; "discontinue" hides from new-sale pickers but keeps the row
+//  so historical sales still resolve. Service layer blocks archiving/deleting a
+//  product referenced by any sale.
+// ============================================================================
+
+model Product {
+  id             String          @id @default(uuid())
+  productRef     String?         @unique             // human-facing product code
+  name           String
+  model          String?
+  category       ProductCategory
+  status         ProductStatus   @default(ACTIVE)
+
+  // Common commercial fields
+  stc            Int?
+  commission     Decimal?        @db.Decimal(12, 2)
+  rrp            Decimal?        @db.Decimal(12, 2)
+  grossPrice     Decimal?        @db.Decimal(12, 2)
+  commissionDate DateTime?       @db.Date            // "dateOfCommission"
+
+  // Category-specific specs (nullable; only the relevant category populates them)
+  panelWatt      Int?                                // SOLAR
+  batterySize    Decimal?        @db.Decimal(10, 2)  // BATTERY (kWh)
+  batteryModules Int?                                // BATTERY
+  inverterType   String?                             // INVERTER
+  optimisers     Boolean?                            // INVERTER / SOLAR
+
+  // References from sales (a product may be used by many sales)
+  batteryForSystems  SystemDetails[] @relation("BatteryProduct")
+  panelForSystems    SystemDetails[] @relation("PanelProduct")
+  inverterForSystems SystemDetails[] @relation("InverterProduct")
+  saleExtras         SaleExtra[]
+
+  log            ProductLog[]
+
+  sortOrder      Int?                                // manual drag-and-drop row order (null = default sort)
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([category])
+  @@index([status])
+}
+
+enum ProductCategory {
+  BATTERIES
+  INVERTER
+  SOLAR
+  EXTRAS
+}
+
+enum ProductStatus {
+  ACTIVE
+  DISCONTINUED                                        // hidden from new sales, kept for history
+  ARCHIVED                                            // soft-delete
+}
+
+// Product change log — array of changes (field, old->new, who, when).
+// Written through a ProductHistoryService choke point (sibling of SaleLog).
+model ProductLog {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  field     String
+  oldValue  String?
+  newValue  String?
+  changedBy String                                    // userId
+  changedAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([changedAt])
+}
+
+model Sale {
+  id            String   @id @default(uuid())
+  saleRef       String?  @unique                    // human-facing "saleID" (e.g. S-2026-0001)
+
+  leadId        String   @unique                     // 1 lead -> at most 1 sale; lead data read via relation
+  lead          Lead     @relation(fields: [leadId], references: [id])
+
+  contactId     String
+  contact       Contact  @relation(fields: [contactId], references: [id])
+
+  ownerId       String                               // owning consultant
+  owner         User     @relation("SaleOwner", fields: [ownerId], references: [id])
+
+  // Core sale fields
+  company       Company                              // carried from the lead (reporting label)
+  status        SaleStatus @default(NEGOTIATION)     // overall lifecycle
+  saleType      SaleType?                            // equipment combination
+  systemType    SystemType?                          // install nature (new vs upgrade)
+  energyProvider String?
+  referral      String?
+
+  // Money
+  soldPrice     Decimal? @db.Decimal(12, 2)
+  totalRRP      Decimal? @db.Decimal(12, 2)
+  totalCommission Decimal? @db.Decimal(12, 2)
+
+  // Dates
+  saleDate      DateTime? @db.Date
+  closedAt      DateTime?
+
+  // Notes
+  installNotes  String?
+
+  // 1:1 detail blocks
+  systemDetails       SystemDetails?
+  statusDetails       SaleStatusDetails?
+  installation        Installation?                  // installDetails (extended model)
+  paymentDetails      PaymentDetails?
+  commissioningDetails CommissioningDetails?
+
+  // 1:n children
+  extras         SaleExtra[]
+  finance        SaleFinance[]
+  postInstall    PostInstallIssue[]
+  stageHistory   SaleStageHistory[]
+  salesLog       SaleLog[]                           // general change log (any field change)
+
+  sortOrder     Int?                                // manual drag-and-drop row order (null = default sort)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([ownerId])
+  @@index([saleDate])
+  @@index([company])
+}
+
+enum SaleStatus {
+  NEGOTIATION
+  CONTRACT
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+// What equipment combination was sold. (UI may display "Solar + Battery".)
+enum SaleType {
+  SOLAR_ONLY
+  BATTERY_ONLY
+  SOLAR_BATTERY
+}
+
+// The nature of the install. (UI may display "Additional + Replacement".)
+enum SystemType {
+  NEW
+  REPLACEMENT
+  ADDITIONAL
+  ADDITIONAL_REPLACEMENT
+}
+
+// ----- System specification (battery + solar + inverter + electrical) -------
+// One-to-one with Sale. Nested groupings in the spec become field prefixes so
+// every spec value stays a queryable column (commissions, sizes, STCs, etc.).
+model SystemDetails {
+  id            String  @id @default(uuid())
+  saleId        String  @unique
+  sale          Sale    @relation(fields: [saleId], references: [id])
+
+  // Catalogue references (which product) — specs below are point-of-sale
+  // snapshots (what it cost/spec'd at the time), preserved even if the catalogue
+  // product changes later.
+  batteryProductId  String?
+  batteryProduct    Product? @relation("BatteryProduct", fields: [batteryProductId], references: [id])
+  panelProductId    String?
+  panelProduct      Product? @relation("PanelProduct", fields: [panelProductId], references: [id])
+  inverterProductId String?
+  inverterProduct   Product? @relation("InverterProduct", fields: [inverterProductId], references: [id])
+
+  // Battery
+  batteryBrand      String?
+  batteryModel      String?
+  batterySTC        Int?
+  batteryModules    Int?                             // "modules"
+  batterySize       Decimal? @db.Decimal(10, 2)      // "size" (kWh)
+  batteryRRP        Decimal? @db.Decimal(12, 2)
+  batteryCommission Decimal? @db.Decimal(12, 2)
+
+  // Solar
+  panelModel        String?
+  panelWatt         Int?
+  numPanels         Int?
+  systemSize        Decimal? @db.Decimal(10, 2)      // kW
+  solarRRP          Decimal? @db.Decimal(12, 2)
+  solarSTC          Int?
+  solarCommission   Decimal? @db.Decimal(12, 2)
+
+  // Inverter + install/electrical
+  inverterModel     String?
+  inverterType      String?
+  optimisers        Boolean?
+  tilts             Int?
+  roofType          String?
+  storeys           Int?
+  switchboard       String?
+  nmi               String?                          // National Meter Identifier
+  phase             String?                          // single / three phase
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ----- The 7 independent status fields, each a simple stage enum -----------
+model SaleStatusDetails {
+  id                  String     @id @default(uuid())
+  saleId              String     @unique
+  sale                Sale       @relation(fields: [saleId], references: [id])
+
+  financeStatus       StageState @default(PENDING)
+  preapprovalStatus   StageState @default(PENDING)
+  meterChangeStatus   StageState @default(PENDING)
+  installStatus       StageState @default(PENDING)
+  paymentStatus       StageState @default(PENDING)
+  commissioningStatus StageState @default(PENDING)
+  cesStatus           StageState @default(PENDING)   // Clean Energy Scheme/Council, etc.
+
+  updatedAt           DateTime   @updatedAt
+}
+
+enum StageState {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  NOT_REQUIRED
+}
+
+// ----- Repeating line items -------------------------------------------------
+model SaleExtra {
+  id         String  @id @default(uuid())
+  saleId     String
+  sale       Sale    @relation(fields: [saleId], references: [id])
+  productId  String?                                 // catalogue link (optional — extras can be ad-hoc)
+  product    Product? @relation(fields: [productId], references: [id])
+  itemName   String
+  itemRef    String?                                 // "itemID" (external/catalog id)
+  itemPrice  Decimal @db.Decimal(12, 2)
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// STUB — `finance[]` shape not yet specified. Placeholder fields; correct once
+// the real financing structure is provided (lender, amount, term, rate...).
+model SaleFinance {
+  id         String  @id @default(uuid())
+  saleId     String
+  sale       Sale    @relation(fields: [saleId], references: [id])
+  lender     String?
+  amount     Decimal? @db.Decimal(12, 2)
+  termMonths Int?
+  status     StageState @default(PENDING)
+
+  @@index([saleId])
+}
+
+// ----- Phase detail blocks --------------------------------------------------
+model PaymentDetails {
+  id           String   @id @default(uuid())
+  saleId       String   @unique
+  sale         Sale     @relation(fields: [saleId], references: [id])
+  paymentNotes String?
+  paymentDate  DateTime? @db.Date
+  updatedAt    DateTime @updatedAt
+}
+
+model CommissioningDetails {
+  id                 String   @id @default(uuid())
+  saleId             String   @unique
+  sale               Sale     @relation(fields: [saleId], references: [id])
+  commissioningNotes String?
+  commissionDate     DateTime? @db.Date
+  updatedAt          DateTime @updatedAt
+}
+
+// postInstallDetails — can recur (multiple issues over time), so 1:n.
+model PostInstallIssue {
+  id           String   @id @default(uuid())
+  saleId       String
+  sale         Sale     @relation(fields: [saleId], references: [id])
+  issueLogDate DateTime? @db.Date
+  issueNotes   String?
+  solution     String?
+  handledById  String?                               // "handledBy" -> user
+  handledBy    User?    @relation("IssueHandler", fields: [handledById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([saleId])
+}
+
+// ----- Sale change log (general: any field change, old->new, who, when) -----
+// Sibling of LeadStateLog, written via a SaleHistoryService choke point.
+model SaleLog {
+  id        String   @id @default(uuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  section   String                                   // e.g. "systemDetails", "statusDetails.installStatus"
+  field     String                                   // which field changed
+  oldValue  String?
+  newValue  String?
+  changedBy String                                   // userId
+  changedAt DateTime @default(now())
+
+  @@index([saleId])
+  @@index([changedAt])
+}
+
+model SaleStageHistory {
+  id        String      @id @default(uuid())
+  saleId    String
+  sale      Sale        @relation(fields: [saleId], references: [id])
+  fromStage SaleStatus?
+  toStage   SaleStatus
+  changedBy String
+  changedAt DateTime    @default(now())
+
+  @@index([saleId])
+}
+
+// ============================================================================
+//  INSTALLATION & CUSTOMER (Tier-3 narrow roles)
+//  Installation == the sale's "installDetails" block (installer, date, notes).
+// ============================================================================
+
+model Installation {
+  id              String             @id @default(uuid())
+  saleId          String             @unique
+  sale            Sale               @relation(fields: [saleId], references: [id])
+
+  installerId     String?
+  installer       User?              @relation("Installer", fields: [installerId], references: [id])
+
+  status          InstallationStatus @default(SCHEDULED)
+  installDate     DateTime?          @db.Date          // "installDate"
+  scheduledAt     DateTime?
+  completedAt     DateTime?
+  notes           String?
+  postInstallNotes String?                             // "postInstallNotes"
+  sortOrder       Int?                                 // manual drag-and-drop row order (null = default sort)
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([installerId])
+  @@index([status])
+}
+
+enum InstallationStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+model Customer {
+  id         String   @id @default(uuid())
+  userId     String?  @unique
+  user       User?    @relation(fields: [userId], references: [id])
+  contactId  String   @unique
+  contact    Contact  @relation(fields: [contactId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+// ============================================================================
+//  ACTIVITY, DISPOSITION HISTORY & AUDIT LOG
+// ============================================================================
+
+model Activity {
+  id         String   @id @default(uuid())
+  type       String                                 // call | email | note | task
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  leadId     String?
+  lead       Lead?    @relation(fields: [leadId], references: [id])
+  content    String?
+  createdAt  DateTime @default(now())
+
+  @@index([leadId])
+  @@index([userId])
+}
+
+// LeadStateLog — the lead's STATUS TIMELINE (machine-oriented, structured).
+// Point-in-time snapshot written on every state change. IDs and statuses are
+// stored AS THEY WERE at changedAt (immutable history) — deliberately
+// denormalized so reassignments don't rewrite the past. Feeds analytics
+// (time-in-stage, funnels) and the future AI. Distinct from Activity (human
+// actions) and AuditLog (system-wide security trail).
+model LeadStateLog {
+  id          String            @id @default(uuid())
+  leadId      String
+  lead        Lead              @relation(fields: [leadId], references: [id])
+
+  stage       LeadStage                              // stage at this moment
+  leadGenId   String?                                // lead-gen attached at this moment
+  consultantId String?                               // consultant attached at this moment
+  outcome     LeadOutcome?                           // lead-gen result at this moment
+  disposition SalesDisposition?                      // consultant result at this moment
+
+  changedBy   String                                 // userId who triggered the change
+  changedAt   DateTime          @default(now())      // log timestamp
+
+  @@index([leadId])
+  @@index([changedAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String                                   // LEAD_CONVERTED, BOOKING_CREATED, ...
+  entity    String
+  entityId  String
+  source    String   @default("app")                 // app | google_sheets | voice (future)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+//  STORAGE (Phase 3) — document metadata in Postgres, blobs in Cloudflare R2.
+//  Uploads go client -> R2 via presigned URL; only the metadata row lives here.
+// ============================================================================
+
+model Document {
+  id          String   @id @default(uuid())
+  // What this document is attached to (loose polymorphic link kept simple).
+  entity      String                                   // "Sale" | "Contact" | "Lead"
+  entityId    String
+  key         String   @unique                         // R2 object key
+  fileName    String
+  contentType String?
+  sizeBytes   Int?
+  uploadedById String
+  createdAt   DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([uploadedById])
+}
+
+// ============================================================================
+//  BLOOME LEADS — raw appointment-setter rows imported from the Bloome
+//  "ASTRA - MASTER BLASTER" Google Sheet (one row per dialled lead).
+//
+//  Deliberately separate from `Lead`: these are unowned, free-form setter
+//  records (string outcomes like "Hot Call Back", bill-spend bands, Bloome
+//  agents who are not CRM users). Promoting one into the managed pipeline
+//  creates a `Lead` + `Contact` as usual; this table stays the import truth.
+//  Dedupe key: (sourceTab, rowNum) — the sheet tab + 1-based sheet row.
+// ============================================================================
+
+model BloomeLead {
+  id             String    @id @default(uuid())
+  region         String                              // "ACT" | "TAS" | ...
+  sourceTab      String                              // e.g. "ACT:Live"
+  rowNum         Int                                 // 1-based row in the source tab
+  wc             String?                             // sheet working-copy flag column
+  timestamp      DateTime?                           // form submission time (null if unparseable)
+  firstName      String?
+  lastName       String?
+  mobile         String?
+  email          String?
+  address        String?
+  postcode       String?
+  suburb         String?
+  billSpend      String?                             // band as recorded ("$251-$500", ...)
+  code           String?                             // campaign code ("ACT-1", ...)
+  agent          String?                             // Bloome setter (Daniel, Ambrose, ...)
+  dials          Int       @default(0)
+  outcome        String?                             // raw label ("Appointment", "Hot Call Back", ...)
+  notes          String?
+  lastCalled     String?                             // free-form date text from the sheet
+  appDate        String?                             // appointment date as recorded (dd/mm/yyyy)
+  appTime        String?                             // appointment time as recorded (24h)
+  existingSystem String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([sourceTab, rowNum])
+  @@index([region])
+  @@index([outcome])
+  @@index([agent])
+  @@index([mobile])
+  @@index([timestamp])
+}
