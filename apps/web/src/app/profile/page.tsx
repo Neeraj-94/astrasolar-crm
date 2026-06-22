@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
+import { apiGet } from "@/lib/api/client";
 import { ProfileForm } from "@/components/profile/profile-form";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +15,16 @@ export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const phones = await prisma.userPhone.findMany({
-    where: { userId: user.id },
-    orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
-  });
+  // Phones live on the API user record (User.phones JSON).
+  const me = await apiGet<{
+    phones?: Array<{ label: string; number: string; isPrimary: boolean }>;
+  }>("/auth/me", { cookieHeader: cookies().toString() });
+  const phones = (me.phones ?? []).map((p, i) => ({
+    id: `phone-${i}`,
+    label: p.label,
+    number: p.number,
+    isPrimary: p.isPrimary,
+  }));
 
   return (
     <div className="max-w-3xl mx-auto py-2">
@@ -34,12 +41,7 @@ export default async function ProfilePage() {
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
         }}
-        phones={phones.map((p) => ({
-          id: p.id,
-          label: p.label,
-          number: p.number,
-          isPrimary: p.isPrimary,
-        }))}
+        phones={phones}
       />
     </div>
   );

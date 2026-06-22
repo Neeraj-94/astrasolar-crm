@@ -17,7 +17,12 @@ import {
   Section,
   Toolbar,
 } from "@/components/leads/shared";
-import { TODAY_LEADS, type Disposition } from "@/lib/sales/mock";
+import {
+  useSalesLeads,
+  DISPOSITION_TO_API,
+  type Disposition,
+} from "@/lib/sales/leads";
+import { apiPatch } from "@/lib/api/client";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import {
   LeadsTable,
@@ -46,8 +51,18 @@ function shiftDate(iso: string, delta: number): string {
 export function MyLeadsTab() {
   const [date, setDate] = React.useState(() => new Date().toISOString().slice(0, 10));
   const [filters, setFilters] = React.useState<SalesFilters>({ search: "" });
-  const [rows, setRows] = React.useState(() => TODAY_LEADS);
+  const { leads, loading, error, reload } = useSalesLeads();
+  // Optimistic inline-disposition overrides keyed by lead id.
+  const [overrides, setOverrides] = React.useState<Record<string, Disposition>>({});
   const [rowOrder, setRowOrder] = React.useState<string[] | null>(null);
+
+  const rows = React.useMemo(
+    () =>
+      leads.map((l) =>
+        overrides[l.id] ? { ...l, disposition: overrides[l.id] } : l,
+      ),
+    [leads, overrides],
+  );
 
   const visible = React.useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -67,7 +82,19 @@ export function MyLeadsTab() {
   }, [visible]);
 
   function dispose(id: string, next: Disposition) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, disposition: next } : r)));
+    setOverrides((prev) => ({ ...prev, [id]: next })); // optimistic
+    const apiValue = DISPOSITION_TO_API[next];
+    if (apiValue) {
+      apiPatch(`/leads/${id}/disposition`, { disposition: apiValue })
+        .then(() => reload())
+        .catch(() => {
+          // Roll back the optimistic change on failure.
+          setOverrides((prev) => {
+            const { [id]: _drop, ...rest } = prev;
+            return rest;
+          });
+        });
+    }
   }
 
   return (
@@ -146,9 +173,13 @@ export function MyLeadsTab() {
         }
       />
 
+      {error && (
+        <p className="px-2 text-sm text-destructive">{error}</p>
+      )}
+
       <Section flush>
         <LeadsTable
-          rows={visible}
+          rows={loading ? [] : visible}
           columns={[
             "index",
             "time",
@@ -163,7 +194,7 @@ export function MyLeadsTab() {
             "disposition",
             "actions",
           ]}
-          emptyLabel="No leads for this day yet. Click + Import Day to add."
+          emptyLabel={loading ? "Loading leads…" : "No leads for this day yet."}
           onDispose={(lead, d) => dispose(lead.id, d)}
           dispositionOptions={DISPOSITION_OPTIONS}
           sortable={{

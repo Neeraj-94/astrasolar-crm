@@ -30,6 +30,9 @@ interface ApiMe {
   roleKeys: string[];
   permissions: string[];
   scope?: string;
+  avatarUrl?: string | null;
+  phones?: Array<{ label: string; number: string; isPrimary: boolean }>;
+  region?: string | null;
 }
 
 const ALL_PERMISSION_KEYS = PERMISSIONS.map((p) => p.key);
@@ -75,7 +78,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     firebaseUid: "",
     email: me.email,
     displayName: me.name ?? null,
-    avatarUrl: null,
+    avatarUrl: me.avatarUrl ?? null,
     isActive: me.isActive ?? true,
     roleKeys: me.roleKeys ?? [],
     permissionKeys: permissionKeysForRoles(me.roleKeys ?? []),

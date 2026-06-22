@@ -2,12 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  updatePassword,
-} from "firebase/auth";
-import { getFirebaseAuth } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -210,32 +204,18 @@ export function ProfileForm({ user, phones: initialPhones }: Props) {
 
     setSavingPassword(true);
     try {
-      const auth = getFirebaseAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser || !currentUser.email) {
-        throw new Error("Not signed in.");
+      // The API verifies the current password (bcrypt) before changing it.
+      const res = await fetch("/api/profile/password", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          (data as { error?: string }).error || "Failed to update password.",
+        );
       }
-
-      // Re-authenticate with current password (Firebase requirement for
-      // sensitive actions). This also verifies the current password is correct.
-      const cred = EmailAuthProvider.credential(
-        currentUser.email,
-        currentPassword,
-      );
-      try {
-        await reauthenticateWithCredential(currentUser, cred);
-      } catch (err) {
-        const code = (err as { code?: string }).code;
-        if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-          throw new Error("Current password is incorrect.");
-        }
-        throw new Error("Re-authentication failed. Please try again.");
-      }
-
-      await updatePassword(currentUser, newPassword);
-
-      // Notify server so it can audit-log the change.
-      await fetch("/api/profile/password", { method: "POST" });
 
       setCurrentPassword("");
       setNewPassword("");

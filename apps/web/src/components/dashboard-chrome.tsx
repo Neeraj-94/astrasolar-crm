@@ -5,6 +5,9 @@ import { Menu } from "lucide-react";
 import { SideNav } from "@/components/side-nav";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
+import { NotificationsProvider } from "@/components/notifications/notifications-context";
+import { FloatingDock } from "@/components/floating-dock";
 
 interface ChromeDashboard {
   key: string;
@@ -21,6 +24,10 @@ interface Props {
     avatarUrl: string | null;
   };
   roleLabels: string[];
+  /** Whether the signed-in user may use Nova (drives the floating assistant). */
+  canUseNova?: boolean;
+  /** Whether to show the floating System Price Calculator (internal staff). */
+  canUsePriceCalc?: boolean;
   children: React.ReactNode;
 }
 
@@ -36,6 +43,8 @@ export function DashboardChrome({
   showSideNav,
   user,
   roleLabels,
+  canUseNova,
+  canUsePriceCalc,
   children,
 }: Props) {
   // Start collapsed=false so the server-rendered HTML and the first client
@@ -64,6 +73,7 @@ export function DashboardChrome({
   }
 
   return (
+    <NotificationsProvider>
     <div className="min-h-screen flex">
       {showSideNav && (
         <SideNav
@@ -91,6 +101,7 @@ export function DashboardChrome({
             )}
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <UserMenu
               email={user.email}
@@ -103,6 +114,13 @@ export function DashboardChrome({
 
         <main className="flex-1 px-6 py-6">{children}</main>
       </div>
+
+      <FloatingDock
+        userName={user.displayName ?? undefined}
+        canUseNova={canUseNova}
+        canUsePriceCalc={canUsePriceCalc}
+      />
     </div>
+    </NotificationsProvider>
   );
 }

@@ -25,6 +25,13 @@ export class InstallationsController {
     return this.installs.reorder(user, dto.ids);
   }
 
+  /** Documents across the installer's own jobs (declared before :id). */
+  @RequirePermissions(PERMISSIONS.INSTALLS_READ_OWN)
+  @Get('documents')
+  documents(@CurrentUser() user: AuthUser, @Query('userId') userId?: string) {
+    return this.installs.documents(user, userId);
+  }
+
   @RequirePermissions(PERMISSIONS.INSTALLS_READ_OWN)
   @Get(':id')
   get(@Param('id') id: string) {

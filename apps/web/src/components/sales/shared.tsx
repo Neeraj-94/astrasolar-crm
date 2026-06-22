@@ -23,13 +23,13 @@ import {
   StatusBadge,
   type BadgeTone,
 } from "@/components/leads/shared";
-import { CONSULTANTS } from "@/lib/leads/mock/consultants";
+import { useConsultants } from "@/lib/leads/consultants";
 import {
   DISPOSITION_LABEL,
   STATE_OPTIONS,
   type Disposition,
   type SalesLead,
-} from "@/lib/sales/mock";
+} from "@/lib/sales/leads";
 
 // ---------------------------------------------------------------------------
 // Disposition badge
@@ -58,9 +58,6 @@ export function DispositionBadge({ value }: { value: Disposition }) {
   );
 }
 
-export function consultantName(id: string): string {
-  return CONSULTANTS.find((c) => c.id === id)?.name ?? id;
-}
 
 // ---------------------------------------------------------------------------
 // Filter bar
@@ -95,6 +92,7 @@ export function SalesFilterBar({
   searchPlaceholder,
   rightExtras,
 }: FilterBarProps) {
+  const { consultants } = useConsultants();
   return (
     <div className="flex flex-wrap items-center gap-2">
       {showConsultant && (
@@ -104,7 +102,7 @@ export function SalesFilterBar({
           onChange={(v) => onChange({ ...filters, consultant: v })}
           options={[
             { value: "__all__", label: "All Consultants" },
-            ...CONSULTANTS.map((c) => ({ value: c.id, label: c.name })),
+            ...consultants.map((c) => ({ value: c.id, label: c.name })),
           ]}
         />
       )}
@@ -357,13 +355,15 @@ function Cell({
       ) : (
         <span className="text-muted-foreground">—</span>
       );
-    case "consultant":
+    case "consultant": {
+      const name = row.consultantName ?? row.consultantId ?? "—";
       return (
         <span className="inline-flex items-center gap-1.5">
-          <ConsultantAvatar name={consultantName(row.consultantId)} size="xs" />
-          <span className="text-foreground">{consultantName(row.consultantId)}</span>
+          <ConsultantAvatar name={name} size="xs" />
+          <span className="text-foreground">{name}</span>
         </span>
       );
+    }
     case "date":
       return (
         <span className="tabular-nums">

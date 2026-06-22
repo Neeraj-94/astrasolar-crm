@@ -1,0 +1,24 @@
+# Keep the Docker build context small. (Does not affect Netlify.)
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/generated
+.git
+.github
+*.log
+
+# Local env files — never bake secrets into the image.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Large local data dumps not needed to build the API.
+Sales.json
+leads-transformed.json
+sales-enrichment.json
+sales-import-preview.json
+apps/api/nova-kb.json
+apps/api/nova-memory.json
+kb.json
+memory.json

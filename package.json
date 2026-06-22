@@ -18,6 +18,8 @@
     "test": "turbo run test",
     "db:migrate": "npm run db:migrate --workspace=@astra/api",
     "db:seed": "npm run db:seed --workspace=@astra/api",
+    "db:import-products": "npm run db:import-products --workspace=@astra/api",
+    "db:clear-products": "npm run db:clear-products --workspace=@astra/api",
     "db:studio": "npm run db:studio --workspace=@astra/api"
   },
   "devDependencies": {

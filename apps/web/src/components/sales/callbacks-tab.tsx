@@ -9,7 +9,7 @@ import {
   Section,
   Toolbar,
 } from "@/components/leads/shared";
-import { CALLBACK_LEADS } from "@/lib/sales/mock";
+import { useSalesLeads, type Disposition } from "@/lib/sales/leads";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import { LeadsTable, SalesFilterBar, applyFilters, type SalesFilters } from "./shared";
 
@@ -21,6 +21,14 @@ const OUTCOME_OPTIONS = [
   { value: "resent_proposal", label: "Resent Proposal" },
 ];
 
+/** Call Back-style dispositions that belong on this sheet. */
+const CALLBACK_DISPOSITIONS: Disposition[] = [
+  "callback",
+  "still_deciding",
+  "maybe_future",
+  "resent_proposal",
+];
+
 export function CallbacksTab() {
   const [filters, setFilters] = React.useState<SalesFilters>({
     search: "",
@@ -28,11 +36,12 @@ export function CallbacksTab() {
   });
 
   const [rowOrder, setRowOrder] = React.useState<string[] | null>(null);
+  const { leads, loading, error } = useSalesLeads(CALLBACK_DISPOSITIONS);
 
   const rows = React.useMemo(() => {
-    const filtered = applyFilters(CALLBACK_LEADS, filters);
+    const filtered = applyFilters(leads, filters);
     return rowOrder ? applyRowOrder(filtered, rowOrder, (r) => r.id) : filtered;
-  }, [filters, rowOrder]);
+  }, [leads, filters, rowOrder]);
 
   const kpis = React.useMemo(() => {
     const hot = rows.filter((r) => r.hot).length;
@@ -74,9 +83,11 @@ export function CallbacksTab() {
         }
       />
 
+      {error && <p className="px-2 text-sm text-destructive">{error}</p>}
+
       <Section flush>
         <LeadsTable
-          rows={rows}
+          rows={loading ? [] : rows}
           columns={[
             "index",
             "hot",
@@ -95,7 +106,7 @@ export function CallbacksTab() {
             "disposition",
             "actions",
           ]}
-          emptyLabel="No call backs found."
+          emptyLabel={loading ? "Loading call backs…" : "No call backs found."}
           sortable={{
             ids: rows.map((r) => r.id),
             onReorder: setRowOrder,

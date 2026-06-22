@@ -35,6 +35,16 @@ async function main() {
       },
     });
 
+    // Deactivate tabs that were removed from the catalog so they no longer
+    // appear anywhere (e.g. old operations-manager Overview/Team/Performance).
+    await prisma.dashboardTab.updateMany({
+      where: {
+        dashboardId: dashboard.id,
+        key: { notIn: d.tabs.map((t) => t.key) },
+      },
+      data: { isActive: false },
+    });
+
     for (const tab of d.tabs) {
       await prisma.dashboardTab.upsert({
         where: {

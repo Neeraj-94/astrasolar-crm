@@ -9,18 +9,22 @@ import {
   Section,
   Toolbar,
 } from "@/components/leads/shared";
-import { PRESO_LEADS } from "@/lib/sales/mock";
+import { useSalesLeads, type Disposition } from "@/lib/sales/leads";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import { LeadsTable, SalesFilterBar, applyFilters, type SalesFilters } from "./shared";
+
+/** Presentation-stage dispositions shown on this sheet. */
+const PRESO_DISPOSITIONS: Disposition[] = ["presented", "sold"];
 
 export function PastPresosTab() {
   const [filters, setFilters] = React.useState<SalesFilters>({ search: "" });
   const [rowOrder, setRowOrder] = React.useState<string[] | null>(null);
+  const { leads, loading, error } = useSalesLeads(PRESO_DISPOSITIONS);
 
   const rows = React.useMemo(() => {
-    const filtered = applyFilters(PRESO_LEADS, filters);
+    const filtered = applyFilters(leads, filters);
     return rowOrder ? applyRowOrder(filtered, rowOrder, (r) => r.id) : filtered;
-  }, [filters, rowOrder]);
+  }, [leads, filters, rowOrder]);
 
   const kpis = React.useMemo(() => {
     const sold = rows.filter((r) => r.disposition === "sold").length;
@@ -64,9 +68,11 @@ export function PastPresosTab() {
         }
       />
 
+      {error && <p className="px-2 text-sm text-destructive">{error}</p>}
+
       <Section flush>
         <LeadsTable
-          rows={rows}
+          rows={loading ? [] : rows}
           columns={[
             "index",
             "consultant",
@@ -83,7 +89,7 @@ export function PastPresosTab() {
             "disposition",
             "actions",
           ]}
-          emptyLabel="No past presentations found."
+          emptyLabel={loading ? "Loading presentations…" : "No past presentations found."}
           sortable={{
             ids: rows.map((r) => r.id),
             onReorder: setRowOrder,

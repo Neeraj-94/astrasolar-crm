@@ -83,18 +83,30 @@ export interface UpdateDispositionRequest {
 
 export interface LeadListItem {
   id: string;
-  contactName: string;
+  // Contact details flattened directly onto the lead.
+  firstName: string;
+  surName: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  postCode: string | null;
+  state: string | null;
   company: Company;
   stage: LeadStage;
+  source: LeadSource;
   outcome: LeadOutcome | null;
   disposition: SalesDisposition | null;
-  ownerId: string;
-  ownerName: string | null;
-  currentConsultantId: string | null;
-  currentConsultantName: string | null;
-  billSpend: number | null;
-  leadDate: string;
-  createdAt: string;
+  leadGenId: string;
+  leadGen: { id: string; name: string } | null;
+  consultantId: string | null;
+  consultant: { id: string; name: string } | null;
+  billSpend: string | null;
+  code: string | null;
+  dials: number;
+  leadGenNotes: string | null;
+  consultantNotes: string | null;
+  timestamp: string;
+  createdAt?: string;
 }
 
 // ---- Sales -----------------------------------------------------------------
@@ -102,7 +114,8 @@ export interface LeadListItem {
 export interface SaleListItem {
   id: string;
   saleRef: string | null;
-  contactName: string;
+  // Customer name comes from the linked lead (no separate contact).
+  lead: { firstName: string; surName: string } | null;
   company: Company;
   status: SaleStatus;
   ownerId: string;
@@ -121,6 +134,7 @@ export interface ProductListItem {
   model: string | null;
   category: ProductCategory;
   status: ProductStatus;
+  states: string[];
   rrp: number | null;
   commission: number | null;
 }
@@ -155,4 +169,77 @@ export interface Paginated<T> {
   total: number;
   page: number;
   pageSize: number;
+}
+
+// ---- Task boards (Trello-style Task Overview tab) ---------------------------
+
+/** Dashboards that own a shared task board. */
+export type TaskBoardKey =
+  | 'leads'
+  | 'sales'
+  | 'sales-manager'
+  | 'operations-manager'
+  | 'admin';
+
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface TaskNudgeInfo {
+  at: string; // ISO datetime of the most recent nudge
+  by: { id: string; name: string };
+}
+
+export interface TaskCardDto {
+  id: string;
+  listId: string;
+  title: string;
+  description: string | null;
+  priority: TaskPriority;
+  dueDate: string | null; // ISO date
+  position: number;
+  assignee: { id: string; name: string } | null;
+  createdBy: { id: string; name: string };
+  /** Most recent nudge; null once the assignee acts on the card. */
+  nudge: TaskNudgeInfo | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskListDto {
+  id: string;
+  name: string;
+  position: number;
+  tasks: TaskCardDto[];
+}
+
+export interface TaskBoardDto {
+  board: TaskBoardKey;
+  lists: TaskListDto[];
+}
+
+export interface CreateTaskListRequest {
+  board: TaskBoardKey;
+  name: string;
+}
+
+export interface CreateTaskRequest {
+  board: TaskBoardKey;
+  listId: string;
+  title: string;
+  description?: string | null;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+  assigneeId?: string | null;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string | null;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+  assigneeId?: string | null;
+}
+
+export interface MoveTaskRequest {
+  listId: string; // target list (may equal current list)
+  position: number; // 0-based index within the target list
 }

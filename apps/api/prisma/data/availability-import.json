@@ -1,0 +1,5659 @@
+{
+  "_meta": {
+    "source": "astra-solar-app-default-rtdb-export \u2014 staff/<id>/availability",
+    "extractedAt": "2026-06-22T04:34:57.441875+00:00",
+    "workingHours": {
+      "firstStartHour": 8,
+      "lastStartHour": 19
+    },
+    "shape": "Each week is a saveWeek() payload: days[].availableHours are integer start-hours; days absent from source are emitted with availableHours:[] (consultant offered nothing). holiday is always false (source has no holiday concept).",
+    "notes": [
+      "ernest: dropped 1 hour(s) outside working window 08\u201319: ['2026-04-07 20:00']",
+      "zane: dropped 1 hour(s) outside working window 08\u201319: ['2026-04-29 20:00']"
+    ],
+    "totals": {
+      "consultants": 7,
+      "weekSubmissions": 69,
+      "availableHourSlots": 2099
+    }
+  },
+  "consultants": [
+    {
+      "staffKey": "burhan",
+      "email": "ben@astrasolar.com.au",
+      "name": "Burhan A",
+      "weekCount": 2,
+      "weeks": [
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-05-07T01:33:53.161000+00:00",
+          "slotsCount": 12,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "burhan",
+          "submittedByName": "Burhan A",
+          "submittedAt": "2026-05-12T06:09:38.991000+00:00",
+          "slotsCount": 1,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                8
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "ernest",
+      "email": "ernest@astrasolar.com.au",
+      "name": "Ernest L",
+      "weekCount": 13,
+      "weeks": [
+        {
+          "weekStart": "2026-03-23",
+          "weekEnd": "2026-03-29",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-25T00:51:07.615000+00:00",
+          "slotsCount": 25,
+          "days": [
+            {
+              "date": "2026-03-23",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-24",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-25",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-26",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-27",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-28",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-29",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-03-30",
+          "weekEnd": "2026-04-05",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-29T21:55:45.824000+00:00",
+          "slotsCount": 21,
+          "days": [
+            {
+              "date": "2026-03-30",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-31",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-01",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-02",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-03",
+              "availableHours": [
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-05",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-06",
+          "weekEnd": "2026-04-12",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-08T00:09:20.144000+00:00",
+          "slotsCount": 25,
+          "days": [
+            {
+              "date": "2026-04-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-07",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-08",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-09",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-10",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-12",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-13",
+          "weekEnd": "2026-04-19",
+          "submitted": true,
+          "submittedBy": "ernest",
+          "submittedByName": "Ernest L",
+          "submittedAt": "2026-04-06T13:03:25.620000+00:00",
+          "slotsCount": 30,
+          "days": [
+            {
+              "date": "2026-04-13",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-14",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-15",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-16",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-17",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-19",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-20",
+          "weekEnd": "2026-04-26",
+          "submitted": true,
+          "submittedBy": "ernest",
+          "submittedByName": "Ernest L",
+          "submittedAt": "2026-04-12T23:01:55.547000+00:00",
+          "slotsCount": 29,
+          "days": [
+            {
+              "date": "2026-04-20",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-21",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-22",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-23",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-24",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-25",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-26",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "ernest",
+          "submittedByName": "Ernest L",
+          "submittedAt": "2026-04-20T02:33:57.645000+00:00",
+          "slotsCount": 30,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-04",
+          "weekEnd": "2026-05-10",
+          "submitted": true,
+          "submittedBy": "ernest",
+          "submittedByName": "Ernest L",
+          "submittedAt": "2026-04-28T22:24:41.093000+00:00",
+          "slotsCount": 24,
+          "days": [
+            {
+              "date": "2026-05-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-05",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-06",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-07",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-08",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-10",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-05-08T04:23:16.851000+00:00",
+          "slotsCount": 28,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "ernest",
+          "submittedByName": "Ernest L",
+          "submittedAt": "2026-05-12T04:53:46.864000+00:00",
+          "slotsCount": 31,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-25",
+          "weekEnd": "2026-05-31",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-05-25T00:27:32.469000+00:00",
+          "slotsCount": 15,
+          "days": [
+            {
+              "date": "2026-05-25",
+              "availableHours": [
+                13,
+                14,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-26",
+              "availableHours": [
+                13,
+                14,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-27",
+              "availableHours": [
+                13,
+                14,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-28",
+              "availableHours": [
+                13,
+                14,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-29",
+              "availableHours": [
+                13,
+                14,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-30",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-31",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-01",
+          "weekEnd": "2026-06-07",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-03T01:04:07.539000+00:00",
+          "slotsCount": 0,
+          "days": [
+            {
+              "date": "2026-06-01",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-03",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-05",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-07",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-08",
+          "weekEnd": "2026-06-14",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-09T04:06:07.041000+00:00",
+          "slotsCount": 0,
+          "days": [
+            {
+              "date": "2026-06-08",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-10",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-12",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-14",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-15",
+          "weekEnd": "2026-06-21",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-09T04:05:58.221000+00:00",
+          "slotsCount": 0,
+          "days": [
+            {
+              "date": "2026-06-15",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-17",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-19",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-20",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-21",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "justin",
+      "email": "justin.parle@astrasolar.com.au",
+      "name": "Justin P",
+      "weekCount": 14,
+      "weeks": [
+        {
+          "weekStart": "2026-03-23",
+          "weekEnd": "2026-03-29",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-25T00:41:33.539000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-03-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-24",
+              "availableHours": [
+                9,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-26",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-27",
+              "availableHours": [
+                10,
+                11,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-28",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-29",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-03-30",
+          "weekEnd": "2026-04-05",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-29T21:55:31.873000+00:00",
+          "slotsCount": 33,
+          "days": [
+            {
+              "date": "2026-03-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-31",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-01",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-02",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-03",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-05",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-06",
+          "weekEnd": "2026-04-12",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-03-29T21:58:39.398000+00:00",
+          "slotsCount": 30,
+          "days": [
+            {
+              "date": "2026-04-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-07",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-08",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-09",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-10",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-12",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-13",
+          "weekEnd": "2026-04-19",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-04-06T22:50:44.274000+00:00",
+          "slotsCount": 39,
+          "days": [
+            {
+              "date": "2026-04-13",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-14",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-16",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-17",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-19",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-20",
+          "weekEnd": "2026-04-26",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-04-13T04:20:05.450000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-04-20",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-21",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-25",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-26",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-28T06:45:30.423000+00:00",
+          "slotsCount": 29,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [
+                14
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-04",
+          "weekEnd": "2026-05-10",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-04-27T23:34:14.323000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-04",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-05",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-06",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-07",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-08",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-10",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-05-04T00:00:05.407000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-05-10T23:56:53.923000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-25",
+          "weekEnd": "2026-05-31",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-05-18T23:53:59.820000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-26",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-27",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-28",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-30",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-31",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-01",
+          "weekEnd": "2026-06-07",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-05-26T01:08:46.612000+00:00",
+          "slotsCount": 38,
+          "days": [
+            {
+              "date": "2026-06-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-02",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-03",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-04",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-05",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-07",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-08",
+          "weekEnd": "2026-06-14",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-06-01T00:00:39.764000+00:00",
+          "slotsCount": 29,
+          "days": [
+            {
+              "date": "2026-06-08",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-09",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-10",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-11",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-12",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-14",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-15",
+          "weekEnd": "2026-06-21",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-06-08T23:55:18.205000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-06-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-16",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-17",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-18",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-19",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-20",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-21",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-22",
+          "weekEnd": "2026-06-28",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-06-14T22:25:06.146000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-06-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-26",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-28",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "lachlan",
+      "email": "lachlan@astrasolar.com.au",
+      "name": "Lachlan M",
+      "weekCount": 14,
+      "weeks": [
+        {
+          "weekStart": "2026-03-23",
+          "weekEnd": "2026-03-29",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-25T06:19:10.427000+00:00",
+          "slotsCount": 40,
+          "days": [
+            {
+              "date": "2026-03-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-26",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-27",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-28",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-29",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-03-30",
+          "weekEnd": "2026-04-05",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-29T21:56:53.409000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-03-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-31",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-02",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-03",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-05",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-06",
+          "weekEnd": "2026-04-12",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-03-29T22:37:27.161000+00:00",
+          "slotsCount": 32,
+          "days": [
+            {
+              "date": "2026-04-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-07",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-08",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-09",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-10",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-12",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-13",
+          "weekEnd": "2026-04-19",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-15T00:13:09.893000+00:00",
+          "slotsCount": 29,
+          "days": [
+            {
+              "date": "2026-04-13",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-14",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-15",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-16",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-17",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-19",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-20",
+          "weekEnd": "2026-04-26",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-22T01:42:16.260000+00:00",
+          "slotsCount": 53,
+          "days": [
+            {
+              "date": "2026-04-20",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-21",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-22",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-23",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-24",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-25",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-26",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-04-21T07:35:47.615000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-04",
+          "weekEnd": "2026-05-10",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-04-27T22:11:35.371000+00:00",
+          "slotsCount": 43,
+          "days": [
+            {
+              "date": "2026-05-04",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-05",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-06",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-07",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-08",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-10",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-05-03T23:03:36.376000+00:00",
+          "slotsCount": 35,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-05-12T01:15:53.530000+00:00",
+          "slotsCount": 27,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-25",
+          "weekEnd": "2026-05-31",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-05-19T00:39:35.733000+00:00",
+          "slotsCount": 20,
+          "days": [
+            {
+              "date": "2026-05-25",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-26",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-28",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-29",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-30",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-31",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-01",
+          "weekEnd": "2026-06-07",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-05-24T23:15:44.245000+00:00",
+          "slotsCount": 25,
+          "days": [
+            {
+              "date": "2026-06-01",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-02",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-03",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-04",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-05",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-07",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-08",
+          "weekEnd": "2026-06-14",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-06-01T05:18:20.839000+00:00",
+          "slotsCount": 25,
+          "days": [
+            {
+              "date": "2026-06-08",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-09",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-10",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-11",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-12",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-14",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-15",
+          "weekEnd": "2026-06-21",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-06-08T22:48:35.361000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-06-15",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-16",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-17",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-19",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-20",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-21",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-22",
+          "weekEnd": "2026-06-28",
+          "submitted": true,
+          "submittedBy": "lachlan",
+          "submittedByName": "Lachlan M",
+          "submittedAt": "2026-06-18T10:51:26.555000+00:00",
+          "slotsCount": 43,
+          "days": [
+            {
+              "date": "2026-06-22",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-23",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-24",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-25",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-26",
+              "availableHours": [
+                9,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-27",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-28",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "neeraj",
+      "email": "neeraj@astrasolar.com.au",
+      "name": "Neeraj",
+      "weekCount": 1,
+      "weeks": [
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "neeraj",
+          "submittedByName": "Neeraj",
+          "submittedAt": "2026-04-21T23:22:08.066000+00:00",
+          "slotsCount": 10,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "stephen",
+      "email": "stephen@astrasolar.com.au",
+      "name": "Stephen N",
+      "weekCount": 14,
+      "weeks": [
+        {
+          "weekStart": "2026-03-23",
+          "weekEnd": "2026-03-29",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-25T00:49:48.713000+00:00",
+          "slotsCount": 38,
+          "days": [
+            {
+              "date": "2026-03-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-24",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-26",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-27",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-28",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-29",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-03-30",
+          "weekEnd": "2026-04-05",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-03-31T03:12:47.565000+00:00",
+          "slotsCount": 30,
+          "days": [
+            {
+              "date": "2026-03-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-03-31",
+              "availableHours": [
+                11,
+                12,
+                13,
+                15,
+                16,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-02",
+              "availableHours": [
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-03",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-04",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-05",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-06",
+          "weekEnd": "2026-04-12",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-03-29T21:46:21.924000+00:00",
+          "slotsCount": 31,
+          "days": [
+            {
+              "date": "2026-04-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-07",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-08",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-09",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-10",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-11",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-12",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-13",
+          "weekEnd": "2026-04-19",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-16T06:33:43.017000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-04-13",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-14",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-16",
+              "availableHours": [
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-17",
+              "availableHours": [
+                10,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-18",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-19",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-20",
+          "weekEnd": "2026-04-26",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-21T00:11:49.836000+00:00",
+          "slotsCount": 38,
+          "days": [
+            {
+              "date": "2026-04-20",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-21",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-23",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-25",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-26",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-21T07:14:54.488000+00:00",
+          "slotsCount": 30,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-04",
+          "weekEnd": "2026-05-10",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-05-06T06:34:09.798000+00:00",
+          "slotsCount": 38,
+          "days": [
+            {
+              "date": "2026-05-04",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-05",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-06",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-07",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-08",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-10",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-05-03T23:50:37.728000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-05-10T23:49:20.474000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-25",
+          "weekEnd": "2026-05-31",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-05-17T23:46:48.267000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-05-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-26",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-27",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-28",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-30",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-31",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-01",
+          "weekEnd": "2026-06-07",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-05-24T23:51:31.564000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-06-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-02",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-03",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-04",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-05",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-07",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-08",
+          "weekEnd": "2026-06-14",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-09T04:05:12.791000+00:00",
+          "slotsCount": 31,
+          "days": [
+            {
+              "date": "2026-06-08",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-09",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-10",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-11",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-12",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-14",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-15",
+          "weekEnd": "2026-06-21",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-18T05:59:42.673000+00:00",
+          "slotsCount": 36,
+          "days": [
+            {
+              "date": "2026-06-15",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-16",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-17",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-18",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-19",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-20",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-21",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-22",
+          "weekEnd": "2026-06-28",
+          "submitted": true,
+          "submittedBy": "stephen",
+          "submittedByName": "Stephen N",
+          "submittedAt": "2026-06-14T23:59:32.433000+00:00",
+          "slotsCount": 37,
+          "days": [
+            {
+              "date": "2026-06-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-23",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-25",
+              "availableHours": [
+                11,
+                12,
+                13,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-26",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-28",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "zane",
+      "email": "zane@astrasolar.com.au",
+      "name": "Zane A",
+      "weekCount": 11,
+      "weeks": [
+        {
+          "weekStart": "2026-04-13",
+          "weekEnd": "2026-04-19",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-16T03:11:21.544000+00:00",
+          "slotsCount": 19,
+          "days": [
+            {
+              "date": "2026-04-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-14",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-15",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-16",
+              "availableHours": [
+                12,
+                13,
+                14
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-17",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-18",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-19",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-20",
+          "weekEnd": "2026-04-26",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-04-13T03:01:49.031000+00:00",
+          "slotsCount": 41,
+          "days": [
+            {
+              "date": "2026-04-20",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-21",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-22",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-23",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-24",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-25",
+              "availableHours": [
+                10,
+                11,
+                12,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-26",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-04-27",
+          "weekEnd": "2026-05-03",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-04-29T05:07:29.603000+00:00",
+          "slotsCount": 40,
+          "days": [
+            {
+              "date": "2026-04-27",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-28",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                14,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-04-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-02",
+              "availableHours": [
+                10,
+                11,
+                12
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-03",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-04",
+          "weekEnd": "2026-05-10",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-04-27T02:22:27.908000+00:00",
+          "slotsCount": 28,
+          "days": [
+            {
+              "date": "2026-05-04",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-05",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-06",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-07",
+              "availableHours": [
+                11,
+                12,
+                13,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-08",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-09",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-10",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-11",
+          "weekEnd": "2026-05-17",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-05-04T02:50:58.949000+00:00",
+          "slotsCount": 45,
+          "days": [
+            {
+              "date": "2026-05-11",
+              "availableHours": [
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-12",
+              "availableHours": [
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-13",
+              "availableHours": [
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-14",
+              "availableHours": [
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-15",
+              "availableHours": [
+                10,
+                11,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-16",
+              "availableHours": [
+                10,
+                11,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-17",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-18",
+          "weekEnd": "2026-05-24",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-05-11T01:53:07.659000+00:00",
+          "slotsCount": 33,
+          "days": [
+            {
+              "date": "2026-05-18",
+              "availableHours": [
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-19",
+              "availableHours": [
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-20",
+              "availableHours": [
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-21",
+              "availableHours": [
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-22",
+              "availableHours": [
+                11,
+                12,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-23",
+              "availableHours": [
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-24",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-05-25",
+          "weekEnd": "2026-05-31",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-05-26T00:54:42.006000+00:00",
+          "slotsCount": 24,
+          "days": [
+            {
+              "date": "2026-05-25",
+              "availableHours": [
+                9,
+                10,
+                11,
+                12,
+                13,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-26",
+              "availableHours": [
+                9,
+                10,
+                11,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-28",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-29",
+              "availableHours": [
+                9,
+                10,
+                11,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-30",
+              "availableHours": [
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-05-31",
+              "availableHours": [
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-01",
+          "weekEnd": "2026-06-07",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-05-26T00:52:32.454000+00:00",
+          "slotsCount": 18,
+          "days": [
+            {
+              "date": "2026-06-01",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-02",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-03",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-04",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-05",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-06",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-07",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-08",
+          "weekEnd": "2026-06-14",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-06-02T15:29:28.702000+00:00",
+          "slotsCount": 35,
+          "days": [
+            {
+              "date": "2026-06-08",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-09",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-10",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-11",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-12",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-13",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-14",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-15",
+          "weekEnd": "2026-06-21",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-06-10T04:30:46.824000+00:00",
+          "slotsCount": 35,
+          "days": [
+            {
+              "date": "2026-06-15",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-16",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-17",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-18",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-19",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-20",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-21",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-22",
+          "weekEnd": "2026-06-28",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-06-15T08:29:47.966000+00:00",
+          "slotsCount": 35,
+          "days": [
+            {
+              "date": "2026-06-22",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-23",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-24",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-25",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-26",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-27",
+              "availableHours": [],
+              "holiday": false
+            },
+            {
+              "date": "2026-06-28",
+              "availableHours": [],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

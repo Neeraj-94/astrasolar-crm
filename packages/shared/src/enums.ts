@@ -5,8 +5,11 @@
 // ============================================================================
 
 export const LeadSource = {
-  MANUAL: 'MANUAL',
-  GOOGLE_SHEETS: 'GOOGLE_SHEETS',
+  BLOOM_ASTRA: 'BLOOM_ASTRA',
+  REFERRAL: 'REFERRAL',
+  INBOUND: 'INBOUND',
+  WEBSITE: 'WEBSITE',
+  BRIGHTE: 'BRIGHTE',
 } as const;
 export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource];
 
@@ -26,23 +29,28 @@ export type LeadStage = (typeof LeadStage)[keyof typeof LeadStage];
 
 // Lead-gen's intake result
 export const LeadOutcome = {
-  NEW: 'NEW',
-  CONTACTED: 'CONTACTED',
+  APPOINTMENT: 'APPOINTMENT', // -> triggers Booking + stage = BOOKED
+  HOT_CALL_BACK: 'HOT_CALL_BACK',
+  NO_ANSWER: 'NO_ANSWER',
   NOT_INTERESTED: 'NOT_INTERESTED',
-  NOT_QUALIFIED: 'NOT_QUALIFIED',
-  BOOKED: 'BOOKED', // -> triggers Booking + stage = BOOKED
+  DNQ: 'DNQ',
+  ALREADY_HAS_SOLAR: 'ALREADY_HAS_SOLAR',
+  WRONG_NUMBER: 'WRONG_NUMBER',
+  RESCHEDULE: 'RESCHEDULE',
 } as const;
 export type LeadOutcome = (typeof LeadOutcome)[keyof typeof LeadOutcome];
 
 // Sales consultant's post-booking result
 export const SalesDisposition = {
-  NO_ANSWER: 'NO_ANSWER',
-  TO_BE_RESCHEDULED: 'TO_BE_RESCHEDULED',
-  RESCHEDULED: 'RESCHEDULED',
-  DID_NOT_QUALIFY: 'DID_NOT_QUALIFY',
-  CANCELLED: 'CANCELLED',
-  NOT_INTERESTED: 'NOT_INTERESTED',
   SOLD: 'SOLD', // -> triggers Sale + stage = CONVERTED
+  PRES_PROP_CREATED: 'PRES_PROP_CREATED',
+  CALL_BACK: 'CALL_BACK',
+  RESCHEDULE: 'RESCHEDULE',
+  BEEN_RESCHEDULED: 'BEEN_RESCHEDULED',
+  NO_ANSWER: 'NO_ANSWER',
+  NOT_INTERESTED: 'NOT_INTERESTED',
+  DNQ: 'DNQ',
+  CANCELLED: 'CANCELLED',
 } as const;
 export type SalesDisposition =
   (typeof SalesDisposition)[keyof typeof SalesDisposition];
@@ -88,12 +96,55 @@ export const ProductCategory = {
 export type ProductCategory =
   (typeof ProductCategory)[keyof typeof ProductCategory];
 
+export const AU_STATES = [
+  'ACT',
+  'NSW',
+  'VIC',
+  'QLD',
+  'SA',
+  'WA',
+  'TAS',
+  'NT',
+] as const;
+export type AuState = (typeof AU_STATES)[number];
+
 export const ProductStatus = {
   ACTIVE: 'ACTIVE',
   DISCONTINUED: 'DISCONTINUED',
   ARCHIVED: 'ARCHIVED',
 } as const;
 export type ProductStatus = (typeof ProductStatus)[keyof typeof ProductStatus];
+
+// Solar pricing tier (formerly "standard"/"special" in the legacy app)
+export const PricingTier = {
+  BLOOME: 'BLOOME',
+  BRIGHTE: 'BRIGHTE',
+} as const;
+export type PricingTier = (typeof PricingTier)[keyof typeof PricingTier];
+
+// Battery combo sale context (legacy)
+export const ComboContext = {
+  SOLAR_BATTERY: 'SOLAR_BATTERY',
+  BATTERY_ONLY: 'BATTERY_ONLY',
+} as const;
+export type ComboContext = (typeof ComboContext)[keyof typeof ComboContext];
+
+// Battery RRP context — a battery's price depends on how it is sold.
+export const BatteryPriceContext = {
+  BATTERY_ONLY: 'BATTERY_ONLY',
+  SOLAR_BATTERY: 'SOLAR_BATTERY',
+} as const;
+export type BatteryPriceContext =
+  (typeof BatteryPriceContext)[keyof typeof BatteryPriceContext];
+
+// The four catalogue resources (one table each).
+export const CatalogueType = {
+  solar: 'solar',
+  battery: 'battery',
+  inverter: 'inverter',
+  extras: 'extras',
+} as const;
+export type CatalogueType = (typeof CatalogueType)[keyof typeof CatalogueType];
 
 export const InstallationStatus = {
   SCHEDULED: 'SCHEDULED',

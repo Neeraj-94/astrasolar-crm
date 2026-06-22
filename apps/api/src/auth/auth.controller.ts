@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
@@ -13,9 +14,19 @@ import type { Request, Response } from 'express';
 import { PERMISSIONS } from '@astra/shared';
 import { AuthService, IssuedTokens } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
-import { RegisterDto } from './dto';
+import {
+  ChangePasswordDto,
+  RegisterDto,
+  UpdateAvatarDto,
+  UpdateProfileDto,
+} from './dto';
 import { UsersService } from '../users/users.service';
-import { CurrentUser, Public, RequirePermissions } from '../common/decorators';
+import {
+  Audit,
+  CurrentUser,
+  Public,
+  RequirePermissions,
+} from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
 
 const ACCESS_MAX_AGE = 15 * 60 * 1000; // 15m
@@ -76,15 +87,54 @@ export class AuthController {
 
   @Get('me')
   async meHandler(@CurrentUser() user: AuthUser) {
-    return this.serialize(user);
+    return this.me(user.id, user);
+  }
+
+  /** Self-service profile update (display name + phone numbers). */
+  @Audit({ action: 'PROFILE_UPDATED', entity: 'User' })
+  @Patch('profile')
+  async updateProfile(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    await this.users.updateProfile(user.id, dto);
+    return this.me(user.id);
+  }
+
+  /** Persist a new avatar URL (the web app handles the file upload). */
+  @Audit({ action: 'PROFILE_AVATAR_UPDATED', entity: 'User' })
+  @Patch('profile/avatar')
+  async updateAvatar(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateAvatarDto,
+  ) {
+    await this.users.updateAvatar(user.id, dto.avatarUrl);
+    return this.me(user.id);
+  }
+
+  /** Self-service password change (requires the current password). */
+  @Audit({ action: 'PROFILE_PASSWORD_CHANGED', entity: 'User' })
+  @Post('profile/password')
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.users.changePassword(user.id, dto.currentPassword, dto.newPassword);
+    return { ok: true };
   }
 
   // ---- helpers ----
 
-  private async me(userId: string) {
-    const user = await this.users.buildAuthUser(userId);
+  private async me(userId: string, principal?: AuthUser) {
+    const user = principal ?? (await this.users.buildAuthUser(userId));
     if (!user) throw new UnauthorizedException();
-    return this.serialize(user);
+    const record = await this.users.findById(userId);
+    return {
+      ...this.serialize(user),
+      avatarUrl: record?.avatarUrl ?? null,
+      phones: record?.phones ?? [],
+      region: record?.region ?? null,
+    };
   }
 
   private serialize(user: AuthUser) {

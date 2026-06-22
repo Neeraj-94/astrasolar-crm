@@ -1,63 +1,26 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import { ProductCategory } from '@astra/shared';
+// Catalogue endpoints accept loosely-typed bodies (validated/whitelisted in the
+// service against each catalogue's known fields). These interfaces document the
+// shapes for the two structured sub-resources.
 
-export class CreateProductDto {
-  @IsOptional()
-  @IsString()
-  productRef?: string;
-
-  @IsString()
-  name!: string;
-
-  @IsOptional()
-  @IsString()
-  model?: string;
-
-  @IsEnum(ProductCategory)
-  category!: ProductCategory;
-
-  @IsOptional()
-  @IsInt()
-  stc?: number;
-
-  @IsOptional()
-  @IsNumber()
-  commission?: number;
-
-  @IsOptional()
-  @IsNumber()
-  rrp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  grossPrice?: number;
-
-  @IsOptional()
-  @IsInt()
-  panelWatt?: number;
-
-  @IsOptional()
-  @IsNumber()
-  batterySize?: number;
-
-  @IsOptional()
-  @IsInt()
-  batteryModules?: number;
-
-  @IsOptional()
-  @IsString()
-  inverterType?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  optimisers?: boolean;
+export interface BatteryPriceInput {
+  context: 'BATTERY_ONLY' | 'SOLAR_BATTERY';
+  batteryRrp?: number | null;
+  effectiveDate?: string | null;
 }
 
-export class UpdateProductDto extends CreateProductDto {}
+// Price for an inverter+battery COMBO in one context (gross + RRP both vary by
+// inverter and context). compatId identifies the BatteryInverterCompat row.
+export interface ComboPriceInput {
+  context: 'BATTERY_ONLY' | 'SOLAR_BATTERY';
+  grossPrice?: number | null;
+  batteryRrp?: number | null;
+  effectiveDate?: string | null;
+}
+
+export interface CompatInput {
+  inverterId: string;
+  batteryId: string;
+  notes?: string | null;
+}
+
+export type CatalogueInput = Record<string, unknown>;

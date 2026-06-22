@@ -7,6 +7,7 @@ import {
 import {
   Company,
   LeadOutcome,
+  LeadSource,
   LeadStage,
   PERMISSIONS,
   SaleStatus,
@@ -37,21 +38,29 @@ export class LeadsService {
 
   async list(
     user: AuthUser,
-    filters: { stage?: LeadStage; userId?: string } = {},
+    filters: {
+      stage?: LeadStage;
+      disposition?: SalesDisposition | SalesDisposition[];
+      userId?: string;
+    } = {},
   ) {
     const where = await this.scope.leadWhere(user, filters.userId);
     if (filters.stage) where.stage = filters.stage;
+    if (filters.disposition) {
+      where.disposition = Array.isArray(filters.disposition)
+        ? { in: filters.disposition }
+        : filters.disposition;
+    }
     return this.prisma.lead.findMany({
       where,
       orderBy: [
         { sortOrder: { sort: 'asc', nulls: 'last' } },
-        { leadDate: 'desc' },
+        { timestamp: 'desc' },
       ],
       take: 200,
       include: {
-        contact: true,
-        owner: { select: { id: true, name: true } },
-        currentConsultant: { select: { id: true, name: true } },
+        leadGen: { select: { id: true, name: true } },
+        consultant: { select: { id: true, name: true } },
         booking: true,
       },
     });
@@ -86,9 +95,8 @@ export class LeadsService {
     const lead = await this.prisma.lead.findUnique({
       where: { id },
       include: {
-        contact: true,
-        owner: { select: { id: true, name: true } },
-        currentConsultant: { select: { id: true, name: true } },
+        leadGen: { select: { id: true, name: true } },
+        consultant: { select: { id: true, name: true } },
         booking: true,
         sale: true,
         stateLog: { orderBy: { changedAt: 'desc' }, take: 50 },
@@ -100,31 +108,28 @@ export class LeadsService {
     return lead;
   }
 
-  /** Create a lead (+ inline contact). Writes initial state log + audit. */
+  /** Create a lead (contact details flattened on). Writes initial state log + audit. */
   async create(user: AuthUser, dto: CreateLeadDto) {
-    if (!dto.contact && !dto.contactId) {
-      throw new BadRequestException('Provide contact or contactId');
-    }
-    const ownerId = dto.ownerId ?? user.id;
+    const leadGenId = dto.leadGenId ?? user.id;
 
     return this.prisma.$transaction(async (tx) => {
-      const contactId =
-        dto.contactId ??
-        (await tx.contact.create({ data: dto.contact! })).id;
-
       const lead = await tx.lead.create({
         data: {
-          contactId,
+          firstName: dto.firstName,
+          surName: dto.surName,
+          phone: dto.phone,
+          email: dto.email,
+          address: dto.address,
+          postCode: dto.postCode,
+          state: dto.state,
           company: dto.company as Company,
-          source: dto.source ?? 'MANUAL',
-          externalRef: dto.externalRef,
-          ownerId,
+          source: dto.source ?? LeadSource.INBOUND,
+          leadGenId,
           stage: LeadStage.INTAKE,
-          outcome: LeadOutcome.NEW,
+          // outcome is unset at intake (nullable, no default)
           billSpend: dto.billSpend,
-          estValue: dto.estValue,
-          notes: dto.notes,
-          leadDate: new Date(dto.leadDate),
+          code: dto.code,
+          leadGenNotes: dto.notes,
         },
       });
       await this.history.recordFromLead(tx, lead, user.id);
@@ -139,7 +144,7 @@ export class LeadsService {
   /** Intake outcome update (lead-gen). BOOKED is handled by book(). */
   async updateOutcome(user: AuthUser, id: string, dto: UpdateOutcomeDto) {
     const lead = await this.loadForWrite(user, id);
-    if (dto.outcome === LeadOutcome.BOOKED) {
+    if (dto.outcome === LeadOutcome.APPOINTMENT) {
       throw new BadRequestException('Use the booking endpoint to book a lead');
     }
     return this.prisma.$transaction(async (tx) => {
@@ -147,10 +152,10 @@ export class LeadsService {
         where: { id },
         data: {
           outcome: dto.outcome,
-          notes: dto.notes ?? lead.notes,
+          leadGenNotes: dto.notes ?? lead.leadGenNotes,
           stage:
             dto.outcome === LeadOutcome.NOT_INTERESTED ||
-            dto.outcome === LeadOutcome.NOT_QUALIFIED
+            dto.outcome === LeadOutcome.DNQ
               ? LeadStage.CLOSED
               : lead.stage,
         },
@@ -165,9 +170,9 @@ export class LeadsService {
   }
 
   /**
-   * TRIGGER 1 — outcome -> BOOKED. One atomic transaction:
+   * TRIGGER 1 — outcome -> APPOINTMENT. One atomic transaction:
    *  1. create Booking (consultant, bookedBy, scheduledAt)
-   *  2. set lead.stage = BOOKED, currentConsultantId, outcome = BOOKED
+   *  2. set lead.stage = BOOKED, consultantId, outcome = APPOINTMENT
    *  3. write LeadStateLog snapshot + AuditLog
    */
   async book(user: AuthUser, id: string, dto: BookLeadDto) {
@@ -188,8 +193,8 @@ export class LeadsService {
         where: { id },
         data: {
           stage: LeadStage.BOOKED,
-          outcome: LeadOutcome.BOOKED,
-          currentConsultantId: dto.consultantId,
+          outcome: LeadOutcome.APPOINTMENT,
+          consultantId: dto.consultantId,
         },
       });
       await this.history.recordFromLead(tx, updated, user.id);
@@ -218,7 +223,7 @@ export class LeadsService {
     const isSold = dto.disposition === SalesDisposition.SOLD;
     if (isSold) {
       const owns =
-        user.id === lead.currentConsultantId ||
+        user.id === lead.consultantId ||
         user.permissions.has(PERMISSIONS.SYSTEM_ADMIN);
       if (!owns || !user.permissions.has(PERMISSIONS.SALES_MANAGE_OWN)) {
         throw new ForbiddenException(
@@ -244,8 +249,7 @@ export class LeadsService {
           data: {
             saleRef,
             leadId: id,
-            contactId: lead.contactId,
-            ownerId: lead.currentConsultantId!,
+            ownerId: lead.consultantId!,
             company: lead.company,
             status: SaleStatus.NEGOTIATION,
             saleDate: new Date(),
@@ -278,7 +282,7 @@ export class LeadsService {
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.lead.update({
         where: { id },
-        data: { ownerId: newOwnerId },
+        data: { leadGenId: newOwnerId },
       });
       await this.history.recordFromLead(tx, updated, user.id);
       await this.audit.record(
@@ -310,14 +314,14 @@ export class LeadsService {
 
   private async assertCanRead(
     user: AuthUser,
-    lead: { ownerId: string; currentConsultantId: string | null },
+    lead: { leadGenId: string; consultantId: string | null },
   ) {
     if (user.scope === 'all') return;
     const visible = await this.scope.visibleUserIds(user);
     if (visible === 'all') return;
     if (
-      visible.includes(lead.ownerId) ||
-      (lead.currentConsultantId && visible.includes(lead.currentConsultantId))
+      visible.includes(lead.leadGenId) ||
+      (lead.consultantId && visible.includes(lead.consultantId))
     ) {
       return;
     }
@@ -326,7 +330,7 @@ export class LeadsService {
 
   private async assertCanWrite(
     user: AuthUser,
-    lead: { ownerId: string; currentConsultantId: string | null },
+    lead: { leadGenId: string; consultantId: string | null },
   ) {
     if (user.permissions.has(PERMISSIONS.SYSTEM_ADMIN)) return;
     // Team writers may edit leads within their scope.
@@ -334,8 +338,8 @@ export class LeadsService {
       const visible = await this.scope.visibleUserIds(user);
       if (
         visible === 'all' ||
-        visible.includes(lead.ownerId) ||
-        (lead.currentConsultantId && visible.includes(lead.currentConsultantId))
+        visible.includes(lead.leadGenId) ||
+        (lead.consultantId && visible.includes(lead.consultantId))
       ) {
         return;
       }
@@ -343,8 +347,8 @@ export class LeadsService {
     // Own writers may edit leads they own or are the consultant on.
     if (user.permissions.has(PERMISSIONS.LEADS_WRITE_OWN)) {
       if (
-        user.id === lead.ownerId ||
-        user.id === lead.currentConsultantId
+        user.id === lead.leadGenId ||
+        user.id === lead.consultantId
       ) {
         return;
       }

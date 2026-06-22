@@ -145,6 +145,14 @@ dashboards/analytics with scope selector, and the web API-client layer.
 - **BullMQ/Redis** — Sheets polling currently runs via `SheetsService.importRows`
   (driven by the manual `/integrations/sheets/sync` endpoint). Wire the
   repeatable poll job + nightly analytics aggregation when Redis is provisioned.
-- **Phases 5–7** — AI (RAG + tools), Voice (JARVIS), predictive scoring &
-  hardening (throttler, Helmet, CI/CD), per the build plan.
+- **Phases 6–7** — Voice (JARVIS), predictive scoring & hardening (throttler,
+  Helmet, CI/CD), per the build plan.
+
+**Nova (Phase 5 AI) — delivered.** The in-house AI assistant from the legacy
+`astrasolar-app` is ported in as a NestJS module (`apps/api/src/nova`) + a Next.js
+chat widget (`apps/web/src/components/nova`), powered by Anthropic. She reads live
+catalogue specs and CRM data through RBAC-scoped tools, keeps a Postgres knowledge
+base + learned memory, and coaches from pasted transcripts. Setup:
+`docs/nova/NOVA_V2_README.md`; design: `docs/nova/NOVA_V2_PLAN.md`. Nova follow-ups:
+response streaming, the Aircall insight pipeline, voice/avatar, pgvector RAG.
 ```

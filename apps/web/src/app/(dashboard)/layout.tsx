@@ -29,6 +29,15 @@ export default async function DashboardLayout({
     .map((k) => ROLES.find((r) => r.key === k)?.name ?? k)
     .sort();
 
+  // Nova is for internal staff — every role except customer and installer
+  // self-service. The API enforces nova:use server-side; this only gates the UI.
+  const NOVA_EXCLUDED = new Set(["customer", "installer"]);
+  const canUseNova = user.roleKeys.some((r) => !NOVA_EXCLUDED.has(r));
+
+  // Price Calculator is for internal sales staff — same audience as Nova
+  // (everyone except customer/installer self-service).
+  const canUsePriceCalc = user.roleKeys.some((r) => !NOVA_EXCLUDED.has(r));
+
   return (
     <DashboardChrome
       showSideNav={showSideNav}
@@ -43,6 +52,8 @@ export default async function DashboardLayout({
         avatarUrl: user.avatarUrl,
       }}
       roleLabels={roleLabels}
+      canUseNova={canUseNova}
+      canUsePriceCalc={canUsePriceCalc}
     >
       {children}
     </DashboardChrome>

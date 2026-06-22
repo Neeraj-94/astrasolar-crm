@@ -106,13 +106,14 @@ Features:
 
 | Concern | File |
 | --- | --- |
-| Prisma model + enum | `prisma/schema.prisma` — `AvailabilitySlot`, `AvailabilityStatus` |
-| Server lib (read / write / booking check) | `src/lib/availability.ts` |
-| API — list slots, upsert slots | `src/app/api/leads/availability/route.ts` |
-| API — consultant directory | `src/app/api/leads/consultants/route.ts` |
+| Prisma models + enum (API database) | `apps/api/prisma/schema.prisma` — `AvailabilitySlot`, `AvailabilitySubmission`, `AvailabilityStatus` |
+| API endpoints (`/scheduling/availability*`, `/scheduling/appointments`) | `apps/api/src/scheduling/*` |
+| Web server lib (authenticated API client, date helpers) | `src/lib/availability.ts` |
+| Web route shims (stable URLs + tab gate) | `src/app/api/leads/availability/route.ts`, `availability/submit/route.ts` |
+| API — consultant directory | `GET /users/consultants` (`apps/api/src/users`) |
 | Server tab (initial data fetch) | `src/components/leads/team-availability-tab.tsx` |
 | Client UI (interactive grid) | `src/components/leads/team-availability-client.tsx` |
-| Booking conflict check (used by Leads Schedule) | `canBookConsultant()` in `src/lib/availability.ts` |
+| Booking conflict check (used by Leads Schedule) | `POST /scheduling/availability/check` via `canBookConsultant()` |
 
 Storage is sparse: a row in `AvailabilitySlot` only exists when a manager has explicitly overridden the default (which is `AVAILABLE` during 8 AM–8 PM). Toggling a slot creates or updates a row; the booking check looks for any `UNAVAILABLE` row overlapping the booked window.
 

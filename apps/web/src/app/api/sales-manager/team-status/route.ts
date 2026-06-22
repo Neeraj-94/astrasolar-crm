@@ -6,8 +6,9 @@ import { getTeamStatus } from "@/lib/sales/statistics";
  * GET /api/sales-manager/team-status
  *
  * Returns the current online/offline status of every sales consultant.
- * Consumed by the Team Status widget on the Sales Manager → Statistics tab,
- * which polls this endpoint for near-real-time updates.
+ * Consumed by the Team Status widget on the Sales Manager → Statistics tab
+ * and the CEO → Overview tab, which poll this endpoint for near-real-time
+ * updates.
  */
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (!canAccessTab(user, "sales-manager", "statistics")) {
+  const allowed =
+    canAccessTab(user, "sales-manager", "statistics") ||
+    canAccessTab(user, "ceo", "overview");
+  if (!allowed) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

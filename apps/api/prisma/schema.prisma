@@ -5,11 +5,11 @@
 //  Covers:
 //    - RBAC with runtime-editable roles (Role/Permission as DATA, not enum)
 //    - Multi-role users (a user holds many roles; access = UNION of grants)
-//    - Contacts / Accounts (B2B-friendly)
 //    - Leads with a TWO-STAGE disposition model (intake -> post-booking)
+//      (customer details are flattened onto the Lead — no separate Contact)
 //    - Bookings as first-class records (consultant + who booked it)
 //    - Sales as SEPARATE entities, born when a consultation is SOLD
-//    - Installations & Customer (narrow Tier-3 roles)
+//    - Installations (narrow Tier-3 roles)
 //    - Disposition history + audit log (fuel for analytics + future AI)
 //
 //  Access rules live as PERMISSION DATA + a getEffectivePermissions() /
@@ -48,6 +48,10 @@ model User {
   password      String                          // bcrypt hash
   name          String
   isActive      Boolean  @default(true)
+  region        String?                          // home region ("ACT" | "TAS" | ...) — drives consultant grouping in availability/schedule
+  aliases       String[] @default([])            // alternate names used to recognise/match the user (e.g. Bloome setter names)
+  avatarUrl     String?                          // profile photo URL (storage handled by the web app)
+  phones        Json?                            // [{ label, number, isPrimary }] — self-managed contact numbers
 
   // Team membership / management (drives manager-level visibility scope)
   teamId        String?
@@ -56,19 +60,33 @@ model User {
 
   refreshToken  String?                          // hashed refresh token
 
+  // Welcome-email support. `welcomePassword` retains the plaintext temp password
+  // set at creation (or admin reset) so a super admin can manually (re)send the
+  // welcome email from the Users tab. Cleared once the user changes their own
+  // password. `welcomeEmailSentAt` records the last successful send (UI hint).
+  welcomePassword    String?
+  welcomeEmailSentAt DateTime?
+
   // Roles (many-to-many)
   roles         UserRole[]
 
   // Domain relations
-  ownedLeads    Lead[]          @relation("LeadOwner")
-  currentLeads  Lead[]          @relation("LeadCurrentConsultant")
+  leadGenLeads    Lead[]        @relation("LeadGen")
+  consultantLeads Lead[]        @relation("LeadConsultant")
   consultations Booking[]       @relation("Consultant")
   bookingsMade  Booking[]       @relation("BookedBy")
   ownedSales    Sale[]          @relation("SaleOwner")
+  customer      Customer?                                  // self-service customer profile (Customer dashboard)
   handledIssues PostInstallIssue[] @relation("IssueHandler")
   activities    Activity[]
   installs      Installation[]  @relation("Installer")
-  customer      Customer?
+  availabilitySlots        AvailabilitySlot[]       @relation("ConsultantAvailability")
+  availabilitySubmissions  AvailabilitySubmission[] @relation("ConsultantAvailabilitySubmissions")
+  scheduleAppointments     Appointment[]            @relation("ConsultantScheduleAppointments")
+  taskAssignments          TaskCard[]               @relation("TaskAssignee")
+  tasksCreated             TaskCard[]               @relation("TaskCreator")
+  taskNudgesSent           TaskCard[]               @relation("TaskNudger")
+  notifications            Notification[]           @relation("UserNotifications")
 
   sortOrder     Int?                             // manual drag-and-drop row order (null = default sort)
 
@@ -127,45 +145,6 @@ model RolePermission {
 }
 
 // ============================================================================
-//  CONTACTS & ACCOUNTS
-// ============================================================================
-
-model Account {
-  id        String    @id @default(uuid())
-  name      String
-  contacts  Contact[]
-  createdAt DateTime  @default(now())
-}
-
-model Contact {
-  id            String     @id @default(uuid())
-  firstName     String
-  surname       String
-  email         String?
-  phone         String?
-
-  // Address
-  streetAddress String?
-  state         String?
-  postcode      String?
-
-  // Company is a real business entity (multiple contacts per account)
-  accountId     String?
-  account       Account?   @relation(fields: [accountId], references: [id])
-
-  leads         Lead[]
-  sales         Sale[]
-  customer      Customer?
-
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  @@index([email])
-  @@index([phone])
-  @@index([surname])
-}
-
-// ============================================================================
 //  LEADS — two-stage status model
 //
 //    stage        : where in the journey (drives which tab/board)
@@ -178,62 +157,74 @@ model Contact {
 // ============================================================================
 
 model Lead {
-  id            String             @id @default(uuid())
-  contactId     String
-  contact       Contact            @relation(fields: [contactId], references: [id])
+  id            String             @id @default(uuid())          // leadId
+  timestamp     DateTime           @default(now())               // when the lead was entered
 
-  source        LeadSource         @default(MANUAL)
-  externalRef   String?                              // Google Sheets row id (dedupe)
-  company       Company                              // our brand the lead belongs to (reporting label)
+  // Contact details — flattened directly onto the lead
+  firstName     String
+  surName       String
+  phone         String?
+  email         String?
+  address       String?
+  postCode      String?
+  state         String?
 
+  billSpend     String?                                          // bill-spend band as text ("$251-$500", ...)
+  code          String?                                          // campaign code ("ACT-1", ...)
+
+  // Ownership — the lead carries the LATEST state directly, kept in sync with the
+  // newest LeadStateLog row (same transaction). The lead is the current truth.
+  leadGenId     String                                           // latest lead-gen assigned to the lead
+  leadGen       User               @relation("LeadGen", fields: [leadGenId], references: [id])
+  consultantId  String?                                          // latest consultant booked to the lead (mirrors booking)
+  consultant    User?              @relation("LeadConsultant", fields: [consultantId], references: [id])
+
+  source        LeadSource         @default(BLOOM_ASTRA)         // leadSource
+  outcome       LeadOutcome?                                     // lead-gen result (intake)
+  disposition   SalesDisposition?                                // consultant result (post-booking)
+
+  dials         Int                @default(0)                   // call attempts (can be added/subtracted)
+
+  leadGenNotes    String?
+  consultantNotes String?
+
+  company       Company            @default(ASTRA)               // DC | Astra (defaults to Astra)
+
+  // Booking — denormalized onto the lead for the board (mirrors the Booking record)
+  bookingDate   DateTime?          @db.Date
+  bookingTime   String?
+
+  // --- structural fields retained so the rest of the schema stays intact ---
   stage         LeadStage          @default(INTAKE)
-  outcome       LeadOutcome?       @default(NEW)      // set by lead-gen (intake)
-  disposition   SalesDisposition?                     // set by consultant (post-booking)
-
   booking       Booking?
-
   convertedAt   DateTime?
   sale          Sale?
 
-  // Ownership — the Lead's "main data" carries the LATEST state directly, kept
-  // in sync with the newest LeadStateLog row (same transaction). The lead is the
-  // current truth; the log is the copied-from history (never read back into it).
-  ownerId            String                         // latest lead-gen (intake owner)
-  owner              User    @relation("LeadOwner", fields: [ownerId], references: [id])
-  currentConsultantId String?                       // latest consultant (mirrors booking)
-  currentConsultant  User?   @relation("LeadCurrentConsultant", fields: [currentConsultantId], references: [id])
-
-  // Qualification / process fields
-  dials         Int                @default(0)        // number of call attempts
-  billSpend     Decimal?           @db.Decimal(12, 2) // prospect's current monthly bill
-  estValue      Decimal?           @db.Decimal(12, 2)
-
-  // Notes — kept separate by author/stage
-  notes         String?                               // lead-gen notes (intake)
-  consultantNotes String?                             // consultant notes (post-booking)
-
-  stateLog      LeadStateLog[]
+  stateLog      LeadStateLog[]                                   // any change to the fields above is logged here
   activities    Activity[]
+  scheduleAppointments Appointment[] @relation("LeadScheduleAppointments")
 
-  sortOrder     Int?                                  // manual drag-and-drop row order (null = default sort)
-
-  createdAt     DateTime           @default(now())    // system entry timestamp
-  leadDate      DateTime           @db.Date           // date the lead actually came in
+  sortOrder     Int?                                             // manual drag-and-drop row order (null = default sort)
   updatedAt     DateTime           @updatedAt
 
-  @@unique([source, externalRef])                     // prevents double-import from Sheets
   @@index([stage])
-  @@index([ownerId])
-  @@index([currentConsultantId])
+  @@index([leadGenId])
+  @@index([consultantId])
   @@index([outcome])
   @@index([disposition])
-  @@index([leadDate])
+  @@index([source])
   @@index([company])
+  @@index([phone])
+  @@index([surName])
 }
 
+// Where the lead came from ("leadSource").
 enum LeadSource {
-  MANUAL
-  GOOGLE_SHEETS
+  BLOOM_ASTRA       // "Bloom Astra"
+  REFERRAL
+  INBOUND
+  WEBSITE
+  BRIGHTE
 }
 
 // Our internal brand/business entity the lead/sale belongs to. Reporting label
@@ -250,24 +241,29 @@ enum LeadStage {
   CLOSED
 }
 
-// Lead-gen's intake result ("outcome")
+// Lead-gen's intake result ("outcome").
 enum LeadOutcome {
-  NEW
-  CONTACTED
+  APPOINTMENT       // -> triggers Booking + stage = BOOKED
+  HOT_CALL_BACK     // "Hot Call Back"
+  NO_ANSWER
   NOT_INTERESTED
-  NOT_QUALIFIED
-  BOOKED            // -> triggers Booking + stage = BOOKED
+  DNQ
+  ALREADY_HAS_SOLAR // "Already has Solar"
+  WRONG_NUMBER      // "Wrong Number"
+  RESCHEDULE
 }
 
-// Sales consultant's post-booking result ("disposition")
+// Sales consultant's post-booking result ("disposition").
 enum SalesDisposition {
-  NO_ANSWER
-  TO_BE_RESCHEDULED
-  RESCHEDULED
-  DID_NOT_QUALIFY
-  CANCELLED
-  NOT_INTERESTED
   SOLD              // -> triggers Sale + stage = CONVERTED
+  PRES_PROP_CREATED // "Pres / Prop Created"
+  CALL_BACK         // "Call Back"
+  RESCHEDULE
+  BEEN_RESCHEDULED  // "Been Rescheduled"
+  NO_ANSWER
+  NOT_INTERESTED
+  DNQ
+  CANCELLED
 }
 
 // ============================================================================
@@ -301,94 +297,18 @@ model Booking {
 //  may mark SOLD or edit the sale.
 // ============================================================================
 
-// ============================================================================
-//  PRODUCT CATALOGUE
-//  Common fields + category-specific specs (nullable per category). "Delete" is
-//  a soft ARCHIVE; "discontinue" hides from new-sale pickers but keeps the row
-//  so historical sales still resolve. Service layer blocks archiving/deleting a
-//  product referenced by any sale.
-// ============================================================================
-
-model Product {
-  id             String          @id @default(uuid())
-  productRef     String?         @unique             // human-facing product code
-  name           String
-  model          String?
-  category       ProductCategory
-  status         ProductStatus   @default(ACTIVE)
-
-  // Common commercial fields
-  stc            Int?
-  commission     Decimal?        @db.Decimal(12, 2)
-  rrp            Decimal?        @db.Decimal(12, 2)
-  grossPrice     Decimal?        @db.Decimal(12, 2)
-  commissionDate DateTime?       @db.Date            // "dateOfCommission"
-
-  // Category-specific specs (nullable; only the relevant category populates them)
-  panelWatt      Int?                                // SOLAR
-  batterySize    Decimal?        @db.Decimal(10, 2)  // BATTERY (kWh)
-  batteryModules Int?                                // BATTERY
-  inverterType   String?                             // INVERTER
-  optimisers     Boolean?                            // INVERTER / SOLAR
-
-  // References from sales (a product may be used by many sales)
-  batteryForSystems  SystemDetails[] @relation("BatteryProduct")
-  panelForSystems    SystemDetails[] @relation("PanelProduct")
-  inverterForSystems SystemDetails[] @relation("InverterProduct")
-  saleExtras         SaleExtra[]
-
-  log            ProductLog[]
-
-  sortOrder      Int?                                // manual drag-and-drop row order (null = default sort)
-
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  @@index([category])
-  @@index([status])
-}
-
-enum ProductCategory {
-  BATTERIES
-  INVERTER
-  SOLAR
-  EXTRAS
-}
-
-enum ProductStatus {
-  ACTIVE
-  DISCONTINUED                                        // hidden from new sales, kept for history
-  ARCHIVED                                            // soft-delete
-}
-
-// Product change log — array of changes (field, old->new, who, when).
-// Written through a ProductHistoryService choke point (sibling of SaleLog).
-model ProductLog {
-  id        String   @id @default(uuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  field     String
-  oldValue  String?
-  newValue  String?
-  changedBy String                                    // userId
-  changedAt DateTime @default(now())
-
-  @@index([productId])
-  @@index([changedAt])
-}
-
 model Sale {
   id            String   @id @default(uuid())
   saleRef       String?  @unique                    // human-facing "saleID" (e.g. S-2026-0001)
 
-  leadId        String   @unique                     // 1 lead -> at most 1 sale; lead data read via relation
+  leadId        String   @unique                     // 1 lead -> at most 1 sale; customer data read via lead
   lead          Lead     @relation(fields: [leadId], references: [id])
-
-  contactId     String
-  contact       Contact  @relation(fields: [contactId], references: [id])
 
   ownerId       String                               // owning consultant
   owner         User     @relation("SaleOwner", fields: [ownerId], references: [id])
+
+  // Customer self-service link (powers the Customer dashboard).
+  customer      Customer?
 
   // Core sale fields
   company       Company                              // carried from the lead (reporting label)
@@ -423,6 +343,7 @@ model Sale {
   postInstall    PostInstallIssue[]
   stageHistory   SaleStageHistory[]
   salesLog       SaleLog[]                           // general change log (any field change)
+  rrpRequests    RrpRequest[]                        // pending custom-product RRP requests (finance)
 
   sortOrder     Int?                                // manual drag-and-drop row order (null = default sort)
 
@@ -466,16 +387,7 @@ model SystemDetails {
   saleId        String  @unique
   sale          Sale    @relation(fields: [saleId], references: [id])
 
-  // Catalogue references (which product) — specs below are point-of-sale
-  // snapshots (what it cost/spec'd at the time), preserved even if the catalogue
-  // product changes later.
-  batteryProductId  String?
-  batteryProduct    Product? @relation("BatteryProduct", fields: [batteryProductId], references: [id])
-  panelProductId    String?
-  panelProduct      Product? @relation("PanelProduct", fields: [panelProductId], references: [id])
-  inverterProductId String?
-  inverterProduct   Product? @relation("InverterProduct", fields: [inverterProductId], references: [id])
-
+  // Point-of-sale spec snapshots (what it cost/spec'd at the time).
   // Battery
   batteryBrand      String?
   batteryModel      String?
@@ -493,6 +405,8 @@ model SystemDetails {
   solarRRP          Decimal? @db.Decimal(12, 2)
   solarSTC          Int?
   solarCommission   Decimal? @db.Decimal(12, 2)
+  solarProfit       Decimal? @db.Decimal(12, 2)      // POS profit snapshot (from SolarProduct)
+  batteryProfit     Decimal? @db.Decimal(12, 2)      // POS profit snapshot (from BatteryProduct)
 
   // Inverter + install/electrical
   inverterModel     String?
@@ -538,14 +452,12 @@ model SaleExtra {
   id         String  @id @default(uuid())
   saleId     String
   sale       Sale    @relation(fields: [saleId], references: [id])
-  productId  String?                                 // catalogue link (optional — extras can be ad-hoc)
-  product    Product? @relation(fields: [productId], references: [id])
   itemName   String
   itemRef    String?                                 // "itemID" (external/catalog id)
   itemPrice  Decimal @db.Decimal(12, 2)
+  profit     Decimal? @db.Decimal(12, 2)             // POS profit snapshot (from ExtraProduct)
 
   @@index([saleId])
-  @@index([productId])
 }
 
 // STUB — `finance[]` shape not yet specified. Placeholder fields; correct once
@@ -661,13 +573,19 @@ enum InstallationStatus {
   CANCELLED
 }
 
+// ============================================================================
+//  CUSTOMER — self-service login linked to a single Sale (Customer dashboard).
+//  Customer identity/contact details are read via the sale's lead (flattened);
+//  this model only ties a User login to the sale they own.
+// ============================================================================
+
 model Customer {
-  id         String   @id @default(uuid())
-  userId     String?  @unique
-  user       User?    @relation(fields: [userId], references: [id])
-  contactId  String   @unique
-  contact    Contact  @relation(fields: [contactId], references: [id])
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  saleId    String   @unique
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 // ============================================================================
@@ -735,7 +653,7 @@ model AuditLog {
 model Document {
   id          String   @id @default(uuid())
   // What this document is attached to (loose polymorphic link kept simple).
-  entity      String                                   // "Sale" | "Contact" | "Lead"
+  entity      String                                   // "Sale" | "Lead"
   entityId    String
   key         String   @unique                         // R2 object key
   fileName    String
@@ -755,7 +673,7 @@ model Document {
 //  Deliberately separate from `Lead`: these are unowned, free-form setter
 //  records (string outcomes like "Hot Call Back", bill-spend bands, Bloome
 //  agents who are not CRM users). Promoting one into the managed pipeline
-//  creates a `Lead` + `Contact` as usual; this table stays the import truth.
+//  creates a `Lead` (customer details flattened on); this table stays the import truth.
 //  Dedupe key: (sourceTab, rowNum) — the sheet tab + 1-based sheet row.
 // ============================================================================
 
@@ -793,4 +711,740 @@ model BloomeLead {
   @@index([agent])
   @@index([mobile])
   @@index([timestamp])
+}
+
+// ============================================================================
+//  SCHEDULING — consultant availability + the Leads Schedule grid.
+//  Migrated from the legacy web database (apps/web prisma) so the platform
+//  runs on a single database. Date columns are DATE; all reads/writes must
+//  use UTC-midnight Dates (see the web lib's DB date boundary note).
+// ============================================================================
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  HOLIDAY
+}
+
+model AvailabilitySlot {
+  id           String             @id @default(uuid())
+  consultantId String                              // User.id of the consultant
+  consultant   User               @relation("ConsultantAvailability", fields: [consultantId], references: [id], onDelete: Cascade)
+  date         DateTime           @db.Date
+  hour         Int                                 // 8..19 — start hour of the 1-hour slot
+  status       AvailabilityStatus
+  note         String?
+  createdById  String?                             // user who made the change (audit)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@unique([consultantId, date, hour])
+  @@index([date])
+  @@index([consultantId, date])
+}
+
+model AvailabilitySubmission {
+  id             String   @id @default(uuid())
+  consultantId   String
+  consultant     User     @relation("ConsultantAvailabilitySubmissions", fields: [consultantId], references: [id], onDelete: Cascade)
+  consultantName String                            // snapshot at submission time
+  weekStart      DateTime @db.Date
+  weekEnd        DateTime @db.Date
+  holidayDays    String[]                          // ISO dates fully marked Holiday
+  slotsCount     Int      @default(0)
+  submitted      Boolean  @default(true)
+  submittedAt    DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  updatedById    String?
+  updatedByName  String?
+
+  @@unique([consultantId, weekStart])
+  @@index([weekStart])
+  @@index([consultantId])
+}
+
+// One cell of the Leads Schedule grid. Contact details are denormalised
+// snapshots (imported from the legacy database); `leadId` optionally links a
+// modern pipeline Lead. Distinct from `Booking`, which is the pipeline's
+// outcome-triggered record.
+model Appointment {
+  id               String    @id @default(uuid())
+  leadId           String?
+  lead             Lead?     @relation("LeadScheduleAppointments", fields: [leadId], references: [id], onDelete: SetNull)
+  consultantId     String
+  consultant       User      @relation("ConsultantScheduleAppointments", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  date             DateTime  @db.Date
+  hour             Int                              // 8..19
+  minute           Int       @default(0)            // 0 or 30
+  durationMinutes  Int       @default(60)
+
+  disposition      String?
+  bookedByUserId   String?
+  bookedByName     String?
+  source           String?                          // Brighte | Referral | Website | Bloome | ...
+  company          String?                          // Astra | DC ELEC | ...
+  bills            String?
+  notes            String?
+
+  // Contact snapshot
+  customerName     String?
+  firstName        String?
+  lastName         String?
+  phone            String?
+  email            String?
+  address          String?
+  suburb           String?
+  state            String?
+  postcode         String?
+
+  // Reschedule audit (most recent move only)
+  originalDate     DateTime? @db.Date
+  originalHour     Int?
+  originalMinute   Int?
+  rescheduleReason String?
+  rescheduledAt    DateTime?
+
+  isAdditional     Boolean   @default(false)
+  cancelPending    String?                          // 'cancel' | 'dnq' | 'not_interested'
+  cancelPendingAt  DateTime?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([date])
+  @@index([consultantId, date])
+  @@index([leadId])
+}
+
+// ============================================================================
+//  TASK BOARDS (Trello-style "Task Overview" tab — one shared board per
+//  dashboard: leads / sales / sales-manager / operations-manager / admin)
+// ============================================================================
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model TaskList {
+  id           String     @id @default(uuid())
+  dashboardKey String                              // board key = dashboard ("sales", "leads", ...)
+  name         String
+  position     Int                                 // 0-based column order within the board
+  tasks        TaskCard[]
+  createdById  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([dashboardKey, position])
+}
+
+model TaskCard {
+  id          String       @id @default(uuid())
+  listId      String
+  list        TaskList     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?    @db.Date
+  position    Int                                  // 0-based order within the list
+
+  assigneeId  String?
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById String
+  createdBy   User         @relation("TaskCreator", fields: [createdById], references: [id])
+
+  // Last nudge sent to the assignee (in-app indicator; cleared when the
+  // assignee touches the card). Rate-limited to one per task per hour.
+  nudgedAt    DateTime?
+  nudgedById  String?
+  nudgedBy    User?        @relation("TaskNudger", fields: [nudgedById], references: [id])
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([listId, position])
+  @@index([assigneeId])
+}
+
+// ============================================================================
+// Financials dashboard (ported from v1 CEO Financials widget)
+// ============================================================================
+
+// Extra weekly operating costs entered by finance/CEO on the Financials widget.
+// The fixed BASELINE weekly cost lives in code (financials.constants.ts) — these
+// rows are the manual "Extra Weekly Costs" stacked on top. Entries labelled
+// "bloome" / "bloome leads" are treated as variable lead-acquisition spend and
+// excluded from fixed costs (v1 parity — avoids double-counting against the
+// per-lead Bloome spend computed from lead counts).
+model OperatingCost {
+  id          String   @id @default(uuid())
+  weekStart   DateTime @db.Date                     // Monday of the week the cost applies to
+  label       String
+  amount      Decimal  @db.Decimal(12, 2)
+  createdById String?                               // User.id (no FK — audit-style reference)
+  createdAt   DateTime @default(now())
+
+  @@index([weekStart])
+}
+
+// A request for finance to price custom (non-catalogue) products on a sale so
+// commissions/oversell can be computed. v1: Firebase `pendingRrpRequests`.
+model RrpRequest {
+  id            String           @id @default(uuid())
+  saleId        String
+  sale          Sale             @relation(fields: [saleId], references: [id])
+  status        RrpRequestStatus @default(PENDING)
+  // [{ "type": "Battery", "product": "Tesla PW3", "rrp": 12000? }] — rrp filled on completion
+  items         Json
+  requestedById String?                             // User.id of the consultant
+  completedById String?                             // User.id of finance member who priced it
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([status])
+  @@index([saleId])
+}
+
+enum RrpRequestStatus {
+  PENDING
+  COMPLETED
+  DISMISSED
+}
+
+// ============================================================================
+//  NOTIFICATIONS — in-app notification centre. A row is one message addressed
+//  to one user (e.g. the lead-gen who booked a lead is told it now needs
+//  rebooking after the consultant marked it RESCHEDULE). `type` is a stable
+//  machine key; `entityType`/`entityId` deep-link the recipient to the record
+//  they need to act on (e.g. an Appointment to rebook).
+// ============================================================================
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String                                  // recipient
+  user       User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  type       String                                  // e.g. LEAD_NEEDS_REBOOKING
+  title      String
+  body       String?
+  entityType String?                                 // e.g. Appointment
+  entityId   String?                                 // e.g. Appointment.id
+  data       Json?                                   // optional structured payload for the UI
+  actorId    String?                                 // User.id who triggered it (no FK — audit-style)
+
+  readAt     DateTime?                               // null = unread
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+// ============================================================================
+//  SOLAR PRODUCT CATALOGUE
+//  Dedicated catalogue for solar (panel) products. Pricing is EFFECTIVE-DATED:
+//  `effectiveDate` is the date the CURRENT solarRrp / solarCommission took
+//  effect. The row always carries the latest values; every change is mirrored
+//  into SolarProductLog (same transaction) via a history choke point, where
+//  `effectiveDate` is MANDATORY so price/commission can be reconstructed as-of
+//  any date. `status` controls visibility: DISCONTINUED hides the product from
+//  new-sale pickers, ARCHIVED is a soft-delete. Rows are never hard-deleted
+//  while referenced by historical sales.
+// ============================================================================
+model SolarProduct {
+  id              String             @id @default(uuid())  // productID
+  productName     String                                   // display name
+  brand           String?                                  // e.g. Jinko, Trina, REC
+  panelModel      String?                                  // e.g. JKM475N-48HL4M-DV [AU]
+  panelWatt       Int?                                     // per-panel wattage (W)
+  systemSize      Decimal?           @db.Decimal(10, 3)    // full system size (kW, e.g. 9.975)
+  solarStc        Decimal?           @db.Decimal(12, 2)    // rebate STC value
+  numOfPanels     Int?                                     // derived: round(systemSize * 1000 / panelWatt)
+
+  states          String[]           @default([])          // AU states it applies to (empty = all)
+  status          SolarProductStatus @default(ACTIVE)
+
+  // Commercials — current values; `effectiveDate` is when these took effect.
+  solarRrp        Decimal?           @db.Decimal(12, 2)
+  solarCommission Decimal?           @db.Decimal(12, 2)
+  profit          Decimal?           @db.Decimal(12, 2)
+  effectiveDate   DateTime?          @db.Date              // pricing effective-from
+
+  notes           String?
+
+  // Change history (effectiveDate is required on every entry — see model below)
+  logs            SolarProductLog[]
+
+  sortOrder       Int?                                     // manual drag-and-drop row order (null = default sort)
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([status])
+  @@index([brand])
+  @@index([effectiveDate])
+}
+
+enum SolarProductStatus {
+  ACTIVE
+  DISCONTINUED   // hidden from new sales, kept for history
+  ARCHIVED       // soft-delete
+}
+
+// Solar product change log — one row per field change (old -> new), who changed
+// it, and the date the change BECOMES EFFECTIVE. `effectiveDate` is REQUIRED so
+// the catalogue's price/commission history can be replayed as-of any date.
+// Written through a history choke point (sibling of ProductLog / SaleLog).
+model SolarProductLog {
+  id            String       @id @default(uuid())
+  productId     String
+  product       SolarProduct @relation(fields: [productId], references: [id])
+
+  field         String                                     // which field changed
+  oldValue      String?
+  newValue      String?
+
+  effectiveDate DateTime     @db.Date                      // REQUIRED — when this change takes effect
+  changedBy     String                                     // userId (or "import")
+  changedAt     DateTime     @default(now())               // when the log row was written
+
+  @@index([productId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  INVERTER CATALOGUE
+//  Dedicated catalogue for inverter products (sibling of SolarProduct). Every
+//  change is mirrored into InverterProductLog (same transaction) via a history
+//  choke point, where `effectiveDate` is MANDATORY. `status` controls
+//  visibility: DISCONTINUED hides from new-sale pickers, ARCHIVED is a
+//  soft-delete. Rows are never hard-deleted while referenced by historical sales.
+// ============================================================================
+model InverterProduct {
+  id            String              @id @default(uuid())    // productID
+  productName   String                                      // display name
+  brand         String?                                     // e.g. GoodWe, Sungrow, Fronius
+  inverterModel String?                                     // e.g. GW9.999KEHA-G20
+  type          String?                                     // e.g. String | Hybrid | Microinverter
+  phase         Int?                                        // 1 or 3 (null = both)
+  systemSize    Decimal?            @db.Decimal(10, 3)       // rated system size (kW)
+  maxPVArray    Decimal?            @db.Decimal(10, 3)       // max PV array the inverter supports (kW)
+  mppt          Int?                                        // number of MPPT trackers
+  strings       Int?                                        // number of PV strings
+  notes         String?
+
+  states        String[]            @default([])            // AU states it applies to (empty = all)
+  status        InverterStatus      @default(ACTIVE)
+
+  // Change history (effectiveDate is required on every entry — see model below)
+  logs          InverterProductLog[]
+
+  // Batteries that are allowed to pair with this inverter (explicit allow-list)
+  compatibleBatteries BatteryInverterCompat[]
+
+  sortOrder     Int?                                        // manual drag-and-drop row order (null = default sort)
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([phase])
+  @@index([brand])
+}
+
+enum InverterStatus {
+  ACTIVE
+  DISCONTINUED   // hidden from new sales, kept for history
+  ARCHIVED       // soft-delete
+}
+
+// Inverter change log — one row per field change (old -> new), who changed it,
+// and the date the change BECOMES EFFECTIVE. `effectiveDate` is REQUIRED so the
+// catalogue's history can be replayed as-of any date. Sibling of SolarProductLog.
+model InverterProductLog {
+  id            String          @id @default(uuid())
+  productId     String
+  product       InverterProduct @relation(fields: [productId], references: [id])
+
+  field         String                                      // which field changed
+  oldValue      String?
+  newValue      String?
+
+  effectiveDate DateTime        @db.Date                    // REQUIRED — when this change takes effect
+  changedBy     String                                      // userId (or "import")
+  changedAt     DateTime        @default(now())             // when the log row was written
+
+  @@index([productId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  EXTRAS CATALOGUE
+//  Dedicated catalogue for add-on line items (sibling of SolarProduct /
+//  InverterProduct). `unitPrice` is the current price; every change is mirrored
+//  into ExtraProductLog (same transaction) via a history choke point, where
+//  `effectiveDate` is MANDATORY so pricing can be replayed as-of any date.
+// ============================================================================
+model ExtraProduct {
+  id          String           @id @default(uuid())         // productID
+  itemName    String                                        // display name
+  category    String?                                       // grouping (e.g. "Electrical", "Mounting", "Misc")
+  unit        String?                                       // free-form size/spec (e.g. "5m", "2.5kW", "1")
+  unitPrice   Decimal?         @db.Decimal(12, 2)
+  notes       String?
+
+  // Change history (effectiveDate is required on every entry — see model below)
+  logs        ExtraProductLog[]
+
+  sortOrder   Int?                                          // manual drag-and-drop row order (null = default sort)
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+// Extras change log — one row per field change (old -> new), who changed it, and
+// the date the change BECOMES EFFECTIVE. `effectiveDate` is REQUIRED so the
+// catalogue's price history can be replayed as-of any date. Sibling of the
+// other catalogue logs.
+model ExtraProductLog {
+  id            String       @id @default(uuid())
+  productId     String
+  product       ExtraProduct @relation(fields: [productId], references: [id])
+
+  field         String                                      // which field changed
+  oldValue      String?
+  newValue      String?
+
+  effectiveDate DateTime     @db.Date                       // REQUIRED — when this change takes effect
+  changedBy     String                                      // userId (or "import")
+  changedAt     DateTime     @default(now())                // when the log row was written
+
+  @@index([productId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  BATTERY CATALOGUE
+//  Dedicated catalogue for battery products (sibling of SolarProduct). Pricing
+//  is EFFECTIVE-DATED: `effectiveDate` is the date the CURRENT batteryRrp /
+//  batteryCommission took effect. Every change is mirrored into
+//  BatteryProductLog (same transaction) via a history choke point, where
+//  `effectiveDate` is MANDATORY. `status` controls visibility: DISCONTINUED
+//  hides from new-sale pickers, ARCHIVED is a soft-delete.
+// ============================================================================
+model BatteryProduct {
+  id               String             @id @default(uuid())  // productID
+  productName      String                                   // display name
+  brand            String?                                  // e.g. GoodWe, Fox ESS, Tesla
+  batteryModel     String?                                  // e.g. GW8.3-BAT-D-G20
+  batterySize      Decimal?           @db.Decimal(10, 2)    // usable capacity (kWh)
+  modules          Int?                                     // number of battery modules
+  batteryStc       Decimal?           @db.Decimal(12, 2)    // rebate STC value
+  phase            Int?                                      // 1 or 3 (null = both)
+
+  states           String[]           @default([])          // AU states it applies to (empty = all)
+  status           BatteryStatus      @default(ACTIVE)
+
+  // Commercials — current values; `effectiveDate` is when these took effect.
+  // NOTE: batteryRrp is CONTEXT-DEPENDENT (differs battery-only vs solar+battery)
+  // and lives in BatteryContextPrice, not here. The fields below do NOT vary by
+  // sale context.
+  grossPrice       Decimal?           @db.Decimal(12, 2)
+  batteryCommission Decimal?          @db.Decimal(12, 2)
+  profit           Decimal?           @db.Decimal(12, 2)
+  effectiveDate    DateTime?          @db.Date              // pricing effective-from
+
+  notes            String?
+
+  // Change history (effectiveDate is required on every entry — see model below)
+  logs             BatteryProductLog[]
+
+  // Inverters this battery is allowed to pair with (explicit allow-list)
+  compatibleInverters BatteryInverterCompat[]
+
+  // Per-context RRP (battery-only vs solar+battery) — see BatteryContextPrice
+  contextPrices    BatteryContextPrice[]
+
+  sortOrder        Int?                                     // manual drag-and-drop row order (null = default sort)
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status])
+  @@index([brand])
+  @@index([effectiveDate])
+}
+
+enum BatteryStatus {
+  ACTIVE
+  DISCONTINUED   // hidden from new sales, kept for history
+  ARCHIVED       // soft-delete
+}
+
+// Battery change log — one row per field change (old -> new), who changed it,
+// and the date the change BECOMES EFFECTIVE. `effectiveDate` is REQUIRED so the
+// catalogue's price/commission history can be replayed as-of any date. Sibling
+// of SolarProductLog.
+model BatteryProductLog {
+  id            String         @id @default(uuid())
+  productId     String
+  product       BatteryProduct @relation(fields: [productId], references: [id])
+
+  field         String                                      // which field changed
+  oldValue      String?
+  newValue      String?
+
+  effectiveDate DateTime       @db.Date                     // REQUIRED — when this change takes effect
+  changedBy     String                                      // userId (or "import")
+  changedAt     DateTime       @default(now())              // when the log row was written
+
+  @@index([productId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  BATTERY <-> INVERTER COMPATIBILITY
+//  Explicit allow-list: a battery may be paired with an inverter ONLY if a row
+//  exists here. Many-to-many (one inverter supports many batteries; one battery
+//  fits many inverters). Pricing is NOT stored here — it lives on BatteryProduct
+//  (price is fixed per battery, independent of the inverter). Toggle `isActive`
+//  to disable a pairing without deleting it (keeps historical sales resolvable).
+//
+//  Query "batteries that work with inverter X":
+//    prisma.batteryInverterCompat.findMany({
+//      where: { inverterId: X, isActive: true }, include: { battery: true }
+//    })
+// ============================================================================
+model BatteryInverterCompat {
+  id          String          @id @default(uuid())
+  inverterId  String
+  inverter    InverterProduct @relation(fields: [inverterId], references: [id])
+  batteryId   String
+  battery     BatteryProduct  @relation(fields: [batteryId], references: [id])
+
+  isActive    Boolean         @default(true)                // disable a pairing without deleting it
+  notes       String?                                       // optional note (e.g. firmware caveat)
+
+  // Per-context pricing for THIS combo (gross + RRP differ standalone vs with-solar,
+  // and vary by inverter — so price lives on the combo, not on BatteryProduct).
+  comboPrices BatteryComboContextPrice[]
+
+  createdById String?                                       // User.id who added the pairing (audit)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([inverterId, batteryId])                         // one row per pair (no duplicates)
+  @@index([inverterId])
+  @@index([batteryId])
+}
+
+// ============================================================================
+//  BATTERY CONTEXT PRICING
+//  A battery's RRP depends on HOW it is sold: standalone (BATTERY_ONLY) vs
+//  bundled with solar (SOLAR_BATTERY). One row per (battery, context) holds the
+//  RRP for that context, effective-dated, with its own change log (effectiveDate
+//  MANDATORY). Only the RRP varies by context — commission/profit/grossPrice/STC
+//  stay on BatteryProduct. The sale layer reads the row matching the sale's
+//  context to price the battery.
+// ============================================================================
+enum BatteryPriceContext {
+  BATTERY_ONLY    // sold standalone
+  SOLAR_BATTERY   // sold bundled with solar
+}
+
+model BatteryContextPrice {
+  id            String         @id @default(uuid())
+  batteryId     String
+  battery       BatteryProduct @relation(fields: [batteryId], references: [id])
+
+  context       BatteryPriceContext
+  batteryRrp    Decimal?       @db.Decimal(12, 2)           // customer price for THIS context
+  effectiveDate DateTime?      @db.Date                     // when this RRP took effect
+
+  logs          BatteryContextPriceLog[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([batteryId, context])                            // at most one price row per context
+  @@index([batteryId])
+}
+
+// Change log for context pricing (sibling of the catalogue logs). effectiveDate
+// REQUIRED so the per-context RRP history can be replayed as-of any date.
+model BatteryContextPriceLog {
+  id             String              @id @default(uuid())
+  contextPriceId String
+  contextPrice   BatteryContextPrice @relation(fields: [contextPriceId], references: [id])
+
+  field          String                                     // which field changed (e.g. "batteryRrp")
+  oldValue       String?
+  newValue       String?
+
+  effectiveDate  DateTime            @db.Date               // REQUIRED — when this change takes effect
+  changedBy      String                                     // userId (or "import")
+  changedAt      DateTime            @default(now())        // when the log row was written
+
+  @@index([contextPriceId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  BATTERY COMBO (INVERTER + BATTERY) CONTEXT PRICING
+//  gross price AND customer RRP depend on the SPECIFIC inverter the battery is
+//  paired with AND on HOW it is sold (standalone vs bundled with solar). So the
+//  priced unit is the inverter+battery COMBO (a BatteryInverterCompat row), with
+//  one price row per context. Battery-intrinsic figures (modules, size, STC,
+//  profit, commission) stay on BatteryProduct. Effective-dated with its own log.
+//  The sale layer reads the row matching (combo, sale context) to price it.
+// ============================================================================
+model BatteryComboContextPrice {
+  id            String                @id @default(uuid())
+  compatId      String
+  compat        BatteryInverterCompat @relation(fields: [compatId], references: [id], onDelete: Cascade)
+
+  context       BatteryPriceContext                              // BATTERY_ONLY = standalone, SOLAR_BATTERY = with solar
+  grossPrice    Decimal?              @db.Decimal(12, 2)         // internal gross cost for THIS combo + context
+  batteryRrp    Decimal?              @db.Decimal(12, 2)         // customer price for THIS combo + context
+  effectiveDate DateTime?             @db.Date                   // when these prices took effect
+
+  logs          BatteryComboContextPriceLog[]
+
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@unique([compatId, context])                                 // one price row per combo per context
+  @@index([compatId])
+}
+
+// Change log for combo pricing (effectiveDate REQUIRED so combo price history
+// can be replayed as-of any date). Sibling of the other pricing logs.
+model BatteryComboContextPriceLog {
+  id             String                   @id @default(uuid())
+  comboPriceId   String
+  comboPrice     BatteryComboContextPrice @relation(fields: [comboPriceId], references: [id])
+
+  field          String                                          // which field changed (grossPrice | batteryRrp)
+  oldValue       String?
+  newValue       String?
+
+  effectiveDate  DateTime                 @db.Date               // REQUIRED — when this change takes effect
+  changedBy      String                                          // userId (or "import")
+  changedAt      DateTime                 @default(now())        // when the log row was written
+
+  @@index([comboPriceId])
+  @@index([effectiveDate])
+  @@index([changedAt])
+}
+
+// ============================================================================
+//  NOVA — the in-house AI assistant (Claude-powered)
+//
+//    Ported from the legacy Firebase app (astrasolar-app). Where Nova used to
+//    read/write Firebase RTDB nodes (novaUsage, novaKnowledge, AI_KB, [LEARN::]
+//    memory), she now uses these Postgres tables. Conversations + messages give
+//    her persistent history; KnowledgeEntry is the curated KB; Memory is the
+//    self-taught fact store ("newer overrides older"); UsageLog is the cost +
+//    audit trail. Embeddings (pgvector) are a later raw migration — keyword
+//    search is the default, matching the rest of the schema's convention.
+// ============================================================================
+
+model NovaConversation {
+  id        String        @id @default(uuid())
+  userId    String                                  // owner (AuthUser.id)
+  title     String?                                 // auto-summarised from first message
+  archived  Boolean       @default(false)
+  messages  NovaMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model NovaMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   NovaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role           String                              // 'user' | 'assistant'
+  content        String                              // visible text
+  toolCalls      Json?                               // tool_use / tool_result trace for this turn
+  model          String?
+  inputTokens    Int?
+  outputTokens   Int?
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId])
+}
+
+// The AI_KB port — curated question/answer knowledge, keyword-searched and
+// injected into Nova's prompt. Managed via the Knowledge Brain admin UI.
+model NovaKnowledgeEntry {
+  id         String    @id @default(uuid())
+  category   String
+  question   String
+  answer     String
+  tags       String[]  @default([])
+  authority  String?
+  source     String?
+  sourceDate DateTime?
+  status     String    @default("active")           // active | deprecated
+  createdBy  String?                                 // userId or 'system' (imported)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status])
+  @@index([category])
+}
+
+// The [LEARN::category::fact] port — Nova's permanent self-taught memory.
+// Newer facts override older ones (see supersedes).
+model NovaMemory {
+  id         String   @id @default(uuid())
+  category   String                                  // sales_advice, commissions, pronunciation, ...
+  fact       String
+  createdBy  String?                                 // who taught it (userId) or 'system'
+  supersedes String?                                 // id of the memory this overrides
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([category])
+  @@index([active])
+}
+
+// Cost + audit trail (the novaUsage / novaToolUsage port). One row per chat
+// request. Readable by finance/CEO/admin for cost tracking.
+model NovaUsageLog {
+  id           String   @id @default(uuid())
+  userId       String
+  model        String?
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  toolCalls    Int      @default(0)
+  status       String                                // ok | denied_role | rate_limited | upstream_error | fetch_failed
+  detail       String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Runtime-editable Nova settings (the AI_CONFIG port). A small key/value store
+// so a CEO/Super Admin can manage the ElevenLabs + D-ID credentials from the UI
+// instead of env vars. DB value (when set) overrides the matching env var. The
+// Anthropic key is intentionally NOT stored here — it stays env-only.
+model NovaSetting {
+  key       String   @id              // e.g. elevenlabs_api_key, did_agent_id, did_client_key
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
 }

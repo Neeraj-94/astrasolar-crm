@@ -77,11 +77,17 @@ export const DASHBOARDS: DashboardDef[] = [
     sortOrder: 10,
     tabs: [
       {
+        key: "task-overview",
+        name: "Task Overview",
+        description: "Trello-style task board — create tasks and drag them between lists.",
+        sortOrder: 5,
+        isDefault: true,
+      },
+      {
         key: "leads-schedule",
         name: "Leads Schedule",
         description: "Schedule and manage consultant appointments and leads.",
         sortOrder: 10,
-        isDefault: true,
       },
       {
         key: "bloome-leads",
@@ -129,11 +135,17 @@ export const DASHBOARDS: DashboardDef[] = [
     sortOrder: 20,
     tabs: [
       {
+        key: "task-overview",
+        name: "Task Overview",
+        description: "Trello-style task board — create tasks and drag them between lists.",
+        sortOrder: 5,
+        isDefault: true,
+      },
+      {
         key: "my-leads",
         name: "My Leads",
         description: "Today's leads — import, dispose, and follow-up.",
         sortOrder: 10,
-        isDefault: true,
       },
       {
         key: "team-view",
@@ -168,7 +180,14 @@ export const DASHBOARDS: DashboardDef[] = [
     iconKey: "Users",
     sortOrder: 30,
     tabs: [
-      { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
+      {
+        key: "task-overview",
+        name: "Task Overview",
+        description: "Trello-style task board — create tasks and drag them between lists.",
+        sortOrder: 5,
+        isDefault: true,
+      },
+      { key: "overview", name: "Overview", sortOrder: 10 },
       { key: "team", name: "Team", sortOrder: 20 },
       {
         key: "statistics",
@@ -188,10 +207,47 @@ export const DASHBOARDS: DashboardDef[] = [
     iconKey: "Workflow",
     sortOrder: 35,
     tabs: [
-      { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
-      { key: "team", name: "Team", sortOrder: 20 },
-      { key: "performance", name: "Performance", sortOrder: 30 },
-      { key: "approvals", name: "Approvals", sortOrder: 40 },
+      {
+        key: "task-overview",
+        name: "Task Overview",
+        description: "Trello-style task board — create tasks and drag them between lists.",
+        sortOrder: 5,
+        isDefault: true,
+      },
+      {
+        key: "leads-report",
+        name: "Leads Reports",
+        description:
+          "Lead performance reporting — filter by date, consultant and disposition with per-rep breakdowns.",
+        sortOrder: 10,
+      },
+      {
+        key: "rep-results",
+        name: "Rep Results",
+        description:
+          "Weekly sold results and commission payout tracking per consultant.",
+        sortOrder: 20,
+      },
+      {
+        key: "reports",
+        name: "Reports",
+        description:
+          "Custom report builder over leads, sales, installations, and products with CSV export.",
+        sortOrder: 30,
+      },
+      {
+        key: "stock",
+        name: "Stock",
+        description:
+          "Weekly stock requirements — panels, inverters, and batteries aggregated from booked installations.",
+        sortOrder: 40,
+      },
+      {
+        key: "products",
+        name: "Products",
+        description: "Product catalogue — batteries, inverters, solar, extras.",
+        sortOrder: 50,
+      },
     ],
   },
   {
@@ -202,6 +258,13 @@ export const DASHBOARDS: DashboardDef[] = [
     sortOrder: 40,
     tabs: [
       { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
+      {
+        key: "financials",
+        name: "Financials",
+        description:
+          "Weekly P&L, sales table, yearly P&L and pending RRP requests.",
+        sortOrder: 15,
+      },
       { key: "revenue", name: "Revenue", sortOrder: 20 },
       { key: "growth", name: "Growth", sortOrder: 30 },
       { key: "operations", name: "Operations", sortOrder: 40 },
@@ -215,9 +278,30 @@ export const DASHBOARDS: DashboardDef[] = [
     sortOrder: 50,
     tabs: [
       { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
+      {
+        key: "financials",
+        name: "Financials",
+        description:
+          "Weekly P&L, sales table, yearly P&L and pending RRP requests.",
+        sortOrder: 15,
+      },
       { key: "invoices", name: "Invoices", sortOrder: 20 },
       { key: "payments", name: "Payments", sortOrder: 30 },
+      {
+        key: "commissions",
+        name: "Commissions",
+        description:
+          "Commission overview by invoice stage plus a date-ranged payout report (ported from v1).",
+        sortOrder: 35,
+      },
       { key: "reports", name: "Reports", sortOrder: 40 },
+      {
+        key: "finance-settings",
+        name: "Finance Settings",
+        description:
+          "Product pricing, STC cutoffs, rebates, finance products and commission settings (ported from v1).",
+        sortOrder: 50,
+      },
     ],
   },
   {
@@ -255,7 +339,14 @@ export const DASHBOARDS: DashboardDef[] = [
     iconKey: "Shield",
     sortOrder: 60,
     tabs: [
-      { key: "overview", name: "Overview", sortOrder: 10, isDefault: true },
+      {
+        key: "task-overview",
+        name: "Task Overview",
+        description: "Trello-style task board — create tasks and drag them between lists.",
+        sortOrder: 5,
+        isDefault: true,
+      },
+      { key: "overview", name: "Overview", sortOrder: 10 },
       {
         key: "installation-calendar",
         name: "Installation Calendar",

@@ -1,15 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, hasPermission } from "@/lib/rbac";
 import { saveWeekSubmission, type SaveWeekInput } from "@/lib/availability";
-import { logAudit } from "@/lib/audit";
 
 /**
  * POST /api/leads/availability/submit
  * Body: SaveWeekInput
  *
- * Saves a full week of availability for one consultant. Replaces every
- * AvailabilitySlot row for the week and upserts the AvailabilitySubmission.
- * Logical storage path: availability/consultants/[consultantId]/[weekStart]
+ * Saves a full week of availability for one consultant. Storage lives in the
+ * API (`/scheduling/availability/submit`), which replaces every slot row for
+ * the week, upserts the AvailabilitySubmission, and writes the audit trail.
  */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -51,27 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const summary = await saveWeekSubmission(body, {
-      id: user.id,
-      name: user.displayName ?? user.email,
-    });
-
-    await logAudit({
-      actorId: user.id,
-      action: "UPDATE",
-      entityType: "AvailabilitySubmission",
-      entityId: `${body.consultantId}/${body.weekStart}`,
-      summary: `Saved availability for ${body.consultantName} — week of ${body.weekStart} (${summary.slotsCount} slots, ${summary.holidayDays.length} holiday day(s))`,
-      metadata: {
-        consultantId: body.consultantId,
-        weekStart: body.weekStart,
-        slotsCount: summary.slotsCount,
-        holidayDays: summary.holidayDays,
-      },
-      ipAddress: req.headers.get("x-forwarded-for") ?? undefined,
-      userAgent: req.headers.get("user-agent") ?? undefined,
-    });
-
+    const summary = await saveWeekSubmission(body);
     return NextResponse.json({ ok: true, submission: summary });
   } catch (err) {
     console.error("[api/leads/availability/submit] save failed", err);

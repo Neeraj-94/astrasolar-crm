@@ -21,7 +21,7 @@ export class BookingsService {
       include: {
         consultant: { select: { id: true, name: true } },
         bookedBy: { select: { id: true, name: true } },
-        lead: { include: { contact: true } },
+        lead: true,
       },
     });
   }

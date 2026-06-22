@@ -6,8 +6,6 @@
  * components can import from it. The server-only data fetchers live in
  * `./statistics.ts`.
  */
-import type { MockConsultant } from "@/lib/leads/mock/consultants";
-
 // ---------------------------------------------------------------------------
 // Team Status
 // ---------------------------------------------------------------------------
@@ -18,7 +16,7 @@ export interface TeamStatusEntry {
   consultantId: string;
   name: string;
   email: string;
-  region: MockConsultant["region"];
+  region: string | null;
   status: OnlineStatus;
   /** ISO timestamp of last activity. Null when the user has never logged in. */
   lastSeenAt: string | null;

@@ -1,14 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/rbac";
-import { logAudit } from "@/lib/audit";
+import { apiPost, ApiError } from "@/lib/api/client";
 
 /**
  * POST /api/profile/password
+ * Body: { currentPassword, newPassword }
  *
- * The password change itself happens client-side via the Firebase JS SDK
- * (after `reauthenticateWithCredential` confirms the current password).
- * This endpoint only records an audit-log entry so administrators can see
- * password-change events in the activity history.
+ * Forwards to the API (`/auth/profile/password`), which verifies the current
+ * password against the bcrypt hash, rotates it, invalidates refresh tokens,
+ * and writes the audit entry.
  */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -16,16 +17,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  await logAudit({
-    actorId: user.id,
-    action: "UPDATE",
-    entityType: "User",
-    entityId: user.id,
-    summary: `${user.email} changed password`,
-    metadata: { field: "password" },
-    ipAddress: req.headers.get("x-forwarded-for") ?? undefined,
-    userAgent: req.headers.get("user-agent") ?? undefined,
-  });
+  let body: { currentPassword?: unknown; newPassword?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "invalid json" }, { status: 400 });
+  }
+  if (
+    typeof body.currentPassword !== "string" ||
+    typeof body.newPassword !== "string" ||
+    body.newPassword.length < 8
+  ) {
+    return NextResponse.json(
+      { error: "newPassword must be at least 8 characters" },
+      { status: 400 },
+    );
+  }
 
-  return NextResponse.json({ ok: true });
+  try {
+    await apiPost(
+      "/auth/profile/password",
+      {
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      },
+      { cookieHeader: cookies().toString() },
+    );
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 400) {
+      return NextResponse.json(
+        { error: "Current password is incorrect." },
+        { status: 400 },
+      );
+    }
+    console.error("[api/profile/password] change failed", err);
+    return NextResponse.json(
+      { error: "failed to update password" },
+      { status: 500 },
+    );
+  }
 }

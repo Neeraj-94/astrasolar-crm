@@ -8,7 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { LeadStage, PERMISSIONS } from '@astra/shared';
+import { LeadStage, PERMISSIONS, SalesDisposition } from '@astra/shared';
 import { LeadsService } from './leads.service';
 import { CurrentUser, RequirePermissions } from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
@@ -32,9 +32,22 @@ export class LeadsController {
   list(
     @CurrentUser() user: AuthUser,
     @Query('stage') stage?: LeadStage,
+    @Query('disposition') disposition?: string,
     @Query('userId') userId?: string,
   ) {
-    return this.leads.list(user, { stage, userId });
+    // `disposition` accepts a single value or a comma-separated list
+    // (e.g. NOT_INTERESTED,DNQ,CANCELLED).
+    const dispositions = disposition
+      ? (disposition
+          .split(',')
+          .map((d) => d.trim())
+          .filter(Boolean) as SalesDisposition[])
+      : undefined;
+    return this.leads.list(user, {
+      stage,
+      disposition: dispositions,
+      userId,
+    });
   }
 
   /** Persist drag-and-drop row order (declared before :id routes). */

@@ -23,11 +23,13 @@ interface LeadRow {
   stage: string;
   outcome: string | null;
   disposition: string | null;
-  billSpend: string | number | null;
-  leadDate: string;
-  contact: { firstName: string; surname: string; phone?: string | null } | null;
-  owner: { id: string; name: string } | null;
-  currentConsultant: { id: string; name: string } | null;
+  billSpend: string | null;
+  timestamp: string;
+  firstName: string;
+  surName: string;
+  phone?: string | null;
+  leadGen: { id: string; name: string } | null;
+  consultant: { id: string; name: string } | null;
 }
 interface SelectableUser {
   id: string;
@@ -44,9 +46,9 @@ const STAGE_COLORS: Record<string, string> = {
 
 const DISPOSITIONS = [
   "NO_ANSWER",
-  "TO_BE_RESCHEDULED",
-  "RESCHEDULED",
-  "DID_NOT_QUALIFY",
+  "RESCHEDULE",
+  "BEEN_RESCHEDULED",
+  "DNQ",
   "CANCELLED",
   "NOT_INTERESTED",
   "SOLD",
@@ -59,10 +61,10 @@ export function LeadsListTab() {
 
   const [form, setForm] = useState({
     firstName: "",
-    surname: "",
+    surName: "",
     phone: "",
     company: "ASTRA",
-    leadDate: new Date().toISOString().slice(0, 10),
+    timestamp: new Date().toISOString().slice(0, 10),
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -87,15 +89,13 @@ export function LeadsListTab() {
     setErr(null);
     try {
       await apiPost("/leads", {
-        contact: {
-          firstName: form.firstName,
-          surname: form.surname,
-          phone: form.phone || undefined,
-        },
+        firstName: form.firstName,
+        surName: form.surName,
+        phone: form.phone || undefined,
         company: form.company,
-        leadDate: form.leadDate,
+        timestamp: form.timestamp,
       });
-      setForm({ ...form, firstName: "", surname: "", phone: "" });
+      setForm({ ...form, firstName: "", surName: "", phone: "" });
       leads.reload();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not create lead");
@@ -143,8 +143,8 @@ export function LeadsListTab() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="l-last">Surname</Label>
-            <Input id="l-last" required value={form.surname}
-              onChange={(e) => setForm({ ...form, surname: e.target.value })} />
+            <Input id="l-last" required value={form.surName}
+              onChange={(e) => setForm({ ...form, surName: e.target.value })} />
           </div>
           <div className="space-y-1">
             <Label htmlFor="l-phone">Phone</Label>
@@ -163,8 +163,8 @@ export function LeadsListTab() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="l-date">Lead date</Label>
-            <Input id="l-date" type="date" value={form.leadDate}
-              onChange={(e) => setForm({ ...form, leadDate: e.target.value })} />
+            <Input id="l-date" type="date" value={form.timestamp}
+              onChange={(e) => setForm({ ...form, timestamp: e.target.value })} />
           </div>
           <div className="flex items-end">
             <Button type="submit" className="w-full" disabled={busy}>
@@ -202,9 +202,7 @@ export function LeadsListTab() {
                 {(leads.data ?? []).map((l) => (
                   <TR key={l.id} sortableId={l.id} className="align-top">
                     <TD>
-                      {l.contact
-                        ? `${l.contact.firstName} ${l.contact.surname}`
-                        : "—"}
+                      {`${l.firstName} ${l.surName}`}
                     </TD>
                     <TD>{l.company}</TD>
                     <TD>
@@ -212,7 +210,7 @@ export function LeadsListTab() {
                         {l.stage}
                       </span>
                     </TD>
-                    <TD>{l.currentConsultant?.name ?? "—"}</TD>
+                    <TD>{l.consultant?.name ?? "—"}</TD>
                     <TD className="text-muted-foreground">{l.disposition ?? "—"}</TD>
                     <TD>
                       {/* INTAKE -> book */}

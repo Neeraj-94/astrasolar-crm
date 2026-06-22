@@ -21,8 +21,11 @@ interface UserRow {
   id: string;
   email: string;
   name: string;
+  aliases: string[];
   isActive: boolean;
   roleKeys: string[];
+  canSendWelcome?: boolean;
+  welcomeEmailSentAt?: string | null;
 }
 interface RoleRow {
   id: string;
@@ -40,6 +43,7 @@ export function SuperAdminUsersTab() {
     name: "",
     password: "",
     role: "",
+    aliases: [] as string[],
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -47,7 +51,15 @@ export function SuperAdminUsersTab() {
 
   // Inline edit state keyed by user id.
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", password: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    aliases: [] as string[],
+  });
+
+  // Per-row "send welcome email" in-flight state.
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   function flash(setter: (v: string | null) => void, value: string) {
     setter(value);
@@ -60,21 +72,18 @@ export function SuperAdminUsersTab() {
     setErr(null);
     setMsg(null);
     try {
-      const created = await apiPost<{ emailSent?: boolean }>("/users", {
+      await apiPost("/users", {
         email: form.email,
         name: form.name,
         password: form.password,
+        aliases: form.aliases,
         roleKeys: form.role ? [form.role] : [],
       });
-      if (created?.emailSent) {
-        flash(setMsg, `Created ${form.email} — welcome email sent.`);
-      } else {
-        flash(
-          setErr,
-          `Created ${form.email}, but the welcome email could not be sent. Share the password manually (check SMTP settings).`,
-        );
-      }
-      setForm({ email: "", name: "", password: "", role: "" });
+      flash(
+        setMsg,
+        `Created ${form.email}. Use “Send email” in the table to notify them with their login details.`,
+      );
+      setForm({ email: "", name: "", password: "", role: "", aliases: [] });
       users.reload();
     } catch (e) {
       flash(setErr, e instanceof Error ? e.message : "Could not create user");
@@ -102,6 +111,36 @@ export function SuperAdminUsersTab() {
     }
   }
 
+  async function sendWelcome(u: UserRow) {
+    if (
+      !window.confirm(
+        `Send the account-creation email to ${u.name} (${u.email}) with their login link and password?`,
+      )
+    )
+      return;
+    setSendingId(u.id);
+    setErr(null);
+    setMsg(null);
+    try {
+      const res = await apiPost<{ emailSent?: boolean }>(
+        `/users/${u.id}/welcome-email`,
+      );
+      if (res?.emailSent) {
+        flash(setMsg, `Account email sent to ${u.email}.`);
+      } else {
+        flash(
+          setErr,
+          `Could not send the email to ${u.email} — check SMTP settings.`,
+        );
+      }
+      users.reload();
+    } catch (e) {
+      flash(setErr, e instanceof Error ? e.message : "Could not send email");
+    } finally {
+      setSendingId(null);
+    }
+  }
+
   async function toggleActive(u: UserRow) {
     try {
       await apiPatch(`/users/${u.id}/active`, { isActive: !u.isActive });
@@ -113,16 +152,22 @@ export function SuperAdminUsersTab() {
 
   function startEdit(u: UserRow) {
     setEditId(u.id);
-    setEditForm({ name: u.name, email: u.email, password: "" });
+    setEditForm({
+      name: u.name,
+      email: u.email,
+      password: "",
+      aliases: u.aliases ?? [],
+    });
     setErr(null);
     setMsg(null);
   }
 
   async function saveEdit(id: string) {
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | string[]> = {
         name: editForm.name,
         email: editForm.email,
+        aliases: editForm.aliases,
       };
       if (editForm.password) payload.password = editForm.password;
       await apiPatch(`/users/${id}`, payload);
@@ -156,7 +201,7 @@ export function SuperAdminUsersTab() {
         <h3 className="mb-4 text-sm font-semibold">Create user</h3>
         <form
           onSubmit={createUser}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-5"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-6"
         >
           <div className="space-y-1">
             <Label htmlFor="u-email">Email</Label>
@@ -204,6 +249,14 @@ export function SuperAdminUsersTab() {
               ))}
             </select>
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="u-aliases">Aliases</Label>
+            <AliasEditor
+              inputId="u-aliases"
+              value={form.aliases}
+              onChange={(aliases) => setForm({ ...form, aliases })}
+            />
+          </div>
           <div className="flex items-end">
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Creating…" : "Create"}
@@ -229,6 +282,7 @@ export function SuperAdminUsersTab() {
                 <DragTH />
                 <TH>Name</TH>
                 <TH>Email</TH>
+                <TH>Aliases</TH>
                 <TH>Status</TH>
                 <TH>Roles</TH>
                 <TH>Actions</TH>
@@ -262,6 +316,29 @@ export function SuperAdminUsersTab() {
                           />
                         ) : (
                           <span className="text-muted-foreground">{u.email}</span>
+                        )}
+                      </TD>
+                      <TD className="align-top">
+                        {editing ? (
+                          <AliasEditor
+                            value={editForm.aliases}
+                            onChange={(aliases) =>
+                              setEditForm({ ...editForm, aliases })
+                            }
+                          />
+                        ) : u.aliases.length === 0 ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {u.aliases.map((a) => (
+                              <span
+                                key={a}
+                                className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px]"
+                              >
+                                {a}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </TD>
                       <TD className="align-top">
@@ -348,13 +425,32 @@ export function SuperAdminUsersTab() {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => startEdit(u)}
                             >
                               Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={
+                                sendingId === u.id || u.canSendWelcome === false
+                              }
+                              title={
+                                u.canSendWelcome === false
+                                  ? "No temporary password on file — reset the user's password first, then resend."
+                                  : "Email the user their account login link and password"
+                              }
+                              onClick={() => sendWelcome(u)}
+                            >
+                              {sendingId === u.id
+                                ? "Sending…"
+                                : u.welcomeEmailSentAt
+                                  ? "Resend email"
+                                  : "Send email"}
                             </Button>
                             <Button
                               size="sm"
@@ -370,6 +466,14 @@ export function SuperAdminUsersTab() {
                             >
                               Delete
                             </Button>
+                            {u.welcomeEmailSentAt && (
+                              <span className="text-[11px] text-muted-foreground">
+                                sent{" "}
+                                {new Date(
+                                  u.welcomeEmailSentAt,
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
                           </div>
                         )}
                       </TD>
@@ -380,6 +484,69 @@ export function SuperAdminUsersTab() {
           </DataTable>
         )}
       </section>
+    </div>
+  );
+}
+
+/** Tag-style editor for a user's aliases: removable chips + an add field
+ *  (commit on Enter, comma, or blur; case-insensitive de-dupe). */
+function AliasEditor({
+  value,
+  onChange,
+  inputId,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+  inputId?: string;
+}) {
+  const [draft, setDraft] = useState("");
+
+  function commit() {
+    const v = draft.trim();
+    if (v && !value.some((a) => a.toLowerCase() === v.toLowerCase())) {
+      onChange([...value, v]);
+    }
+    setDraft("");
+  }
+
+  return (
+    <div className="space-y-1">
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {value.map((a) => (
+            <span
+              key={a}
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px]"
+            >
+              {a}
+              <button
+                type="button"
+                title="Remove alias"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={() => onChange(value.filter((x) => x !== a))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <Input
+        id={inputId}
+        className="h-8 text-[11px]"
+        placeholder="Add alias…"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Backspace" && !draft && value.length > 0) {
+            onChange(value.slice(0, -1));
+          }
+        }}
+        onBlur={commit}
+      />
     </div>
   );
 }

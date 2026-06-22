@@ -3,6 +3,7 @@ import { DASHBOARDS } from "@/lib/permissions";
 import { requireTab } from "@/components/dashboard-shell";
 import { TabPlaceholder } from "@/components/tab-placeholder";
 import { InstallerJobsTab } from "@/components/installer/installer-jobs-tab";
+import { DocumentsTab } from "@/components/installer/documents-tab";
 
 interface Props { params: { tab: string } }
 
@@ -14,6 +15,7 @@ export default async function InstallerTabPage({ params }: Props) {
 
   if (["overview", "schedule", "jobs"].includes(params.tab))
     return <InstallerJobsTab />;
+  if (params.tab === "documents") return <DocumentsTab />;
 
   return (
     <TabPlaceholder
