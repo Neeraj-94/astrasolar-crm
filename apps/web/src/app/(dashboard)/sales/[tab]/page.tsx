@@ -10,6 +10,7 @@ import { PastPresosTab } from "@/components/sales/past-presos-tab";
 import { NotInterestedTab } from "@/components/sales/not-interested-tab";
 import { LeadsListTab } from "@/components/leads/leads-list-tab";
 import { SalesListTab } from "@/components/sales/sales-list-tab";
+import { TaskBoardTab } from "@/components/tasks/task-board-tab";
 
 interface Props {
   params: { tab: string };
@@ -24,6 +25,7 @@ interface Props {
  */
 const TAB_COMPONENTS: Record<string, () => JSX.Element> = {
   // Migrated to API-backed views; legacy mock tabs retained for reference.
+  "task-overview": () => <TaskBoardTab board="sales" />,
   "my-leads": LeadsListTab,
   "team-view": SalesListTab,
   callbacks: CallbacksTab,

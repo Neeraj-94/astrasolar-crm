@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -227,6 +228,106 @@ export function TH({
       )}
     >
       {children}
+    </th>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Column sorting (opt-in). Use `useTableSort` for state, `<SortTH>` for clickable
+ * headers, and `sortRows` to order the rows. Clicking a header cycles
+ * asc → desc → none. Plain `<TH>` headers stay non-sortable.
+ * -------------------------------------------------------------------------- */
+
+export type SortDir = "asc" | "desc";
+export interface SortState {
+  key: string | null;
+  dir: SortDir;
+}
+
+export function useTableSort(initial: SortState = { key: null, dir: "asc" }) {
+  const [sort, setSort] = useState<SortState>(initial);
+  const toggle = (key: string) =>
+    setSort((s) =>
+      s.key !== key
+        ? { key, dir: "asc" }
+        : s.dir === "asc"
+          ? { key, dir: "desc" }
+          : { key: null, dir: "asc" },
+    );
+  return { sort, setSort, toggle };
+}
+
+/** Stable sort by a column accessor; nulls/blank always sort last. */
+export function sortRows<T>(
+  rows: T[],
+  sort: SortState,
+  accessor: (row: T, key: string) => string | number | null | undefined,
+): T[] {
+  if (!sort.key) return rows;
+  const key = sort.key;
+  const sign = sort.dir === "asc" ? 1 : -1;
+  return rows
+    .map((row, i) => ({ row, i }))
+    .sort((a, b) => {
+      const av = accessor(a.row, key);
+      const bv = accessor(b.row, key);
+      const an = av == null || av === "";
+      const bn = bv == null || bv === "";
+      if (an && bn) return a.i - b.i;
+      if (an) return 1; // nulls last regardless of direction
+      if (bn) return -1;
+      let c: number;
+      if (typeof av === "number" && typeof bv === "number") c = av - bv;
+      else
+        c = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return c !== 0 ? c * sign : a.i - b.i;
+    })
+    .map((x) => x.row);
+}
+
+/** Clickable, sortable header cell. Matches <TH> styling. */
+export function SortTH({
+  children,
+  className,
+  align = "left",
+  sortKey,
+  sort,
+  onSort,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  align?: "left" | "right" | "center";
+  sortKey: string;
+  sort: SortState;
+  onSort: (key: string) => void;
+}) {
+  const active = sort.key === sortKey;
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      aria-sort={
+        active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
+      }
+      className={cn(
+        "px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground border-b",
+        "cursor-pointer select-none hover:text-foreground",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+        align === "left" && "text-left",
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex items-center gap-1",
+          align === "right" && "flex-row-reverse",
+        )}
+      >
+        {children}
+        <span className={cn("text-[10px]", active ? "opacity-90" : "opacity-40")}>
+          {active ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </span>
     </th>
   );
 }

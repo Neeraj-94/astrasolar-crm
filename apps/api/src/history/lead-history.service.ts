@@ -48,8 +48,8 @@ export class LeadHistoryService {
     lead: {
       id: string;
       stage: LeadStage;
-      ownerId: string;
-      currentConsultantId: string | null;
+      leadGenId: string;
+      consultantId: string | null;
       outcome: LeadOutcome | null;
       disposition: SalesDisposition | null;
     },
@@ -60,8 +60,8 @@ export class LeadHistoryService {
       lead.id,
       {
         stage: lead.stage,
-        leadGenId: lead.ownerId,
-        consultantId: lead.currentConsultantId,
+        leadGenId: lead.leadGenId,
+        consultantId: lead.consultantId,
         outcome: lead.outcome,
         disposition: lead.disposition,
       },

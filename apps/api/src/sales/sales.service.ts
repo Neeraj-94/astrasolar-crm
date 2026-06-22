@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { SaleStatus } from '@astra/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScopeService } from '../common/scope.service';
@@ -33,7 +37,7 @@ export class SalesService {
       ],
       take: 200,
       include: {
-        contact: true,
+        lead: true,
         owner: { select: { id: true, name: true } },
         statusDetails: true,
       },
@@ -68,7 +72,7 @@ export class SalesService {
     const sale = await this.prisma.sale.findUnique({
       where: { id },
       include: {
-        contact: true,
+        lead: true,
         owner: { select: { id: true, name: true } },
         systemDetails: true,
         statusDetails: true,
@@ -123,40 +127,93 @@ export class SalesService {
    * Owner-only: system spec. Selecting a catalogue product copies its spec/price
    * into the sale as a POINT-OF-SALE SNAPSHOT — later catalogue edits never
    * rewrite this sale.
+   *
+   * Battery RRP is CONTEXT-DEPENDENT: a battery sold as part of a solar+battery
+   * deal (saleType = SOLAR_BATTERY) is priced from its SOLAR_BATTERY context row;
+   * otherwise from its BATTERY_ONLY row (see BatteryContextPrice). All other
+   * battery commercials (commission/STC/etc.) come straight off the product.
    */
   async updateSystemDetails(user: AuthUser, id: string, dto: UpdateSystemDetailsDto) {
-    await this.getOwned(user, id);
+    const sale = await this.getOwned(user, id);
 
-    const snapshot: Record<string, unknown> = { ...dto };
+    // Sale context drives which battery RRP applies.
+    const context =
+      sale.saleType === 'SOLAR_BATTERY' ? 'SOLAR_BATTERY' : 'BATTERY_ONLY';
 
-    if (dto.batteryProductId) {
-      const p = await this.prisma.product.findUnique({ where: { id: dto.batteryProductId } });
-      if (p) {
-        snapshot.batteryBrand = p.name;
-        snapshot.batteryModel = p.model;
-        snapshot.batterySTC = p.stc;
-        snapshot.batteryModules = p.batteryModules;
-        snapshot.batterySize = p.batterySize;
-        snapshot.batteryRRP = p.rrp;
-        snapshot.batteryCommission = p.commission;
+    // Product ids are inputs, not SystemDetails columns — keep them out of the snapshot.
+    const { batteryProductId, panelProductId, inverterProductId, ...rest } = dto;
+    const snapshot: Record<string, unknown> = { ...rest };
+
+    // A battery may only be paired with a compatible inverter (allow-list). The
+    // pairing also carries the combo's context price: gross/RRP vary by inverter
+    // AND context, so prefer the combo price over the legacy per-battery price.
+    const combo =
+      batteryProductId && inverterProductId
+        ? await this.prisma.batteryInverterCompat.findUnique({
+            where: {
+              inverterId_batteryId: {
+                inverterId: inverterProductId,
+                batteryId: batteryProductId,
+              },
+            },
+            include: { comboPrices: { where: { context } } },
+          })
+        : null;
+    if (batteryProductId && inverterProductId && (!combo || !combo.isActive)) {
+      throw new BadRequestException(
+        'Selected battery is not compatible with the selected inverter',
+      );
+    }
+
+    if (batteryProductId) {
+      const b = await this.prisma.batteryProduct.findUnique({
+        where: { id: batteryProductId },
+        include: { contextPrices: { where: { context } } },
+      });
+      if (b) {
+        snapshot.batteryBrand = b.brand;
+        snapshot.batteryModel = b.batteryModel;
+        // SystemDetails.batterySTC is Int; product STC is Decimal — round for the snapshot.
+        snapshot.batterySTC =
+          b.batteryStc != null ? Math.round(Number(b.batteryStc)) : null;
+        snapshot.batteryModules = b.modules;
+        snapshot.batterySize = b.batterySize;
+        // Context-aware RRP. Prefer the inverter+battery combo price; fall back
+        // to the legacy per-battery context price; else null (not offered here).
+        snapshot.batteryRRP =
+          combo?.comboPrices[0]?.batteryRrp ??
+          b.contextPrices[0]?.batteryRrp ??
+          null;
+        snapshot.batteryCommission = b.batteryCommission;
+        snapshot.batteryProfit = b.profit; // POS profit snapshot (for financials)
       }
     }
-    if (dto.panelProductId) {
-      const p = await this.prisma.product.findUnique({ where: { id: dto.panelProductId } });
-      if (p) {
-        snapshot.panelModel = p.model;
-        snapshot.panelWatt = p.panelWatt;
-        snapshot.solarRRP = p.rrp;
-        snapshot.solarSTC = p.stc;
-        snapshot.solarCommission = p.commission;
+    if (panelProductId) {
+      const s = await this.prisma.solarProduct.findUnique({
+        where: { id: panelProductId },
+      });
+      if (s) {
+        snapshot.panelModel = s.panelModel;
+        snapshot.panelWatt = s.panelWatt;
+        snapshot.solarRRP = s.solarRrp;
+        snapshot.solarCommission = s.solarCommission;
+        snapshot.solarProfit = s.profit; // POS profit snapshot (for financials)
+        // SystemDetails.solarSTC is Int; product STC is Decimal — round for the snapshot.
+        snapshot.solarSTC =
+          s.solarStc != null ? Math.round(Number(s.solarStc)) : null;
+        // Use the product's system size unless the caller supplied one.
+        if (s.systemSize != null && rest.systemSize == null) {
+          snapshot.systemSize = s.systemSize;
+        }
       }
     }
-    if (dto.inverterProductId) {
-      const p = await this.prisma.product.findUnique({ where: { id: dto.inverterProductId } });
-      if (p) {
-        snapshot.inverterModel = p.model;
-        snapshot.inverterType = p.inverterType;
-        snapshot.optimisers = p.optimisers;
+    if (inverterProductId) {
+      const inv = await this.prisma.inverterProduct.findUnique({
+        where: { id: inverterProductId },
+      });
+      if (inv) {
+        snapshot.inverterModel = inv.inverterModel;
+        snapshot.inverterType = inv.type;
       }
     }
 
@@ -197,7 +254,30 @@ export class SalesService {
 
   async addExtra(user: AuthUser, id: string, dto: AddExtraDto) {
     await this.getOwned(user, id);
-    return this.prisma.saleExtra.create({ data: { saleId: id, ...dto } });
+    // productId selects a catalogue extra; it is NOT a SaleExtra column.
+    const { productId, ...rest } = dto;
+    const data: {
+      saleId: string;
+      itemName: string;
+      itemPrice: number;
+      itemRef?: string | null;
+    } = { saleId: id, ...rest };
+
+    if (productId) {
+      const ex = await this.prisma.extraProduct.findUnique({
+        where: { id: productId },
+      });
+      if (ex) {
+        // Snapshot from the catalogue (caller values win when provided).
+        if (!data.itemName) data.itemName = ex.itemName;
+        if (data.itemPrice == null && ex.unitPrice != null) {
+          data.itemPrice = Number(ex.unitPrice);
+        }
+        data.itemRef = data.itemRef ?? productId;
+      }
+    }
+
+    return this.prisma.saleExtra.create({ data });
   }
 
   // ---- helpers ----

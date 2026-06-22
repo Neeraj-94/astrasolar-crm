@@ -37,8 +37,6 @@ model User {
   consultant   Consultant?
 
   // Availability slots where this user IS the consultant whose availability is set
-  availabilitySlots AvailabilitySlot[] @relation("ConsultantAvailability")
-  availabilitySubmissions AvailabilitySubmission[] @relation("ConsultantAvailabilitySubmissions")
 
   // Appointments where this user IS the consultant the appointment is booked with
   consultantAppointments Appointment[] @relation("ConsultantAppointments")
@@ -400,7 +398,7 @@ enum AvailabilityStatus {
 // the week as bookable. Holiday days mark entire days off.
 model AvailabilitySubmission {
   id              String   @id @default(cuid())
-  consultantId    String
+  consultantId    String   // API user id (consultant directory lives in apps/api — no local FK)
   consultantName  String   // snapshot at submission time
   weekStart       DateTime @db.Date
   weekEnd         DateTime @db.Date
@@ -411,8 +409,6 @@ model AvailabilitySubmission {
   updatedAt       DateTime @updatedAt
   updatedById     String?
   updatedByName   String?
-
-  consultant      User     @relation("ConsultantAvailabilitySubmissions", fields: [consultantId], references: [id], onDelete: Cascade)
 
   @@unique([consultantId, weekStart])
   @@index([weekStart])
@@ -478,7 +474,7 @@ model Appointment {
 
 model AvailabilitySlot {
   id           String             @id @default(cuid())
-  consultantId String             // User.id of the consultant
+  consultantId String             // API user id (consultant directory lives in apps/api — no local FK)
   date         DateTime           @db.Date
   hour         Int                // 8..19 — start hour of the 1-hour slot, local time
   status       AvailabilityStatus
@@ -486,8 +482,6 @@ model AvailabilitySlot {
   createdById  String?            // user who made the change (audit)
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
-
-  consultant   User               @relation("ConsultantAvailability", fields: [consultantId], references: [id], onDelete: Cascade)
 
   @@unique([consultantId, date, hour])
   @@index([date])

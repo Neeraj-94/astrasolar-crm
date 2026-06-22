@@ -22,7 +22,7 @@ interface SaleRow {
   soldPrice: string | number | null;
   totalCommission: string | number | null;
   saleDate: string | null;
-  contact: { firstName: string; surname: string } | null;
+  lead: { firstName: string; surName: string } | null;
   owner: { id: string; name: string } | null;
 }
 
@@ -89,7 +89,7 @@ export function SalesListTab() {
               >
                 <TD className="font-mono text-xs">{s.saleRef ?? "—"}</TD>
                 <TD>
-                  {s.contact ? `${s.contact.firstName} ${s.contact.surname}` : "—"}
+                  {s.lead ? `${s.lead.firstName ?? ""} ${s.lead.surName ?? ""}` : "—"}
                 </TD>
                 <TD>{s.company}</TD>
                 <TD>

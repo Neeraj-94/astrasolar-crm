@@ -122,7 +122,7 @@ export function SaleDetailPanel({
         <div>
           <h3 className="text-sm font-semibold">
             Sale {s.saleRef ?? s.id.slice(0, 8)} —{" "}
-            {s.contact ? `${s.contact.firstName} ${s.contact.surname}` : ""}
+            {s.lead ? `${s.lead.firstName ?? ""} ${s.lead.surName ?? ""}` : ""}
           </h3>
           <p className="text-xs text-muted-foreground">
             Owner: {s.owner?.name ?? "—"} · {s.company}

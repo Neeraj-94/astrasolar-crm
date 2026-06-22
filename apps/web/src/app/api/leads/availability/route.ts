@@ -6,12 +6,13 @@ import {
   upsertSlots,
   type UpsertSlotInput,
 } from "@/lib/availability";
-import { logAudit } from "@/lib/audit";
 
 /**
  * GET /api/leads/availability?from=YYYY-MM-DD&to=YYYY-MM-DD&consultantIds=id1,id2
  *
- * Returns sparse availability rows in the requested date range.
+ * Returns sparse availability rows in the requested date range. Storage lives
+ * in the API (`/scheduling/availability`); this route keeps the web app's
+ * stable URL and tab-permission gate. Auditing happens API-side.
  */
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -49,9 +50,6 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/leads/availability
  * Body: { updates: UpsertSlotInput[] }
- *
- * Bulk upsert of (consultant, date, hour, status) tuples.
- * Requires the leads.availability.manage permission.
  */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -77,7 +75,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Light input validation — the lib will also throw on bad hours.
   for (const u of updates) {
     if (
       typeof u.consultantId !== "string" ||
@@ -93,18 +90,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await upsertSlots(updates, user.id);
-
-    await logAudit({
-      actorId: user.id,
-      action: "UPDATE",
-      entityType: "AvailabilitySlot",
-      summary: `Updated ${result.written} availability slot(s)`,
-      metadata: { count: result.written, updates: updates.slice(0, 50) },
-      ipAddress: req.headers.get("x-forwarded-for") ?? undefined,
-      userAgent: req.headers.get("user-agent") ?? undefined,
-    });
-
+    const result = await upsertSlots(updates);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error("[api/leads/availability] upsert failed", err);

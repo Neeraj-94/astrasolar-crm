@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
-import { adminAuth, adminBucket } from "@/lib/firebase/admin";
-import { logAudit } from "@/lib/audit";
+import { apiPatch } from "@/lib/api/client";
+import { adminBucket } from "@/lib/firebase/admin";
 
 export const runtime = "nodejs";
 
@@ -63,27 +63,12 @@ export async function POST(req: NextRequest) {
     const encodedPath = encodeURIComponent(objectPath);
     const avatarUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { avatarUrl },
-    });
-
-    try {
-      await adminAuth().updateUser(user.firebaseUid, { photoURL: avatarUrl });
-    } catch (err) {
-      console.error("[api/profile/avatar] firebase photoURL sync failed", err);
-    }
-
-    await logAudit({
-      actorId: user.id,
-      action: "UPDATE",
-      entityType: "User",
-      entityId: user.id,
-      summary: `${user.email} updated profile photo`,
-      metadata: { objectPath },
-      ipAddress: req.headers.get("x-forwarded-for") ?? undefined,
-      userAgent: req.headers.get("user-agent") ?? undefined,
-    });
+    // Persist the URL on the API user record (audited API-side).
+    await apiPatch(
+      "/auth/profile/avatar",
+      { avatarUrl },
+      { cookieHeader: cookies().toString() },
+    );
 
     return NextResponse.json({ ok: true, avatarUrl });
   } catch (err) {

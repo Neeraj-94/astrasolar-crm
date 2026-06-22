@@ -9,6 +9,7 @@ import { AdminSalesPipelineTab } from "@/components/admin/sales-pipeline-tab";
 import { AdminInboundLeadsTab } from "@/components/admin/inbound-leads-tab";
 import { AdminAuditLogTab } from "@/components/admin/audit-log-tab";
 import { AdminProductsTab } from "@/components/admin/products-tab";
+import { TaskBoardTab } from "@/components/tasks/task-board-tab";
 
 interface Props {
   params: { tab: string };
@@ -28,6 +29,7 @@ interface Props {
  * and permission plumbing still works.
  */
 const TAB_COMPONENTS: Record<string, () => JSX.Element> = {
+  "task-overview": () => <TaskBoardTab board="admin" />,
   overview: AdminOverviewTab,
   "installation-calendar": InstallationCalendarTab,
   "sales-pipeline": AdminSalesPipelineTab,

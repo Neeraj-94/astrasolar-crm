@@ -10,8 +10,8 @@ import {
   Section,
   Toolbar,
 } from "@/components/leads/shared";
-import { CONSULTANTS } from "@/lib/leads/mock/consultants";
-import { TODAY_LEADS } from "@/lib/sales/mock";
+import { useConsultants } from "@/lib/leads/consultants";
+import { useSalesLeads } from "@/lib/sales/leads";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import { LeadsTable, SalesFilterBar, type SalesFilters } from "./shared";
 
@@ -28,21 +28,28 @@ export function TeamViewTab() {
   // Session-only row order per consultant table, keyed by consultant id.
   const [rowOrders, setRowOrders] = React.useState<Record<string, string[]>>({});
 
-  // For the mock, all "today" leads are date-shifted to display whichever
-  // date the user has selected. In production this would re-query Firebase.
+  const { leads, loading, error } = useSalesLeads();
+  const { consultants } = useConsultants();
+
+  // Real leads booked for the selected day, narrowed by the search box.
   const day = React.useMemo(
     () =>
-      TODAY_LEADS.map((r) => ({ ...r, date })).filter((r) => {
+      leads.filter((r) => {
+        if (r.date !== date) return false;
         const q = filters.search.trim().toLowerCase();
         if (!q) return true;
         return `${r.name} ${r.phone} ${r.address}`.toLowerCase().includes(q);
       }),
-    [date, filters.search],
+    [leads, date, filters.search],
+  );
+
+  const consultantById = React.useMemo(
+    () => new Map(consultants.map((c) => [c.id, c])),
+    [consultants],
   );
 
   const grouped = React.useMemo(() => {
     const byConsultant = new Map<string, typeof day>();
-    CONSULTANTS.forEach((c) => byConsultant.set(c.id, []));
     day.forEach((r) => {
       const list = byConsultant.get(r.consultantId) ?? [];
       list.push(r);
@@ -105,15 +112,21 @@ export function TeamViewTab() {
         right={<SalesFilterBar filters={filters} onChange={setFilters} />}
       />
 
-      {grouped.length === 0 ? (
+      {error ? (
+        <Section>
+          <p className="text-sm text-destructive text-center py-10">{error}</p>
+        </Section>
+      ) : grouped.length === 0 ? (
         <Section>
           <p className="text-sm text-muted-foreground text-center py-10">
-            No leads logged for this date yet.
+            {loading ? "Loading leads…" : "No leads logged for this date yet."}
           </p>
         </Section>
       ) : (
         grouped.map(([cid, rows]) => {
-          const consultant = CONSULTANTS.find((c) => c.id === cid)!;
+          const consultant = consultantById.get(cid);
+          const cName = consultant?.name ?? rows[0]?.consultantName ?? "Unassigned";
+          const cRegion = consultant?.region ?? "—";
           const order = rowOrders[cid];
           const displayRows = order
             ? applyRowOrder(rows, order, (r) => r.id)
@@ -121,8 +134,8 @@ export function TeamViewTab() {
           return (
             <Section
               key={cid}
-              title={consultant.name}
-              description={`${rows.length} leads · ${consultant.region}`}
+              title={cName}
+              description={`${rows.length} leads · ${cRegion}`}
               actions={<Button size="sm" variant="outline">View Calendar</Button>}
               flush
             >

@@ -36,6 +36,16 @@ export class UsersController {
     return this.users.selectable(ids);
   }
 
+  /**
+   * Consultant directory for Team Availability / Leads Schedule.
+   * Any authenticated staff member with record access may read it.
+   */
+  @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
+  @Get('consultants')
+  consultants() {
+    return this.users.consultants();
+  }
+
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)
   @Get()
   list(@CurrentUser() _user: AuthUser) {
@@ -75,6 +85,14 @@ export class UsersController {
   @Patch(':id/active')
   setActive(@Param('id') id: string, @Body() dto: SetActiveDto) {
     return this.users.setActive(id, dto.isActive);
+  }
+
+  /** Manually send (or resend) the account-creation welcome email. */
+  @RequirePermissions(PERMISSIONS.USERS_MANAGE)
+  @Audit({ action: 'USER_WELCOME_EMAIL_SENT', entity: 'User' })
+  @Post(':id/welcome-email')
+  sendWelcomeEmail(@Param('id') id: string) {
+    return this.users.sendWelcomeEmail(id);
   }
 
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)

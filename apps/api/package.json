@@ -13,6 +13,20 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
+    "db:import-products": "ts-node --transpile-only prisma/import-products.ts",
+    "db:import-leads": "ts-node --transpile-only prisma/import-leads.ts",
+    "db:import-sales": "ts-node --transpile-only prisma/import-sales.ts",
+    "db:import-availability": "ts-node --transpile-only prisma/import-availability.ts",
+    "db:import-lead-appointments": "ts-node --transpile-only prisma/import-lead-appointments.ts",
+    "db:seed-solar-products": "ts-node --transpile-only prisma/seed-solar-products.ts",
+    "db:set-solar-effective-date": "ts-node --transpile-only prisma/set-solar-effective-date.ts",
+    "db:enrich-solar-products": "ts-node --transpile-only prisma/enrich-solar-products.ts",
+    "db:seed-solar-products-tas": "ts-node --transpile-only prisma/seed-solar-products-tas.ts",
+    "db:seed-solar-products-brighte": "ts-node --transpile-only prisma/seed-solar-products-brighte.ts",
+    "db:seed-solar-products-tas-brighte": "ts-node --transpile-only prisma/seed-solar-products-tas-brighte.ts",
+    "db:clear-products": "ts-node --transpile-only prisma/clear-products.ts",
+    "db:nova-migrate": "ts-node --transpile-only prisma/nova-migrate.ts",
+    "db:backfill-appointment-leads": "ts-node --transpile-only prisma/backfill-appointment-leads.ts",
     "db:studio": "prisma studio",
     "prisma:generate": "prisma generate"
   },
@@ -20,6 +34,7 @@
     "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@astra/shared": "*",
     "@aws-sdk/client-s3": "^3.667.0",
     "@aws-sdk/s3-request-presigner": "^3.667.0",

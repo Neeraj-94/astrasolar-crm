@@ -70,8 +70,8 @@ export class ScopeService {
     if (ids === 'all') return {};
     return {
       OR: [
-        { ownerId: { in: ids } },
-        { currentConsultantId: { in: ids } },
+        { leadGenId: { in: ids } },
+        { consultantId: { in: ids } },
       ],
     };
   }

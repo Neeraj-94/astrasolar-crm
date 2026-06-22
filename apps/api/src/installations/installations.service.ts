@@ -28,7 +28,14 @@ export class InstallationsService {
       ],
       include: {
         installer: { select: { id: true, name: true } },
-        sale: { include: { contact: true } },
+        // systemDetails powers the Operations Manager "Stock" tab (weekly
+        // panel / inverter / battery requirements per booked install).
+        sale: {
+          include: {
+            lead: { select: { firstName: true, surName: true } },
+            systemDetails: true,
+          },
+        },
       },
     });
   }
@@ -57,10 +64,67 @@ export class InstallationsService {
     return { ok: true };
   }
 
+  /**
+   * Documents attached to the sales behind the installer's own jobs. Documents
+   * are stored against the Sale (entity 'Sale'), so we gather the installer's
+   * in-scope installations, map to their sale ids, and list those documents.
+   */
+  async documents(user: AuthUser, userId?: string) {
+    const where = await this.scope.installationWhere(user, userId);
+    const installs = await this.prisma.installation.findMany({
+      where,
+      select: {
+        saleId: true,
+        sale: {
+          select: {
+            saleRef: true,
+            lead: { select: { firstName: true, surName: true } },
+          },
+        },
+      },
+    });
+    const saleIds = installs.map((i) => i.saleId);
+    const saleMeta = new Map(
+      installs.map((i) => [
+        i.saleId,
+        {
+          saleRef: i.sale.saleRef,
+          customerName:
+            `${i.sale.lead?.firstName ?? ''} ${i.sale.lead?.surName ?? ''}`.trim(),
+        },
+      ]),
+    );
+
+    if (saleIds.length === 0) return [];
+
+    const docs = await this.prisma.document.findMany({
+      where: { entity: 'Sale', entityId: { in: saleIds } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return docs.map((d) => ({
+      id: d.id,
+      fileName: d.fileName,
+      contentType: d.contentType,
+      sizeBytes: d.sizeBytes,
+      createdAt: d.createdAt,
+      saleId: d.entityId,
+      saleRef: saleMeta.get(d.entityId)?.saleRef ?? null,
+      customerName: saleMeta.get(d.entityId)?.customerName ?? null,
+    }));
+  }
+
   async get(id: string) {
     const inst = await this.prisma.installation.findUnique({
       where: { id },
-      include: { installer: true, sale: { include: { contact: true } } },
+      include: {
+        installer: true,
+        sale: {
+          include: {
+            lead: { select: { firstName: true, surName: true } },
+          },
+        },
+      },
     });
     if (!inst) throw new NotFoundException('Installation not found');
     return inst;

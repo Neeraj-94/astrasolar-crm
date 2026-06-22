@@ -90,5 +90,8 @@ export const apiPost = <T>(path: string, body?: unknown, opts?: ApiOptions) =>
 export const apiPatch = <T>(path: string, body?: unknown, opts?: ApiOptions) =>
   api<T>(path, { ...opts, method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
 
+export const apiPut = <T>(path: string, body?: unknown, opts?: ApiOptions) =>
+  api<T>(path, { ...opts, method: 'PUT', body: body ? JSON.stringify(body) : undefined });
+
 export const apiDelete = <T>(path: string, opts?: ApiOptions) =>
   api<T>(path, { ...opts, method: 'DELETE' });

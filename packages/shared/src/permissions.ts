@@ -15,6 +15,10 @@ export const PERMISSIONS = {
   USERS_MANAGE: 'users:manage',
   ROLES_MANAGE: 'roles:manage',
 
+  // Nova — the in-house AI assistant
+  NOVA_USE: 'nova:use', // open Nova and chat
+  NOVA_MANAGE: 'nova:manage', // manage Nova's knowledge base + memory (Knowledge Brain)
+
   // Dashboard access (open the dashboard shell)
   DASHBOARD_SUPERADMIN: 'dashboard:superadmin',
   DASHBOARD_CEO: 'dashboard:ceo',
@@ -58,6 +62,8 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   'system:admin': 'Access the Super Admin console (system settings, RBAC controls)',
   'users:manage': 'Create/deactivate staff accounts, assign roles',
   'roles:manage': 'Create/edit roles and their permissions',
+  'nova:use': 'Open Nova (the AI assistant) and chat with her',
+  'nova:manage': "Manage Nova's knowledge base and learned memory (Knowledge Brain)",
   'dashboard:superadmin': 'Open the Super Admin dashboard',
   'dashboard:ceo': 'Open the CEO (executive) dashboard',
   'dashboard:finance': 'Open the Finance dashboard',
@@ -101,6 +107,48 @@ export const ROLES = {
 
 export type RoleKey = (typeof ROLES)[keyof typeof ROLES];
 
+// ---- Task assignment policy --------------------------------------------------
+// Who may a user ASSIGN TASKS to, by role (union across the user's roles, and
+// self-assignment is always allowed). Enforced in the API's TasksService and
+// used to build the assignee picker on the Task Overview boards.
+
+const TASK_ASSIGNEE_POOL: RoleKey[] = [
+  ROLES.SALES_CONSULTANT,
+  ROLES.INSTALLER,
+  ROLES.LEAD_GEN,
+  ROLES.ADMIN_OFFICER,
+];
+
+export const TASK_ASSIGNABLE_ROLES: Record<RoleKey, RoleKey[]> = {
+  // Execs assign to any staff role.
+  [ROLES.SUPER_ADMIN]: [
+    ROLES.CEO,
+    ROLES.FINANCE,
+    ROLES.OPERATIONS_MANAGER,
+    ROLES.SALES_MANAGER,
+    ...TASK_ASSIGNEE_POOL,
+  ],
+  [ROLES.CEO]: [
+    ROLES.FINANCE,
+    ROLES.OPERATIONS_MANAGER,
+    ROLES.SALES_MANAGER,
+    ...TASK_ASSIGNEE_POOL,
+  ],
+  // Finance mirrors the manager set (accesses every dashboard except CEO).
+  [ROLES.FINANCE]: TASK_ASSIGNEE_POOL,
+  // Admin / sales manager / operations manager → consultants, installers,
+  // lead gen, and admin staff.
+  [ROLES.OPERATIONS_MANAGER]: TASK_ASSIGNEE_POOL,
+  [ROLES.SALES_MANAGER]: TASK_ASSIGNEE_POOL,
+  [ROLES.ADMIN_OFFICER]: TASK_ASSIGNEE_POOL,
+  // Lead gen → sales consultants only.
+  [ROLES.LEAD_GEN]: [ROLES.SALES_CONSULTANT],
+  // Sales consultants → admin staff only.
+  [ROLES.SALES_CONSULTANT]: [ROLES.ADMIN_OFFICER],
+  [ROLES.INSTALLER]: [],
+  [ROLES.CUSTOMER]: [],
+};
+
 export interface SystemRoleDef {
   key: RoleKey;
   name: string;
@@ -133,6 +181,8 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.SYSTEM_ADMIN,
       P.USERS_MANAGE,
       P.ROLES_MANAGE,
+      P.NOVA_USE,
+      P.NOVA_MANAGE,
       P.DASHBOARD_SUPERADMIN,
       P.DASHBOARD_CEO,
       ...ALL_STAFF_DASHBOARDS_BELOW_CEO,
@@ -156,6 +206,8 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'CEO',
     description: 'Executive — sees everything, no system administration.',
     permissions: [
+      P.NOVA_USE,
+      P.NOVA_MANAGE,
       P.DASHBOARD_CEO,
       ...ALL_STAFF_DASHBOARDS_BELOW_CEO,
       P.RECORDS_READ_ALL,
@@ -170,6 +222,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Finance',
     description: 'Org-wide financial visibility; all dashboards except CEO.',
     permissions: [
+      P.NOVA_USE,
       ...ALL_STAFF_DASHBOARDS_BELOW_CEO,
       P.RECORDS_READ_ALL,
       P.RECORDS_READ_TEAM,
@@ -183,6 +236,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Operations Manager',
     description: 'Business-wide operations; no finance/exec/system.',
     permissions: [
+      P.NOVA_USE,
       P.DASHBOARD_OPERATIONS,
       P.DASHBOARD_SALES,
       P.DASHBOARD_CONSULTANT,
@@ -206,6 +260,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Sales Manager',
     description: 'Manages a sales branch: consultant + lead-gen dashboards.',
     permissions: [
+      P.NOVA_USE,
       P.DASHBOARD_SALES,
       P.DASHBOARD_CONSULTANT,
       P.DASHBOARD_LEADGEN,
@@ -223,6 +278,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Sales Consultant',
     description: 'Owns their own consultations and sales.',
     permissions: [
+      P.NOVA_USE,
       P.DASHBOARD_CONSULTANT,
       P.RECORDS_READ_OWN,
       P.LEADS_CREATE,
@@ -236,6 +292,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Lead-Gen',
     description: 'Works their own leads; books consultations.',
     permissions: [
+      P.NOVA_USE,
       P.DASHBOARD_LEADGEN,
       P.RECORDS_READ_OWN,
       P.LEADS_CREATE,
@@ -248,6 +305,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Admin Officer',
     description: 'Back-office lead administration.',
     permissions: [
+      P.NOVA_USE,
       P.DASHBOARD_ADMIN_OFFICER,
       P.RECORDS_READ_OWN,
       P.LEADS_CREATE,

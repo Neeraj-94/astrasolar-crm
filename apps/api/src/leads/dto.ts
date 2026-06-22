@@ -1,12 +1,15 @@
 import {
   IsDateString,
   IsEnum,
-  IsNumber,
+  IsIn,
+  IsInt,
   IsOptional,
   IsString,
-  ValidateNested,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import {
   Company,
   LeadOutcome,
@@ -14,25 +17,15 @@ import {
   SalesDisposition,
 } from '@astra/shared';
 
-class InlineContactDto {
-  @IsString() firstName!: string;
-  @IsString() surname!: string;
-  @IsOptional() @IsString() email?: string;
-  @IsOptional() @IsString() phone?: string;
-  @IsOptional() @IsString() streetAddress?: string;
-  @IsOptional() @IsString() state?: string;
-  @IsOptional() @IsString() postcode?: string;
-}
-
 export class CreateLeadDto {
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => InlineContactDto)
-  contact?: InlineContactDto;
-
-  @IsOptional()
-  @IsString()
-  contactId?: string;
+  // Contact details — flattened directly onto the lead.
+  @IsString() firstName!: string;
+  @IsString() surName!: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() email?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() postCode?: string;
+  @IsOptional() @IsString() state?: string;
 
   @IsEnum(Company)
   company!: Company;
@@ -43,22 +36,15 @@ export class CreateLeadDto {
 
   @IsOptional()
   @IsString()
-  externalRef?: string;
+  leadGenId?: string;
 
   @IsOptional()
   @IsString()
-  ownerId?: string;
-
-  @IsDateString()
-  leadDate!: string;
+  billSpend?: string;
 
   @IsOptional()
-  @IsNumber()
-  billSpend?: number;
-
-  @IsOptional()
-  @IsNumber()
-  estValue?: number;
+  @IsString()
+  code?: string;
 
   @IsOptional()
   @IsString()
@@ -103,4 +89,53 @@ export class AddActivityDto {
   @IsOptional()
   @IsString()
   content?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Bloome setter leads (raw sheet rows) — inline editing + booking
+// ---------------------------------------------------------------------------
+
+/**
+ * Inline-editable fields on a BloomeLead row. All optional; only the keys
+ * present in the payload are written. `outcome` stays a free string in the
+ * schema (sheet truth), but the web UI restricts it to the known label set.
+ */
+export class UpdateBloomeLeadDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  agent?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(999)
+  dials?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  outcome?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string | null;
+}
+
+/** Book a Bloome lead into a consultant's Leads Schedule timeslot. */
+export class BookBloomeLeadDto {
+  @IsString()
+  consultantId!: string;
+
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  date!: string; // YYYY-MM-DD
+
+  @IsInt()
+  @Min(8)
+  @Max(19)
+  hour!: number;
+
+  @IsIn([0, 30])
+  minute!: number;
 }

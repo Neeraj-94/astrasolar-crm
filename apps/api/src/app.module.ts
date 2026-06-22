@@ -10,16 +10,21 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RbacModule } from './rbac/rbac.module';
-import { ContactsModule } from './contacts/contacts.module';
 import { LeadsModule } from './leads/leads.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { SalesModule } from './sales/sales.module';
 import { ProductsModule } from './products/products.module';
 import { InstallationsModule } from './installations/installations.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { FinancialsModule } from './financials/financials.module';
 import { AuditReadModule } from './audit/audit.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { StorageModule } from './storage/storage.module';
+import { SchedulingModule } from './scheduling/scheduling.module';
+import { TasksModule } from './tasks/tasks.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { CustomerModule } from './customer/customer.module';
+import { NovaModule } from './nova/nova.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -35,16 +40,21 @@ import { AuditInterceptor } from './common/audit.interceptor';
     AuthModule,
     UsersModule,
     RbacModule,
-    ContactsModule,
     LeadsModule,
     BookingsModule,
     SalesModule,
     ProductsModule,
     InstallationsModule,
     AnalyticsModule,
+    FinancialsModule,
     AuditReadModule,
     IntegrationsModule,
     StorageModule,
+    SchedulingModule,
+    TasksModule,
+    NotificationsModule,
+    CustomerModule,
+    NovaModule,
   ],
   providers: [
     // The authorization pipeline runs globally, in order:

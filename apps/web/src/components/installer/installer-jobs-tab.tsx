@@ -21,7 +21,7 @@ interface Installation {
   installer: { id: string; name: string } | null;
   sale: {
     saleRef: string | null;
-    contact: { firstName: string; surname: string } | null;
+    lead: { firstName: string; surName: string } | null;
   } | null;
 }
 
@@ -84,8 +84,8 @@ export function InstallerJobsTab() {
                   {j.sale?.saleRef ?? "—"}
                 </TD>
                 <TD>
-                  {j.sale?.contact
-                    ? `${j.sale.contact.firstName} ${j.sale.contact.surname}`
+                  {j.sale?.lead
+                    ? `${j.sale.lead.firstName} ${j.sale.lead.surName}`
                     : "—"}
                 </TD>
                 <TD>{j.installer?.name ?? "—"}</TD>

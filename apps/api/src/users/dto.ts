@@ -23,6 +23,15 @@ export class CreateUserDto {
   teamId?: string;
 
   @IsOptional()
+  @IsString()
+  region?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   roleKeys?: string[];
@@ -45,6 +54,15 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   teamId?: string;
+
+  @IsOptional()
+  @IsString()
+  region?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
 }
 
 export class SetActiveDto {

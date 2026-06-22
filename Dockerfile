@@ -1,0 +1,50 @@
+# =============================================================================
+# AstraSolar CRM — NestJS API (apps/api) production image for Railway.
+# Build context = repo root (npm workspaces monorepo).
+# =============================================================================
+
+# ---- base -------------------------------------------------------------------
+FROM node:20-slim AS base
+WORKDIR /app
+# openssl is required by Prisma's query engine at runtime.
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---- build ------------------------------------------------------------------
+FROM base AS build
+# Copy only manifests first so npm install is cached when source changes.
+COPY package.json package-lock.json turbo.json ./
+COPY packages/shared/package.json packages/shared/
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+# --ignore-scripts skips each workspace's postinstall (e.g. web's prisma generate,
+# whose schema isn't in this context). The API's own build runs prisma generate.
+RUN npm ci --ignore-scripts
+
+# Source for the two workspaces the API needs.
+COPY packages/shared packages/shared
+COPY apps/api apps/api
+
+# Build the shared lib, then the API (prisma generate + nest build).
+RUN npm run build --workspace=@astra/shared && \
+    npm run build --workspace=@astra/api
+
+# ---- runner -----------------------------------------------------------------
+FROM base AS runner
+ENV NODE_ENV=production
+# node_modules carries the generated Prisma client AND the prisma CLI used by
+# `migrate deploy` at startup.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+
+WORKDIR /app/apps/api
+# Railway injects PORT; main.ts reads process.env.PORT.
+EXPOSE 4000
+# Apply pending migrations, then boot. If you'd rather run migrations manually,
+# remove the `prisma migrate deploy &&` prefix.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

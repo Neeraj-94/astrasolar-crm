@@ -10,6 +10,7 @@ import { SheetsSyncTab } from "@/components/leads/sheets-sync-tab";
 import { NoAnswersTab } from "@/components/leads/no-answers-tab";
 import { ConsultantContactsTab } from "@/components/leads/consultant-contacts-tab";
 import { SmsIntegrationTab } from "@/components/leads/sms-integration-tab";
+import { TaskBoardTab } from "@/components/tasks/task-board-tab";
 
 interface Props {
   params: { tab: string };
@@ -31,6 +32,7 @@ interface Props {
 type TabComponent = () => JSX.Element | Promise<JSX.Element>;
 
 const TAB_COMPONENTS: Record<string, TabComponent> = {
+  "task-overview": () => <TaskBoardTab board="leads" />,
   "leads-schedule": LeadsScheduleTab,
   // Real Bloome sheet data (API /leads/bloome, imported from Google Sheets).
   // The API-backed pipeline list (LeadsListTab: create + book + dispositions)

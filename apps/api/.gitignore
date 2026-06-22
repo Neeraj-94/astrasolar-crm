@@ -3,3 +3,7 @@ dist
 
 # Generated Prisma client (run `npm run prisma:generate`)
 prisma/generated
+
+# Nova one-time import data (Firebase KB/memory export — not source)
+nova-kb.json
+nova-memory.json

@@ -1,0 +1,978 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useApi } from "@/lib/api/use-api";
+import { apiPatch } from "@/lib/api/client";
+
+/**
+ * No Answers tab — a faithful reproduction of the astrasolar-app
+ * "📞 No Answer Leads" tab (same structure and UI): the source dark-theme
+ * palette and `.lg-leads-table` styling are scoped locally, the header carries
+ * a search box + lead count, a toggle-button filter bar opens a checkbox panel,
+ * saved filter presets persist per browser, and the wide 15-column table is
+ * rendered exactly as in the source (Outcome dropdown, Notes textarea,
+ * Dials −/+, Last Called date + Today, Original Slot, Status, Rebook).
+ */
+
+interface LeadRow {
+  id: string;
+  company: string; // "ASTRA" | "DC"
+  stage: string;
+  outcome: string | null;
+  disposition: string | null;
+  source: string | null;
+  timestamp: string;
+  consultantNotes: string | null;
+  leadGenNotes: string | null;
+  firstName: string;
+  surName: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  postCode?: string | null;
+  state?: string | null;
+  billSpend?: string | null;
+  dials?: number | null;
+  bookingDate?: string | null;
+  bookingTime?: string | null;
+  leadGen?: { id: string; name: string } | null;
+  consultant?: { id: string; name: string } | null;
+}
+
+// --- enum → friendly label maps (mirror the source DISPOSITIONS list) --------
+
+/** Outcome dropdown options — editable disposition (matches source Outcome). */
+const DISPOSITIONS: { val: string; label: string }[] = [
+  { val: "", label: "(no outcome)" },
+  { val: "SOLD", label: "Sold" },
+  { val: "PRES_PROP_CREATED", label: "Pres / Prop Created" },
+  { val: "CALL_BACK", label: "Call Back" },
+  { val: "RESCHEDULE", label: "Reschedule" },
+  { val: "BEEN_RESCHEDULED", label: "Been Rescheduled" },
+  { val: "NO_ANSWER", label: "No Answer" },
+  { val: "NOT_INTERESTED", label: "Not Interested" },
+  { val: "DNQ", label: "DNQ" },
+  { val: "CANCELLED", label: "Cancel" },
+];
+
+const DISP_LABELS: Record<string, string> = Object.fromEntries(
+  DISPOSITIONS.filter((d) => d.val).map((d) => [d.val, d.label]),
+);
+
+const SOURCE_LABELS: Record<string, string> = {
+  BLOOM_ASTRA: "Bloom Astra",
+  REFERRAL: "Referral",
+  INBOUND: "Inbound",
+  WEBSITE: "Website",
+  BRIGHTE: "Brighte",
+};
+
+/** Consultant Disposition cell colour — mirrors the source colour map. */
+function consultantDispColor(val: string | null): string {
+  switch (val) {
+    case "CANCELLED":
+    case "DNQ":
+    case "NOT_INTERESTED":
+      return "var(--red)";
+    case "RESCHEDULE":
+    case "BEEN_RESCHEDULED":
+      return "var(--gold)";
+    case "NO_ANSWER":
+      return "var(--text-dim)";
+    default:
+      return "var(--text-dim)";
+  }
+}
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function originalDateLabel(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function timeAgo(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (Number.isNaN(mins)) return "";
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1440) return `${Math.floor(mins / 60)}h ago`;
+  return `${Math.floor(mins / 1440)}d ago`;
+}
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// --- filter facets -----------------------------------------------------------
+
+type Facet = "rep" | "consultant" | "status" | "source" | "outcome" | "consultantDisp";
+type FilterState = Record<Facet, string[]>;
+
+const EMPTY_FILTERS: FilterState = {
+  rep: [], consultant: [], status: [], source: [], outcome: [], consultantDisp: [],
+};
+
+const FACET_TITLES: Record<Facet, string> = {
+  rep: "Lead Gen Rep",
+  consultant: "Consultant",
+  status: "Status",
+  source: "Source",
+  outcome: "Outcome",
+  consultantDisp: "Consultant Disposition",
+};
+
+function facetValue(l: LeadRow, facet: Facet): string {
+  switch (facet) {
+    case "rep":
+      return l.leadGen?.name || "(unknown)";
+    case "consultant":
+      return l.consultant?.name || "(unknown)";
+    case "status":
+      return "pending";
+    case "source":
+      return l.source || "(unknown)";
+    case "outcome":
+      return l.disposition || "";
+    case "consultantDisp":
+      return l.disposition || "";
+  }
+}
+
+function facetDisplay(facet: Facet, val: string): string {
+  if (facet === "outcome") return val === "" ? "(no outcome)" : DISP_LABELS[val] ?? val;
+  if (facet === "consultantDisp") return val === "" ? "(none)" : DISP_LABELS[val] ?? val;
+  if (facet === "source") return SOURCE_LABELS[val] ?? val;
+  return val;
+}
+
+// --- saved presets (per-browser, localStorage) -------------------------------
+
+interface Preset {
+  name: string;
+  q: string;
+  filters: FilterState;
+}
+
+const PRESETS_KEY = "na-filter-presets";
+
+function loadPresets(): Preset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(PRESETS_KEY);
+    return raw ? (JSON.parse(raw) as Preset[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistPresets(p: Preset[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PRESETS_KEY, JSON.stringify(p));
+  } catch {
+    /* ignore */
+  }
+}
+
+// Local-only field overrides (Dials / Notes / Last Called have no v2 endpoint).
+interface Override {
+  dials?: number;
+  notes?: string;
+  lastCalled?: string;
+}
+
+const STYLES = `
+.na-root {
+  --bg:#0a0a0f; --surface:#111118; --border:rgba(255,255,255,0.07);
+  --text:#e8e4dc; --text-dim:rgba(232,228,220,0.55); --text-faint:rgba(232,228,220,0.25);
+  --gold:#f0b429; --accent:#f0b429; --red:#e84545; --green:#22c55e;
+  background:var(--bg); color:var(--text); border-radius:12px;
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+.na-root *,
+.na-root *::before,
+.na-root *::after { box-sizing:border-box; }
+.na-root input, .na-root select, .na-root textarea, .na-root button { font-family:inherit; }
+.na-root .lg-leads-table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+.na-root .lg-leads-table th {
+  padding:7px 8px; text-align:left; font-size:0.58rem; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-faint); border-bottom:1px solid var(--border);
+  white-space:nowrap; position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.na-root .lg-leads-table td {
+  padding:7px 8px; border-bottom:1px solid rgba(255,255,255,0.10);
+  vertical-align:middle; font-size:0.72rem; color:var(--text);
+}
+.na-root .lg-leads-table tbody tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.na-root .lg-leads-table tr:hover td { background:rgba(255,255,255,0.09); transition:background 0.1s; }
+.na-root .na-filter-toggle {
+  position:relative; padding:4px 10px; border-radius:6px; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); font-size:0.6rem; cursor:pointer;
+}
+.na-root .na-filter-toggle.active { border-color:var(--accent); color:var(--accent); }
+.na-root input::placeholder, .na-root textarea::placeholder { color:var(--text-faint); }
+.na-root input[type=date] { color-scheme:dark; }
+`;
+
+export function NoAnswersTab() {
+  const router = useRouter();
+  const leads = useApi<LeadRow[]>("/leads?disposition=NO_ANSWER");
+
+  const [q, setQ] = useState("");
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [openFilter, setOpenFilter] = useState<Facet | "">("");
+  const [overrides, setOverrides] = useState<Record<string, Override>>({});
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => setPresets(loadPresets()), []);
+
+  const rows = useMemo(() => leads.data ?? [], [leads.data]);
+
+  // Visible rows = search + every active facet filter.
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter((l) => {
+      if (needle) {
+        const hay = `${l.firstName} ${l.surName} ${l.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(needle)) return false;
+      }
+      return (Object.keys(filters) as Facet[]).every((facet) => {
+        const sel = filters[facet];
+        if (sel.length === 0) return true;
+        return sel.includes(facetValue(l, facet));
+      });
+    });
+  }, [rows, q, filters]);
+
+  // Counts for the currently-open facet panel (over the full row set).
+  const openCounts = useMemo(() => {
+    if (!openFilter) return [] as { val: string; count: number }[];
+    const counts = new Map<string, number>();
+    for (const l of rows) {
+      const v = facetValue(l, openFilter);
+      counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([val, count]) => ({ val, count }))
+      .sort((a, b) => a.val.localeCompare(b.val));
+  }, [openFilter, rows]);
+
+  function toggleFilterPanel(facet: Facet) {
+    setOpenFilter((cur) => (cur === facet ? "" : facet));
+  }
+
+  function setFacetSelection(facet: Facet, nextSelected: string[], allCount: number) {
+    setFilters((f) => ({
+      ...f,
+      [facet]: nextSelected.length === allCount ? [] : nextSelected,
+    }));
+  }
+
+  function clearAllFilters() {
+    setQ("");
+    setFilters(EMPTY_FILTERS);
+    setOpenFilter("");
+  }
+
+  function saveCurrentPreset() {
+    const name = window.prompt("Name this filter preset:");
+    if (!name?.trim()) return;
+    const next = [
+      ...presets.filter((p) => p.name !== name.trim()),
+      { name: name.trim(), q, filters },
+    ];
+    setPresets(next);
+    persistPresets(next);
+  }
+
+  function applyPreset(p: Preset) {
+    setQ(p.q);
+    setFilters({ ...EMPTY_FILTERS, ...p.filters });
+  }
+
+  function deletePreset(name: string) {
+    const next = presets.filter((p) => p.name !== name);
+    setPresets(next);
+    persistPresets(next);
+  }
+
+  function patchOverride(id: string, patch: Override) {
+    setOverrides((o) => ({ ...o, [id]: { ...o[id], ...patch } }));
+  }
+
+  async function updateDisposition(leadId: string, disposition: string) {
+    if (!disposition) return;
+    setBusyId(leadId);
+    setErr(null);
+    try {
+      await apiPatch(`/leads/${leadId}/disposition`, { disposition });
+      await leads.reload();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not update disposition");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const inputBase =
+    "padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.65rem;width:200px";
+
+  return (
+    <div className="na-root" style={{ overflow: "hidden" }}>
+      <style>{STYLES}</style>
+      <div style={{ padding: "16px 20px" }}>
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0, fontSize: "0.9rem", color: "var(--text)" }}>
+              📞 No Answer Leads
+            </h3>
+            <div style={{ fontSize: "0.6rem", color: "var(--text-dim)", marginTop: 2 }}>
+              Leads marked &quot;No Answer&quot; by consultants — call back and rebook
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search name, phone..."
+              style={cssText(inputBase)}
+            />
+            <span style={{ fontSize: "0.6rem", color: "var(--text-dim)" }}>
+              {filtered.length} lead{filtered.length === 1 ? "" : "s"}
+            </span>
+          </div>
+        </div>
+
+        {/* Multi-select filter bar */}
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            flexWrap: "wrap",
+            marginBottom: 12,
+            alignItems: "center",
+          }}
+        >
+          <span style={{ fontSize: "0.58rem", color: "var(--text-dim)", marginRight: 4 }}>
+            Filters:
+          </span>
+          {(Object.keys(FACET_TITLES) as Facet[]).map((facet) => {
+            const active = filters[facet].length > 0;
+            return (
+              <button
+                key={facet}
+                type="button"
+                className={`na-filter-toggle${active ? " active" : ""}`}
+                onClick={() => toggleFilterPanel(facet)}
+              >
+                {FACET_TITLES[facet]}
+                {active ? ` (${filters[facet].length})` : ""} ▾
+              </button>
+            );
+          })}
+          <button type="button" onClick={clearAllFilters} style={clearBtn}>
+            Clear All
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              window.alert(
+                "Historical backfill is run from the server-side import in v2.",
+              )
+            }
+            title="Import no-answer leads from 23/3/26 onwards"
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--gold)",
+              background: "var(--surface)",
+              color: "var(--gold)",
+              fontSize: "0.58rem",
+              cursor: "pointer",
+              marginLeft: "auto",
+            }}
+          >
+            📥 Backfill from 23/3
+          </button>
+        </div>
+
+        {/* Saved filter presets */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+            padding: "6px 0",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.58rem",
+              color: "var(--text-dim)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              fontWeight: 600,
+            }}
+          >
+            Saved filters:
+          </span>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {presets.map((p) => (
+              <span
+                key={p.name}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "3px 8px",
+                  borderRadius: 5,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  fontSize: "0.55rem",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    padding: 0,
+                    fontSize: "0.55rem",
+                  }}
+                >
+                  {p.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deletePreset(p.name)}
+                  aria-label={`Delete preset ${p.name}`}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-dim)",
+                    cursor: "pointer",
+                    padding: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={saveCurrentPreset}
+            style={{
+              padding: "3px 10px",
+              borderRadius: 5,
+              border: "1px solid var(--accent)",
+              background: "rgba(240,180,41,0.1)",
+              color: "var(--accent)",
+              cursor: "pointer",
+              fontSize: "0.55rem",
+              fontWeight: 600,
+            }}
+          >
+            + Save Current
+          </button>
+        </div>
+
+        {/* Filter panel (opens under the bar for the active facet) */}
+        {openFilter && (
+          <FilterPanel
+            facet={openFilter}
+            counts={openCounts}
+            selected={filters[openFilter]}
+            onChange={(next) =>
+              setFacetSelection(openFilter, next, openCounts.length)
+            }
+            onSelectAll={() => setFilters((f) => ({ ...f, [openFilter]: [] }))}
+            onClear={() =>
+              setFilters((f) => ({ ...f, [openFilter]: ["__none__"] }))
+            }
+          />
+        )}
+
+        {err && (
+          <div style={{ color: "var(--red)", fontSize: "0.65rem", margin: "8px 0" }}>
+            {err}
+          </div>
+        )}
+
+        {/* Table */}
+        <div style={{ overflowX: "auto" }}>
+          {leads.loading ? (
+            <p style={{ fontSize: "0.65rem", color: "var(--text-dim)", padding: "16px 4px" }}>
+              Loading…
+            </p>
+          ) : leads.error ? (
+            <p style={{ fontSize: "0.65rem", color: "var(--red)", padding: "16px 4px" }}>
+              {leads.error}
+            </p>
+          ) : filtered.length === 0 ? (
+            <p style={{ fontSize: "0.65rem", color: "var(--text-dim)", padding: "24px 4px" }}>
+              No leads marked &quot;No Answer&quot; match the current search/filters.
+            </p>
+          ) : (
+            <table className="lg-leads-table">
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 140 }}>Customer</th>
+                  <th style={{ minWidth: 110 }}>Phone</th>
+                  <th style={{ minWidth: 100 }}>Address</th>
+                  <th style={{ minWidth: 80 }}>Lead Gen Rep</th>
+                  <th style={{ minWidth: 80 }}>Consultant</th>
+                  <th style={{ minWidth: 110 }}>Consultant Disposition</th>
+                  <th style={{ minWidth: 70 }}>Company</th>
+                  <th style={{ minWidth: 70 }}>Source</th>
+                  <th style={{ minWidth: 130 }}>Outcome</th>
+                  <th style={{ minWidth: 160 }}>Notes</th>
+                  <th style={{ minWidth: 50 }}>Dials</th>
+                  <th style={{ minWidth: 90 }}>Last Called</th>
+                  <th style={{ minWidth: 150 }}>Original Slot</th>
+                  <th style={{ minWidth: 80 }}>Status</th>
+                  <th style={{ minWidth: 120 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((l) => (
+                  <Row
+                    key={l.id}
+                    l={l}
+                    override={overrides[l.id]}
+                    busy={busyId === l.id}
+                    onDials={(d) => patchOverride(l.id, { dials: d })}
+                    onNotes={(n) => patchOverride(l.id, { notes: n })}
+                    onLastCalled={(d) => patchOverride(l.id, { lastCalled: d })}
+                    onOutcome={(v) => updateDisposition(l.id, v)}
+                    onRebook={() =>
+                      router.push(`/leads/leads-schedule?rebookLeadId=${l.id}`)
+                    }
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Convert a `key:value;key:value` CSS string into a React style object. */
+function cssText(text: string): React.CSSProperties {
+  const out: Record<string, string> = {};
+  for (const decl of text.split(";")) {
+    const [k, v] = decl.split(":");
+    if (!k || v === undefined) continue;
+    const prop = k.trim().replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    out[prop] = v.trim();
+  }
+  return out as React.CSSProperties;
+}
+
+const clearBtn: React.CSSProperties = {
+  padding: "4px 10px",
+  borderRadius: 6,
+  border: "1px solid var(--border)",
+  background: "var(--surface)",
+  color: "var(--text-dim)",
+  fontSize: "0.58rem",
+  cursor: "pointer",
+};
+
+function FilterPanel({
+  facet,
+  counts,
+  selected,
+  onChange,
+  onSelectAll,
+  onClear,
+}: {
+  facet: Facet;
+  counts: { val: string; count: number }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  onSelectAll: () => void;
+  onClear: () => void;
+}) {
+  // A value is checked when no explicit selection (all) or it's selected.
+  function isChecked(val: string) {
+    return selected.length === 0 || selected.includes(val);
+  }
+  function toggle(val: string) {
+    const current = selected.length === 0 ? counts.map((c) => c.val) : [...selected];
+    const next = current.includes(val)
+      ? current.filter((v) => v !== val)
+      : [...current, val];
+    onChange(next);
+  }
+
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        padding: 10,
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+        background: "var(--surface)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8,
+        }}
+      >
+        <span style={{ fontSize: "0.65rem", fontWeight: 600, color: "var(--text)" }}>
+          {FACET_TITLES[facet]} Filter
+        </span>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            type="button"
+            onClick={onSelectAll}
+            style={{
+              fontSize: "0.55rem",
+              color: "var(--accent)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Select All
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            style={{
+              fontSize: "0.55rem",
+              color: "var(--text-dim)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {counts.map(({ val, count }) => (
+          <label
+            key={val}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: "0.6rem",
+              color: "var(--text)",
+              cursor: "pointer",
+              padding: "3px 8px",
+              borderRadius: 4,
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isChecked(val)}
+              value={val}
+              onChange={() => toggle(val)}
+              style={{ margin: 0 }}
+            />
+            {facetDisplay(facet, val)}{" "}
+            <span style={{ color: "var(--text-dim)" }}>({count})</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Row({
+  l,
+  override,
+  busy,
+  onDials,
+  onNotes,
+  onLastCalled,
+  onOutcome,
+  onRebook,
+}: {
+  l: LeadRow;
+  override?: Override;
+  busy: boolean;
+  onDials: (d: number) => void;
+  onNotes: (n: string) => void;
+  onLastCalled: (d: string) => void;
+  onOutcome: (v: string) => void;
+  onRebook: () => void;
+}) {
+  const dials = override?.dials ?? l.dials ?? 0;
+  const notes = override?.notes ?? l.consultantNotes ?? l.leadGenNotes ?? "";
+  const lastCalled = override?.lastCalled ?? "";
+
+  const companyType = l.company === "DC" ? "DC" : "Astra";
+  const companyColor = l.company === "DC" ? "var(--gold)" : "var(--accent)";
+  const addr = l.address?.trim();
+  const sub = [l.postCode, l.state].filter(Boolean).join(" ");
+  const dateLabel = originalDateLabel(l.bookingDate);
+
+  return (
+    <tr>
+      {/* Customer */}
+      <td>
+        <strong>{`${l.firstName} ${l.surName}`}</strong>
+        {l.email && (
+          <>
+            <br />
+            <span style={{ fontSize: "0.55rem", color: "var(--text-dim)" }}>
+              {l.email}
+            </span>
+          </>
+        )}
+      </td>
+      {/* Phone */}
+      <td style={{ whiteSpace: "nowrap" }}>{l.phone || "—"}</td>
+      {/* Address */}
+      <td>
+        {addr ? (
+          <>
+            {addr}
+            {sub && (
+              <>
+                <br />
+                <span style={{ fontSize: "0.55rem", color: "var(--text-dim)" }}>
+                  {sub}
+                </span>
+              </>
+            )}
+          </>
+        ) : sub ? (
+          sub
+        ) : (
+          <span style={{ color: "var(--text-faint)" }}>—</span>
+        )}
+      </td>
+      {/* Lead Gen Rep */}
+      <td style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.62rem" }}>
+        {l.leadGen?.name || "—"}
+      </td>
+      {/* Consultant */}
+      <td style={{ color: "var(--gold)", fontSize: "0.62rem" }}>
+        {l.consultant?.name || ""}
+      </td>
+      {/* Consultant Disposition */}
+      <td
+        style={{
+          fontSize: "0.62rem",
+          fontWeight: 600,
+          color: consultantDispColor(l.disposition),
+        }}
+      >
+        {l.disposition ? DISP_LABELS[l.disposition] ?? l.disposition : "—"}
+      </td>
+      {/* Company */}
+      <td style={{ fontSize: "0.62rem", fontWeight: 600, color: companyColor }}>
+        {companyType}
+      </td>
+      {/* Source */}
+      <td style={{ fontSize: "0.6rem" }}>
+        {l.source ? SOURCE_LABELS[l.source] ?? l.source : "—"}
+      </td>
+      {/* Outcome (editable disposition) */}
+      <td>
+        <select
+          value={l.disposition ?? ""}
+          disabled={busy}
+          onChange={(e) => onOutcome(e.target.value)}
+          style={{
+            padding: "3px 6px",
+            border: "1px solid var(--border)",
+            borderRadius: 4,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontSize: "0.6rem",
+            width: "100%",
+          }}
+        >
+          {DISPOSITIONS.map((d) => (
+            <option key={d.val} value={d.val}>
+              {d.label}
+            </option>
+          ))}
+        </select>
+      </td>
+      {/* Notes */}
+      <td>
+        <textarea
+          defaultValue={notes}
+          maxLength={2000}
+          placeholder="Add notes…"
+          onBlur={(e) => onNotes(e.target.value)}
+          style={{
+            width: 160,
+            minHeight: 36,
+            maxHeight: 80,
+            padding: "4px 6px",
+            borderRadius: 5,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--text)",
+            fontSize: "0.65rem",
+            resize: "vertical",
+            lineHeight: 1.35,
+          }}
+        />
+      </td>
+      {/* Dials */}
+      <td>
+        <div style={{ display: "flex", alignItems: "center", gap: 3, justifyContent: "center" }}>
+          <button type="button" onClick={() => onDials(Math.max(0, dials - 1))} style={dialBtn}>
+            −
+          </button>
+          <span
+            style={{
+              minWidth: 18,
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.62rem",
+            }}
+          >
+            {dials}
+          </span>
+          <button type="button" onClick={() => onDials(dials + 1)} style={dialBtn}>
+            +
+          </button>
+        </div>
+      </td>
+      {/* Last Called */}
+      <td style={{ whiteSpace: "nowrap" }}>
+        <input
+          type="date"
+          value={lastCalled}
+          onChange={(e) => onLastCalled(e.target.value)}
+          style={{
+            padding: "3px 4px",
+            border: "1px solid var(--border)",
+            borderRadius: 4,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontSize: "0.58rem",
+            width: 110,
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            onLastCalled(todayISO());
+            onDials(dials + 1);
+          }}
+          title="Mark as called today (increments dials)"
+          style={{
+            marginLeft: 3,
+            padding: "2px 6px",
+            border: "1px solid var(--border)",
+            borderRadius: 4,
+            background: "var(--surface)",
+            color: "var(--accent)",
+            fontSize: "0.5rem",
+            cursor: "pointer",
+          }}
+        >
+          Today
+        </button>
+      </td>
+      {/* Original Slot */}
+      <td style={{ fontSize: "0.62rem", color: "var(--text)", lineHeight: 1.4 }}>
+        {l.consultant?.name && (
+          <>
+            <span style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.6rem" }}>
+              {l.consultant.name}
+            </span>
+            <br />
+          </>
+        )}
+        {dateLabel}
+        {l.bookingTime && (
+          <>
+            <br />
+            <span style={{ fontSize: "0.58rem", color: "var(--gold)", fontWeight: 600 }}>
+              {l.bookingTime}
+            </span>
+          </>
+        )}
+        <br />
+        <span style={{ fontSize: "0.5rem", color: "var(--text-faint)" }}>
+          {timeAgo(l.timestamp)}
+        </span>
+      </td>
+      {/* Status */}
+      <td style={{ fontSize: "0.6rem", color: "var(--text-dim)" }}>Pending</td>
+      {/* Actions */}
+      <td>
+        <button
+          type="button"
+          onClick={onRebook}
+          style={{
+            background: "var(--accent)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "5px 14px",
+            cursor: "pointer",
+            fontSize: "0.6rem",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Rebook
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+const dialBtn: React.CSSProperties = {
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  color: "var(--text)",
+  borderRadius: 3,
+  width: 18,
+  height: 18,
+  cursor: "pointer",
+  fontSize: "0.62rem",
+  padding: 0,
+  lineHeight: 1,
+  fontWeight: 700,
+};
