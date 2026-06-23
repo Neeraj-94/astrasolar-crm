@@ -155,3 +155,13 @@ export const InstallationStatus = {
 } as const;
 export type InstallationStatus =
   (typeof InstallationStatus)[keyof typeof InstallationStatus];
+
+// Per-lead system-recommendation checklist lifecycle.
+//   DRAFT     — saved capture, no AI call yet
+//   COMPLETED — an AI recommendation result is attached
+export const ChecklistStatus = {
+  DRAFT: 'DRAFT',
+  COMPLETED: 'COMPLETED',
+} as const;
+export type ChecklistStatus =
+  (typeof ChecklistStatus)[keyof typeof ChecklistStatus];

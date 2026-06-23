@@ -25,6 +25,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CustomerModule } from './customer/customer.module';
 import { NovaModule } from './nova/nova.module';
+import { ChecklistModule } from './checklist/checklist.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -55,6 +56,7 @@ import { AuditInterceptor } from './common/audit.interceptor';
     NotificationsModule,
     CustomerModule,
     NovaModule,
+    ChecklistModule,
   ],
   providers: [
     // The authorization pipeline runs globally, in order:

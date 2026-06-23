@@ -1,5 +1,7 @@
 [build]
-  command = "npm run build"
+  # Monorepo: build the shared workspace first (turbo dependency), then the web
+  # app. Set the new Netlify site's "Base directory" to apps/web so this is used.
+  command = "cd ../.. && npm run build --workspace=@astra/shared && cd apps/web && npm run build"
   publish = ".next"
 
 [[plugins]]

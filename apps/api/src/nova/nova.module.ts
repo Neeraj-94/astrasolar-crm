@@ -10,11 +10,15 @@ import { NovaToolsService } from './nova-tools.service';
 import { NovaKnowledgeService } from './nova-knowledge.service';
 import { NovaVoiceService } from './nova-voice.service';
 import { NovaSettingsService } from './nova-settings.service';
+import { NovaRecommendationService } from './nova-recommendation.service';
 
 /**
  * Nova — the Claude-powered AI assistant. Pulls in the domain modules whose
  * services back her tools (products, leads, sales, analytics). PrismaService,
  * ScopeService and the auth guards are global, so they need no import here.
+ *
+ * NovaRecommendationService is exported so the checklist module can ask Nova to
+ * turn a lead checklist into 5 quote-ready system packages.
  */
 @Module({
   imports: [ProductsModule, LeadsModule, SalesModule, AnalyticsModule],
@@ -26,7 +30,8 @@ import { NovaSettingsService } from './nova-settings.service';
     NovaKnowledgeService,
     NovaVoiceService,
     NovaSettingsService,
+    NovaRecommendationService,
   ],
-  exports: [NovaKnowledgeService],
+  exports: [NovaKnowledgeService, NovaRecommendationService],
 })
 export class NovaModule {}

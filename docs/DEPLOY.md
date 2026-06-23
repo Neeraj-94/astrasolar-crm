@@ -106,8 +106,11 @@ storage (`R2_*`), Google Sheets intake (`GOOGLE_*`, `BLOOME_*`), and Nova AI
 Site **astrasolar** → **Site configuration → Environment variables**. Add:
 
 ```
-# Point the Next.js proxy at your Railway API (no trailing slash)
-API_ORIGIN                          = https://<service>.up.railway.app
+# API location (set both once the Railway URL exists)
+API_ORIGIN                          = https://<service>.up.railway.app          # Next.js proxy target (next.config.mjs)
+API_URL                             = https://<service>.up.railway.app/api/v1   # server-side calls
+# Leave NEXT_PUBLIC_API_URL UNSET — client defaults to /api/v1 (via the proxy),
+# which keeps auth cookies first-party.
 
 NEXT_PUBLIC_APP_URL                 = https://astrasolar.app
 
@@ -128,10 +131,16 @@ SESSION_COOKIE_NAME                 = __astra_session
 SESSION_COOKIE_MAX_AGE              = 432000
 ```
 
-`FIREBASE_PRIVATE_KEY` must keep the literal `\n` sequences. If the web app also
-needs `DATABASE_URL` at build for `prisma generate`, the schema in
-`apps/web/prisma` is used for client generation only — a valid connection string
-(can be the same Railway Postgres) avoids build errors.
+`FIREBASE_PRIVATE_KEY` must keep the literal `\n` sequences. The values for all
+of the above are already in your local `apps/web/.env.local`.
+
+The web app does **not** query Postgres at runtime — it only calls the API — so
+**no `DATABASE_URL` is needed on Netlify**.
+
+> Note: the existing Netlify vars `FIREBASE_SERVICE_ACCOUNT_JSON` and
+> `FIREBASE_DATABASE_URL` are NOT read by the current web code — safe to remove.
+> `ANTHROPIC_API_KEY`, `NOVA_*`, and `AIRCALL_*` are read only by the NestJS API
+> — move those to Railway, not Netlify.
 
 ---
 
@@ -163,14 +172,15 @@ out.
 
 ## 5. Order of operations (important)
 
-1. Railway API + Postgres live, with a public domain → you have the API URL.
-2. Set `API_ORIGIN` on Netlify to that URL.
-3. Set the remaining web + API env vars.
+1. Set the 9 Firebase web vars on Netlify now (independent of the API).
+2. Railway API + Postgres live, with a public domain → you have the API URL.
+3. Set `API_ORIGIN` + `API_URL` on Netlify to that URL.
 4. Run `npm run db:seed` once against prod Postgres.
-5. Push web code → production build picks up `API_ORIGIN`.
+5. **Clear-cache redeploy** the web site so the new `NEXT_PUBLIC_*` and API vars
+   are baked in (Deploys → Trigger deploy → Clear cache and deploy).
 
-If you set `API_ORIGIN` after a web build, **trigger a redeploy** so the new
-value is baked in.
+Because `main` is already deployed, env-var changes only take effect on the next
+build — always redeploy after changing them.
 
 ---
 
