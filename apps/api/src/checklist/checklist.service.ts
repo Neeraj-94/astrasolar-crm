@@ -88,7 +88,11 @@ export class ChecklistService {
       // Editing the captured fields never downgrades a COMPLETED checklist back
       // to DRAFT; the web prompts "Regenerate recommendations?" separately.
       update: data,
-      create: { ...data, leadId, createdById: user.id },
+      create: {
+        ...data,
+        leadId,
+        createdById: user.id,
+      } as Prisma.LeadChecklistUncheckedCreateInput,
     });
 
     await this.audit.record({
@@ -118,7 +122,11 @@ export class ChecklistService {
     const checklist = await this.prisma.leadChecklist.upsert({
       where: { leadId },
       update: data,
-      create: { ...data, leadId, createdById: user.id },
+      create: {
+        ...data,
+        leadId,
+        createdById: user.id,
+      } as Prisma.LeadChecklistUncheckedCreateInput,
     });
 
     // Enforce the required-field set ONLY now (drafts may be partial).
