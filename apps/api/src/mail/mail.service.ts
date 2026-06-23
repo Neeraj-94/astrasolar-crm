@@ -51,6 +51,12 @@ export class MailService {
           String(process.env.SMTP_SECURE).toLowerCase() === 'true' ||
           port === 465,
         auth: { user, pass },
+        // Fail fast if the SMTP host is unreachable (e.g. the platform blocks
+        // outbound SMTP ports). Without these, a blocked port makes sendMail
+        // hang ~30s, which times out the HTTP request and surfaces as a 500.
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
       });
     }
     return this.transporter;
@@ -63,6 +69,12 @@ export class MailService {
     text: string;
     html?: string;
   }): Promise<boolean> {
+    // Prefer Resend's HTTPS API when configured. Railway (and many hosts) block
+    // outbound SMTP ports entirely, so nodemailer/SMTP cannot connect there;
+    // HTTPS (443) is open, so the Resend REST API works.
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) return this.sendViaResend(resendKey, opts);
+
     const transporter = this.getTransporter();
     if (!transporter) return false;
     try {
@@ -77,6 +89,50 @@ export class MailService {
     } catch (e) {
       this.logger.error(
         `Failed to send email to ${opts.to}: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Send via Resend's HTTPS API (https://resend.com). Works on platforms that
+   * block outbound SMTP. `MAIL_FROM` must be a Resend-verified sender/domain
+   * (for quick testing use `onboarding@resend.dev`). Returns true on success.
+   */
+  private async sendViaResend(
+    apiKey: string,
+    opts: { to: string; subject: string; text: string; html?: string },
+  ): Promise<boolean> {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: this.from,
+          to: opts.to,
+          subject: opts.subject,
+          text: opts.text,
+          html: opts.html,
+        }),
+        // HTTPS is open, but never let a hung request block the API.
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        this.logger.error(
+          `Resend send to ${opts.to} failed (HTTP ${res.status}): ${body}`,
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      this.logger.error(
+        `Resend send to ${opts.to} errored: ${
           e instanceof Error ? e.message : String(e)
         }`,
       );
