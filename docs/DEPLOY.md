@@ -45,6 +45,9 @@ real secrets live in the Railway and Netlify dashboards only.
    every boot, then starts the server. Railway injects `PORT`; the app reads it.
 6. After the first successful deploy, open **Settings → Networking → Generate
    Domain** to get the public `https://<service>.up.railway.app` URL.
+   - **Target port must be `8080`** — Railway injects `PORT=8080` and the app
+     binds to it. If the domain points at the 4000 dev fallback you get a 502
+     ("Application failed to respond"). Edit the domain's port to 8080 if so.
 
 ### Seed the first admin + reference data (one time)
 

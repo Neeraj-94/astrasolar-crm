@@ -40,6 +40,7 @@ import {
   type ScheduleAppointment,
   type ScheduleConsultant,
 } from "@/lib/leads/schedule-types";
+import { ChecklistDialog } from "@/components/sales/checklist/checklist-dialog";
 
 // Re-export so existing imports from this module keep working.
 export type { ScheduleConsultant, ScheduleAppointment };
@@ -336,6 +337,33 @@ const REMOVE_BTN =
   "whitespace-nowrap rounded border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[0.58rem] text-destructive transition-colors hover:bg-destructive hover:text-white";
 const CANCEL_BTN =
   "whitespace-nowrap rounded border border-border px-2 py-0.5 text-[0.58rem] text-muted-foreground transition-colors hover:text-foreground";
+const CHECKLIST_BTN =
+  "whitespace-nowrap rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[0.58rem] text-primary transition-colors hover:bg-primary hover:text-primary-foreground";
+
+/**
+ * The per-appointment "Checklist" action — opens the system-recommendation
+ * checklist for that booked lead. Every appointment in the schedule is a booked
+ * lead, so the button shows on each row.
+ */
+function ChecklistButton({
+  appt,
+  onOpen,
+}: {
+  appt: ScheduleAppointment;
+  onOpen?: (a: ScheduleAppointment) => void;
+}) {
+  if (!onOpen) return null;
+  return (
+    <button
+      type="button"
+      className={CHECKLIST_BTN}
+      title="System recommendation checklist"
+      onClick={() => onOpen(appt)}
+    >
+      Checklist
+    </button>
+  );
+}
 const ENTRY_INPUT =
   "w-full rounded border border-input bg-background px-1.5 py-1 text-[0.68rem] text-foreground focus:border-primary focus:outline-none";
 
@@ -397,6 +425,8 @@ export function LeadsScheduleClient({
   } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  // The appointment whose system-recommendation checklist is open (null = closed).
+  const [checklistAppt, setChecklistAppt] = React.useState<ScheduleAppointment | null>(null);
 
   // Tick every 30s so next-call countdowns stay fresh (legacy interval).
   const [, setTick] = React.useState(0);
@@ -1167,6 +1197,7 @@ export function LeadsScheduleClient({
             bookingName={bookingName}
             bookBloomeSlot={bookBloomeSlot}
             setDisposition={setDisposition}
+            onOpenChecklist={setChecklistAppt}
           />
         ))
       )}
@@ -1179,6 +1210,19 @@ export function LeadsScheduleClient({
           onClose={() => setReschedule(null)}
           busy={busy}
           dates={dates}
+        />
+      )}
+
+      {checklistAppt && (
+        <ChecklistDialog
+          leadId={checklistAppt.leadId}
+          leadName={
+            checklistAppt.customer ||
+            [checklistAppt.firstName, checklistAppt.lastName].filter(Boolean).join(" ") ||
+            "this lead"
+          }
+          onClose={() => setChecklistAppt(null)}
+          onSaved={reload}
         />
       )}
     </div>
@@ -1546,6 +1590,7 @@ function ConsultantSection({
   bookingName,
   bookBloomeSlot,
   setDisposition,
+  onOpenChecklist,
 }: {
   consultant: ScheduleConsultant;
   color: string;
@@ -1578,6 +1623,7 @@ function ConsultantSection({
   bookingName: string | null;
   bookBloomeSlot: (cid: string, date: string, hour: number) => void;
   setDisposition: (apptId: string, disposition: string) => void;
+  onOpenChecklist?: (a: ScheduleAppointment) => void;
 }) {
   const cid = consultant.id;
   const activeDate = dates[activeDay];
@@ -1989,7 +2035,8 @@ function ConsultantSection({
                             onClick={() => removeLead(lead)}
                           >
                             ✕
-                          </button>
+                          </button>{" "}
+                          <ChecklistButton appt={lead} onOpen={onOpenChecklist} />
                         </td>
                       </tr>,
                     );
@@ -2097,7 +2144,8 @@ function ConsultantSection({
                             }
                           >
                             Edit
-                          </button>
+                          </button>{" "}
+                          <ChecklistButton appt={extra} onOpen={onOpenChecklist} />
                         </td>
                       </tr>,
                     );
@@ -2205,7 +2253,9 @@ function ConsultantSection({
                             )}
                           </td>
                         ))}
-                        <td />
+                        <td className="whitespace-nowrap px-2 py-1.5">
+                          <ChecklistButton appt={l} onOpen={onOpenChecklist} />
+                        </td>
                       </tr>
                     ))}
                   </>

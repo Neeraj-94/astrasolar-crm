@@ -2,7 +2,10 @@
  * Seed: permission vocabulary + 10 system roles (from permission-matrix.md) +
  * a bootstrap super admin. Idempotent — safe to run repeatedly.
  */
-import { PrismaClient } from '../src/db';
+// Import the Prisma client directly from its generated output (not via the
+// `src/db` barrel) so the seed runs in the production container, whose image
+// ships `prisma/` + `dist/` but not `src/`.
+import { PrismaClient } from './generated/client';
 import * as bcrypt from 'bcryptjs';
 import {
   PERMISSION_DESCRIPTIONS,
