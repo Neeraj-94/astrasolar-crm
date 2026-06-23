@@ -62,6 +62,9 @@ export class LeadsService {
         leadGen: { select: { id: true, name: true } },
         consultant: { select: { id: true, name: true } },
         booking: true,
+        // Lightweight status so the web can label the checklist action
+        // ("Build" vs "View / Edit") without an extra round-trip per row.
+        checklist: { select: { status: true } },
       },
     });
   }

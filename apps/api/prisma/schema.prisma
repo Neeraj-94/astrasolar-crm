@@ -87,6 +87,7 @@ model User {
   tasksCreated             TaskCard[]               @relation("TaskCreator")
   taskNudgesSent           TaskCard[]               @relation("TaskNudger")
   notifications            Notification[]           @relation("UserNotifications")
+  checklistsCreated        LeadChecklist[]          @relation("ChecklistCreatedBy")
 
   sortOrder     Int?                             // manual drag-and-drop row order (null = default sort)
 
@@ -199,6 +200,7 @@ model Lead {
   booking       Booking?
   convertedAt   DateTime?
   sale          Sale?
+  checklist     LeadChecklist?                                   // per-lead system-recommendation checklist (1:1)
 
   stateLog      LeadStateLog[]                                   // any change to the fields above is logged here
   activities    Activity[]
@@ -1447,4 +1449,71 @@ model NovaSetting {
   value     String
   updatedBy String?
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+//  LEAD CHECKLIST — per-lead system-recommendation capture + AI result
+// ----------------------------------------------------------------------------
+// Filled by the assigned consultant before an appointment. On submit, the
+// captured payload is sent to Nova (NovaRecommendationService), which returns
+// 5 quote-ready system packages with one marked "Most Recommended". The
+// captured fields stay queryable columns; the day/usage split, prior-system
+// block, brand preferences and the AI result are stored as JSON. DRAFT = saved
+// with no AI call; COMPLETED = an AI result is attached.
+// ============================================================================
+
+enum ChecklistStatus {
+  DRAFT
+  COMPLETED
+}
+
+model LeadChecklist {
+  id            String          @id @default(uuid())
+  leadId        String          @unique                 // 1 lead -> at most 1 checklist
+  lead          Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  status        ChecklistStatus @default(DRAFT)
+
+  // ── Group 1 — Lead & site ────────────────────────────────────────────────
+  state         String?                                  // NSW | ACT | TAS (drives finance + TAS permit logic)
+  nmi           String?                                  // National Meter Identifier (10–11 chars)
+  roofType      String?                                  // tile | tin-colorbond | klip-lok | decramastic | flat-membrane
+  storeys       Int?
+  orientation   String?                                  // roof orientation / aspect
+  shadingNotes  String?
+  phase         String?                                  // single | three
+  switchboard   String?                                  // age / condition note
+
+  // ── Group 2 — Energy profile ─────────────────────────────────────────────
+  spendAmount   Decimal?        @db.Decimal(12, 2)       // current electricity spend
+  spendPeriod   String?                                  // quarter | year
+  usageSplit    Json?                                    // { day: %, night: % }
+  drivers       String[]        @default([])             // customer drivers (multi-select keys)
+  budgetPosture String?                                  // cash | finance | show_both
+
+  // ── Group 3 — System category ────────────────────────────────────────────
+  category      String?                                  // new | replacement | additional | both
+  priorSystem   Json?                                    // conditional block when category != new
+
+  // ── Group 4 — Constraints / preferences ──────────────────────────────────
+  preferredBrands String[]      @default([])
+  excludedBrands  String[]      @default([])
+  batteryPref   String?                                  // yes | no | let_ai_decide
+  evChargerPref String?                                  // yes | no | let_ai_decide
+  budgetCeiling Decimal?        @db.Decimal(12, 2)
+
+  // ── AI result (the 5 quote-ready packages) ───────────────────────────────
+  result              Json?                              // full SystemRecommendationResult contract
+  recommendedOptionId String?                            // the option flagged "Most Recommended"
+  selectedOptionId    String?                            // the option the consultant chose to use
+  generatedAt         DateTime?
+
+  createdById   String
+  createdBy     User            @relation("ChecklistCreatedBy", fields: [createdById], references: [id])
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+  @@index([createdById])
 }

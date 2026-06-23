@@ -53,6 +53,10 @@ export interface SalesLead {
   /** ISO date the lead was originally set on */
   dateSet: string;
   disposition: Disposition;
+  /** Lead lifecycle stage (INTAKE | BOOKED | CONVERTED | CLOSED). */
+  stage?: string;
+  /** Checklist status if one exists for this lead ("DRAFT" | "COMPLETED"). */
+  checklistStatus?: "DRAFT" | "COMPLETED" | null;
 }
 
 export const DISPOSITION_LABEL: Record<Disposition, string> = {
@@ -145,6 +149,7 @@ export interface ApiLead {
   consultantNotes?: string | null;
   consultant?: { id: string; name: string } | null;
   leadGen?: { id: string; name: string } | null;
+  checklist?: { status: "DRAFT" | "COMPLETED" } | null;
 }
 
 function isoDate(v?: string | null): string {
@@ -185,6 +190,8 @@ export function mapApiLead(l: ApiLead): SalesLead {
     disposition: l.disposition
       ? (API_TO_DISPOSITION[l.disposition] ?? "set")
       : "set",
+    stage: l.stage ?? undefined,
+    checklistStatus: l.checklist?.status ?? null,
   };
 }
 

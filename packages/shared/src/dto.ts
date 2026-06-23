@@ -243,3 +243,186 @@ export interface MoveTaskRequest {
   listId: string; // target list (may equal current list)
   position: number; // 0-based index within the target list
 }
+
+// ---- Lead system-recommendation checklist ----------------------------------
+// The per-lead checklist a consultant fills before an appointment. On submit it
+// is sent to Nova, which returns 5 quote-ready system packages (one
+// recommended). The capture payload (request) and the AI result (response)
+// are both modelled here as the wire contract shared by web + api.
+
+export type ChecklistCategory =
+  | 'new'
+  | 'replacement'
+  | 'additional'
+  | 'both';
+
+export type SpendPeriod = 'quarter' | 'year';
+export type BudgetPosture = 'cash' | 'finance' | 'show_both';
+export type PreferenceFlag = 'yes' | 'no' | 'let_ai_decide';
+
+// The customer-driver vocabulary (multi-select). Keys are stable; labels live
+// on the web side.
+export const CHECKLIST_DRIVERS = [
+  'bill_reduction',
+  'blackout_backup',
+  'ev_now',
+  'ev_soon',
+  'pool_spa',
+  'ducted_ac',
+  'home_business',
+  'go_green',
+  'property_value',
+  'beat_price_changes',
+] as const;
+export type ChecklistDriver = (typeof CHECKLIST_DRIVERS)[number];
+
+export const CHECKLIST_ROOF_TYPES = [
+  'tile',
+  'tin_colorbond',
+  'klip_lok',
+  'decramastic',
+  'flat_membrane',
+] as const;
+export type RoofType = (typeof CHECKLIST_ROOF_TYPES)[number];
+
+export interface UsageSplit {
+  day: number; // %
+  night: number; // %
+}
+
+// The conditional prior-system block (required when category !== 'new').
+export interface PriorSystemDetails {
+  existingArrayKw?: number;
+  existingArrayAgeYears?: number;
+  existingInverter?: string; // make/model/size
+  existingInverterPhase?: string;
+  working?: boolean; // working | faulty
+  existingBattery?: string;
+  keptRemovedAdded?: string; // what's kept / removed / added
+  disposal?: string; // disposal vs left with customer
+}
+
+// What the web sends to save a draft or request recommendations. Everything is
+// optional at the draft stage; the api enforces the required set only when
+// generating recommendations.
+export interface SaveChecklistRequest {
+  // Group 1 — lead & site
+  state?: string; // NSW | ACT | TAS
+  nmi?: string;
+  roofType?: RoofType;
+  storeys?: number;
+  orientation?: string;
+  shadingNotes?: string;
+  phase?: 'single' | 'three';
+  switchboard?: string;
+
+  // Group 2 — energy profile
+  spendAmount?: number;
+  spendPeriod?: SpendPeriod;
+  usageSplit?: UsageSplit;
+  drivers?: ChecklistDriver[];
+  budgetPosture?: BudgetPosture;
+
+  // Group 3 — system category
+  category?: ChecklistCategory;
+  priorSystem?: PriorSystemDetails;
+
+  // Group 4 — constraints / preferences
+  preferredBrands?: string[];
+  excludedBrands?: string[];
+  batteryPref?: PreferenceFlag;
+  evChargerPref?: PreferenceFlag;
+  budgetCeiling?: number;
+}
+
+// One quote-ready system package (§5 of the spec).
+export interface SystemOptionSizing {
+  array_kw: number;
+  inverter_kw: number;
+  inverter_phase: string;
+  battery_kwh?: number;
+}
+
+export interface SystemOptionProducts {
+  panels: string;
+  inverter: string;
+  battery?: string;
+  extras?: string[];
+}
+
+export interface SystemOptionPrice {
+  total_inc_gst: number;
+  currency: string; // "AUD"
+  indicative: boolean; // always true
+}
+
+export interface FinanceProduct {
+  name: string;
+  amount: number;
+  term_years: number;
+  frequency: string; // weekly | fortnightly | monthly
+  approx_repayment: number;
+}
+
+export interface SystemOptionFinance {
+  products: FinanceProduct[];
+  combined_repayment_note?: string;
+  no_penalty_note?: boolean;
+}
+
+export interface SystemOption {
+  option_id: string;
+  label: string; // e.g. "Recommended", "Entry", "Premium"
+  summary: string;
+  sizing: SystemOptionSizing;
+  products: SystemOptionProducts;
+  price: SystemOptionPrice;
+  finance: SystemOptionFinance;
+  permit_flags: string[]; // e.g. ["TAS_building_permit_required"]
+  rationale: string;
+  tradeoffs: string;
+}
+
+// The AI response contract — exactly 5 options, exactly one recommended.
+export interface SystemRecommendationResult {
+  lead_id: string;
+  recommended_option_id: string;
+  options: SystemOption[];
+}
+
+// The persisted checklist as returned by the api.
+export interface LeadChecklistDto {
+  id: string;
+  leadId: string;
+  status: 'DRAFT' | 'COMPLETED';
+  state: string | null;
+  nmi: string | null;
+  roofType: string | null;
+  storeys: number | null;
+  orientation: string | null;
+  shadingNotes: string | null;
+  phase: string | null;
+  switchboard: string | null;
+  spendAmount: number | null;
+  spendPeriod: string | null;
+  usageSplit: UsageSplit | null;
+  drivers: string[];
+  budgetPosture: string | null;
+  category: string | null;
+  priorSystem: PriorSystemDetails | null;
+  preferredBrands: string[];
+  excludedBrands: string[];
+  batteryPref: string | null;
+  evChargerPref: string | null;
+  budgetCeiling: number | null;
+  result: SystemRecommendationResult | null;
+  recommendedOptionId: string | null;
+  selectedOptionId: string | null;
+  generatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SelectChecklistOptionRequest {
+  optionId: string;
+}

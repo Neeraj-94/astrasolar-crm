@@ -9,7 +9,7 @@
  */
 
 import * as React from "react";
-import { Flame, Phone, Mail, Pencil } from "lucide-react";
+import { ClipboardList, Flame, Phone, Mail, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DataTable,
@@ -244,6 +244,8 @@ interface LeadsTableProps {
   dispositionOptions?: Disposition[];
   /** Enable drag-and-drop row reordering (rows must come pre-ordered). */
   sortable?: SortableConfig;
+  /** Open the system-recommendation checklist for a booked lead (Actions col). */
+  onOpenChecklist?: (lead: SalesLead) => void;
 }
 
 const HEADER_LABEL: Record<LeadColumn, string> = {
@@ -282,6 +284,7 @@ export function LeadsTable({
   onDispose,
   dispositionOptions,
   sortable,
+  onOpenChecklist,
 }: LeadsTableProps) {
   if (rows.length === 0) {
     return (
@@ -319,7 +322,8 @@ export function LeadsTable({
                   className="px-3 py-2 border-b align-top text-sm whitespace-nowrap"
                 >
                   <Cell row={r} index={i} column={c} onDispose={onDispose}
-                    dispositionOptions={dispositionOptions} />
+                    dispositionOptions={dispositionOptions}
+                    onOpenChecklist={onOpenChecklist} />
                 </td>
               ))}
             </TR>
@@ -336,12 +340,14 @@ function Cell({
   column,
   onDispose,
   dispositionOptions,
+  onOpenChecklist,
 }: {
   row: SalesLead;
   index: number;
   column: LeadColumn;
   onDispose?: (lead: SalesLead, next: Disposition) => void;
   dispositionOptions?: Disposition[];
+  onOpenChecklist?: (lead: SalesLead) => void;
 }) {
   switch (column) {
     case "index":
@@ -451,16 +457,39 @@ function Cell({
       ) : (
         <DispositionBadge value={row.disposition} />
       );
-    case "actions":
+    case "actions": {
+      // The checklist button shows only for booked (or converted) leads —
+      // mirrors the spec's "visible only when booked/appointment-set" rule.
+      const booked = row.stage === "BOOKED" || row.stage === "CONVERTED";
+      const hasChecklist = !!row.checklistStatus;
       return (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
-        >
-          <Pencil className="h-3 w-3" />
-          Edit
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onOpenChecklist && booked && (
+            <button
+              type="button"
+              onClick={() => onOpenChecklist(row)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs",
+                hasChecklist
+                  ? "border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
+                  : "hover:bg-accent",
+              )}
+              title={hasChecklist ? "View / edit checklist" : "Build system recommendation checklist"}
+            >
+              <ClipboardList className="h-3 w-3" />
+              {hasChecklist ? "View / Edit" : "Build Checklist"}
+            </button>
+          )}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+          >
+            <Pencil className="h-3 w-3" />
+            Edit
+          </button>
+        </div>
       );
+    }
   }
 }
 

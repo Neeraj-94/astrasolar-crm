@@ -29,6 +29,8 @@ import {
   SalesFilterBar,
   type SalesFilters,
 } from "./shared";
+import { ChecklistDialog } from "./checklist/checklist-dialog";
+import type { SalesLead } from "@/lib/sales/leads";
 
 const DISPOSITION_OPTIONS: Disposition[] = [
   "set",
@@ -55,6 +57,8 @@ export function MyLeadsTab() {
   // Optimistic inline-disposition overrides keyed by lead id.
   const [overrides, setOverrides] = React.useState<Record<string, Disposition>>({});
   const [rowOrder, setRowOrder] = React.useState<string[] | null>(null);
+  // The lead whose system-recommendation checklist is open (null = closed).
+  const [checklistLead, setChecklistLead] = React.useState<SalesLead | null>(null);
 
   const rows = React.useMemo(
     () =>
@@ -197,6 +201,7 @@ export function MyLeadsTab() {
           emptyLabel={loading ? "Loading leads…" : "No leads for this day yet."}
           onDispose={(lead, d) => dispose(lead.id, d)}
           dispositionOptions={DISPOSITION_OPTIONS}
+          onOpenChecklist={setChecklistLead}
           sortable={{
             ids: visible.map((r) => r.id),
             onReorder: setRowOrder,
@@ -214,6 +219,15 @@ export function MyLeadsTab() {
           astrasolar-app once a row's disposition is set to <strong>Sold</strong>.
         </p>
       </Section>
+
+      {checklistLead && (
+        <ChecklistDialog
+          leadId={checklistLead.id}
+          leadName={checklistLead.name}
+          onClose={() => setChecklistLead(null)}
+          onSaved={reload}
+        />
+      )}
     </div>
   );
 }
