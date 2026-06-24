@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/lib/rbac";
 import { listConsultants, startOfWeek, addDays } from "@/lib/availability";
 import { listAppointments } from "@/lib/leads/appointments";
 import {
@@ -17,6 +18,7 @@ import {
  * forward/back without a server round-trip for adjacent weeks.
  */
 export async function LeadsScheduleTab() {
+  const user = await getCurrentUser();
   const dbConsultants = await listConsultants();
 
   const consultants: ScheduleConsultant[] = dbConsultants.map((c) => ({
@@ -43,6 +45,7 @@ export async function LeadsScheduleTab() {
     <LeadsScheduleClient
       consultants={consultants}
       appointments={appointments as ScheduleAppointment[]}
+      currentUserId={user?.id ?? null}
     />
   );
 }

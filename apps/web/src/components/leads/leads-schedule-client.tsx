@@ -40,8 +40,7 @@ import {
   type ScheduleAppointment,
   type ScheduleConsultant,
 } from "@/lib/leads/schedule-types";
-import { ChecklistDialog } from "@/components/sales/checklist/checklist-dialog";
-
+import { BookAppointmentDialog } from "@/components/leads/book-appointment-dialog";
 // Re-export so existing imports from this module keep working.
 export type { ScheduleConsultant, ScheduleAppointment };
 
@@ -337,33 +336,6 @@ const REMOVE_BTN =
   "whitespace-nowrap rounded border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[0.58rem] text-destructive transition-colors hover:bg-destructive hover:text-white";
 const CANCEL_BTN =
   "whitespace-nowrap rounded border border-border px-2 py-0.5 text-[0.58rem] text-muted-foreground transition-colors hover:text-foreground";
-const CHECKLIST_BTN =
-  "whitespace-nowrap rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[0.58rem] text-primary transition-colors hover:bg-primary hover:text-primary-foreground";
-
-/**
- * The per-appointment "Checklist" action — opens the system-recommendation
- * checklist for that booked lead. Every appointment in the schedule is a booked
- * lead, so the button shows on each row.
- */
-function ChecklistButton({
-  appt,
-  onOpen,
-}: {
-  appt: ScheduleAppointment;
-  onOpen?: (a: ScheduleAppointment) => void;
-}) {
-  if (!onOpen) return null;
-  return (
-    <button
-      type="button"
-      className={CHECKLIST_BTN}
-      title="System recommendation checklist"
-      onClick={() => onOpen(appt)}
-    >
-      Checklist
-    </button>
-  );
-}
 const ENTRY_INPUT =
   "w-full rounded border border-input bg-background px-1.5 py-1 text-[0.68rem] text-foreground focus:border-primary focus:outline-none";
 
@@ -375,11 +347,14 @@ interface LeadsScheduleClientProps {
   consultants: ScheduleConsultant[];
   /** Optional server-fetched first paint (current week). */
   appointments?: ScheduleAppointment[];
+  /** Logged-in user's id — only the owning consultant can set dispositions. */
+  currentUserId?: string | null;
 }
 
 export function LeadsScheduleClient({
   consultants,
   appointments: initialAppointments,
+  currentUserId,
 }: LeadsScheduleClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -417,16 +392,11 @@ export function LeadsScheduleClient({
     key: keyof EntryDraft;
     value: string;
   } | null>(null);
-  const [reschedule, setReschedule] = React.useState<{
-    apptId: string;
-    date: string;
-    hour: number;
-    reason: string;
-  } | null>(null);
+  // The appointment being rescheduled (null = closed). Picking a new slot is
+  // done through the same booking picker used for Bloome leads.
+  const [rescheduleApptId, setRescheduleApptId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
-  // The appointment whose system-recommendation checklist is open (null = closed).
-  const [checklistAppt, setChecklistAppt] = React.useState<ScheduleAppointment | null>(null);
 
   // Tick every 30s so next-call countdowns stay fresh (legacy interval).
   const [, setTick] = React.useState(0);
@@ -442,7 +412,7 @@ export function LeadsScheduleClient({
     setEntryDrafts({});
     setEditDrafts({});
     setFieldEdit(null);
-    setReschedule(null);
+    setRescheduleApptId(null);
   }, [weekOffset, consultants]);
 
   // ---- Bloome booking mode (?bloomeLeadId=…) — kept from current v2 -------
@@ -459,18 +429,12 @@ export function LeadsScheduleClient({
     router.replace("/leads/leads-schedule");
   }, [router]);
 
-  // ---- Rebook mode (?rebookApptId=…) — opens the reschedule modal for a lead
+  // ---- Rebook mode (?rebookApptId=…) — opens the booking picker for a lead
   // sent here from the No Answers tab's "Rebook" action.
   const rebookApptId = searchParams.get("rebookApptId");
   React.useEffect(() => {
     if (!rebookApptId) return;
-    const firstHour = LG_SLOT_HOURS.find((h) => h <= API_LAST_BOOKABLE_HOUR) ?? 8;
-    setReschedule({
-      apptId: rebookApptId,
-      date: dates[0] ?? todayISO,
-      hour: firstHour,
-      reason: "",
-    });
+    setRescheduleApptId(rebookApptId);
     router.replace("/leads/leads-schedule");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rebookApptId]);
@@ -505,6 +469,18 @@ export function LeadsScheduleClient({
     (cid: string) => !!subIndex.get(cid)?.submitted,
     [subIndex],
   );
+
+  // Consultant table order: alphabetical by name, but consultants who have not
+  // submitted their availability for the week sink to the bottom (still
+  // alphabetical among themselves).
+  const orderedConsultants = React.useMemo(() => {
+    return [...consultants].sort((a, b) => {
+      const aSub = hasSubmitted(a.id);
+      const bSub = hasSubmitted(b.id);
+      if (aSub !== bSub) return aSub ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [consultants, hasSubmitted]);
 
   /** Mirrors the API's canBook semantics so UI and server agree. */
   const isSlotAvailable = React.useCallback(
@@ -642,22 +618,28 @@ export function LeadsScheduleClient({
     [editDrafts, reload],
   );
 
-  const saveFieldEdit = React.useCallback(async () => {
-    if (!fieldEdit) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await apiPatch(`/scheduling/appointments/${fieldEdit.apptId}`, {
-        [fieldEdit.key]: fieldEdit.value.trim() || null,
-      });
-      setFieldEdit(null);
-      reload();
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setBusy(false);
-    }
-  }, [fieldEdit, reload]);
+  // Commit the inline cell edit. `override` lets an option dropdown save the
+  // freshly-picked value directly without waiting for the state update.
+  const saveFieldEdit = React.useCallback(
+    async (override?: string) => {
+      if (!fieldEdit) return;
+      const value = override ?? fieldEdit.value;
+      setBusy(true);
+      setActionError(null);
+      try {
+        await apiPatch(`/scheduling/appointments/${fieldEdit.apptId}`, {
+          [fieldEdit.key]: value.trim() || null,
+        });
+        setFieldEdit(null);
+        reload();
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : "Failed to save");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [fieldEdit, reload],
+  );
 
   const removeLead = React.useCallback(
     async (appt: ScheduleAppointment) => {
@@ -677,28 +659,24 @@ export function LeadsScheduleClient({
     [reload],
   );
 
-  const commitReschedule = React.useCallback(async () => {
-    if (!reschedule) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await apiPatch(`/scheduling/appointments/${reschedule.apptId}`, {
-        date: reschedule.date,
-        hour: reschedule.hour,
-        minute: 0,
-        rescheduleReason: reschedule.reason || null,
+  // Commit a reschedule to the slot chosen in the booking picker. The lead
+  // moves to that consultant/day/time and is badged "Has Been Rescheduled".
+  // Throws on failure so the dialog can surface the error inline.
+  const rescheduleToSlot = React.useCallback(
+    async (slot: { consultantId: string; date: string; hour: number; minute: number }) => {
+      if (!rescheduleApptId) return;
+      await apiPatch(`/scheduling/appointments/${rescheduleApptId}`, {
+        consultantId: slot.consultantId,
+        date: slot.date,
+        hour: slot.hour,
+        minute: slot.minute,
         // Rebooking resolves a RESCHEDULE: the lead lands in its new slot,
         // badged "Has Been Rescheduled".
         disposition: "been_rescheduled",
       });
-      setReschedule(null);
-      reload();
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Failed to reschedule");
-    } finally {
-      setBusy(false);
-    }
-  }, [reschedule, reload]);
+    },
+    [rescheduleApptId],
+  );
 
   // Set a lead's disposition from the schedule. A VACATING value (e.g.
   // "reschedule") empties the slot server-side and moves the row to Additional
@@ -768,6 +746,17 @@ export function LeadsScheduleClient({
   const loadErrors = [appts.error, avail.error, subs.error].filter(Boolean) as string[];
   const colorOf = (cid: string) =>
     TEAM_COLORS[Math.max(0, consultants.findIndex((c) => c.id === cid)) % TEAM_COLORS.length];
+
+  // Name of the lead currently being rescheduled (for the booking dialog header).
+  const rescheduleName = React.useMemo(() => {
+    const a = appointments.find((x) => x.id === rescheduleApptId);
+    if (!a) return "this lead";
+    return (
+      a.customer ||
+      [a.firstName, a.lastName].filter(Boolean).join(" ") ||
+      "this lead"
+    );
+  }, [appointments, rescheduleApptId]);
 
   // ===========================================================================
   // Render
@@ -946,7 +935,7 @@ export function LeadsScheduleClient({
             <table className="w-full border-collapse text-[0.58rem]">
               <thead>
                 <tr>
-                  <th className="min-w-[100px] py-1 pr-2 text-left font-semibold text-muted-foreground">
+                  <th className="min-w-[100px] border-b border-border py-1 pr-2 text-left font-semibold text-muted-foreground">
                     Consultant
                   </th>
                   {dates.map((dt) => {
@@ -959,7 +948,7 @@ export function LeadsScheduleClient({
                       <th
                         key={dt}
                         className={cn(
-                          "min-w-[30px] whitespace-nowrap px-1 py-1 text-center text-[0.55rem] font-semibold text-muted-foreground",
+                          "min-w-[30px] whitespace-nowrap border-b border-border px-1 py-1 text-center text-[0.55rem] font-semibold text-muted-foreground",
                           isToday && "border-b-2 border-primary text-primary",
                           isTomorrow && "border-b-2 border-info text-info",
                         )}
@@ -972,7 +961,7 @@ export function LeadsScheduleClient({
                   })}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="[&>tr>td]:border-b [&>tr>td]:border-border">
                 {consultants.map((c) => (
                   <tr key={c.id}>
                     <td className="whitespace-nowrap border-r border-border py-1 pr-2 text-[0.62rem] font-medium">
@@ -983,6 +972,7 @@ export function LeadsScheduleClient({
                       let tip = `${c.name} — ${dt}: `;
                       let openLabel: number | null = null;
                       if (!hasSubmitted(c.id)) {
+                        cls = "bg-destructive/50 border border-destructive/30";
                         tip += "No availability submitted";
                       } else {
                         let totalAvail = 0;
@@ -1167,7 +1157,7 @@ export function LeadsScheduleClient({
           bookBloomeSlot={bookBloomeSlot}
         />
       ) : (
-        consultants.map((c) => (
+        orderedConsultants.map((c) => (
           <ConsultantSection
             key={c.id}
             consultant={c}
@@ -1188,7 +1178,7 @@ export function LeadsScheduleClient({
             fieldEdit={fieldEdit}
             setFieldEdit={setFieldEdit}
             saveFieldEdit={saveFieldEdit}
-            setReschedule={setReschedule}
+            onReschedule={setRescheduleApptId}
             createLead={createLead}
             saveEdit={saveEdit}
             removeLead={removeLead}
@@ -1197,167 +1187,24 @@ export function LeadsScheduleClient({
             bookingName={bookingName}
             bookBloomeSlot={bookBloomeSlot}
             setDisposition={setDisposition}
-            onOpenChecklist={setChecklistAppt}
+            currentUserId={currentUserId}
           />
         ))
       )}
 
-      {reschedule && (
-        <RescheduleModal
-          state={reschedule}
-          setState={setReschedule}
-          onConfirm={commitReschedule}
-          onClose={() => setReschedule(null)}
-          busy={busy}
-          dates={dates}
+      {rescheduleApptId && (
+        <BookAppointmentDialog
+          leadName={rescheduleName}
+          title="Reschedule Appointment"
+          confirmVerb="Reschedule"
+          onSubmitSlot={rescheduleToSlot}
+          onClose={() => setRescheduleApptId(null)}
+          onBooked={() => {
+            setRescheduleApptId(null);
+            reload();
+          }}
         />
       )}
-
-      {checklistAppt && (
-        <ChecklistDialog
-          leadId={checklistAppt.leadId}
-          leadName={
-            checklistAppt.customer ||
-            [checklistAppt.firstName, checklistAppt.lastName].filter(Boolean).join(" ") ||
-            "this lead"
-          }
-          onClose={() => setChecklistAppt(null)}
-          onSaved={reload}
-        />
-      )}
-    </div>
-  );
-}
-
-// ===========================================================================
-// Reschedule modal — pick a new slot + reason for a lead being rebooked.
-// Confirming marks the lead "Has Been Rescheduled" (disposition
-// been_rescheduled) and drops it into the chosen slot. Replaces the legacy
-// inline reschedule panel.
-// ===========================================================================
-
-function RescheduleModal({
-  state,
-  setState,
-  onConfirm,
-  onClose,
-  busy,
-  dates,
-}: {
-  state: { apptId: string; date: string; hour: number; reason: string };
-  setState: React.Dispatch<
-    React.SetStateAction<{
-      apptId: string;
-      date: string;
-      hour: number;
-      reason: string;
-    } | null>
-  >;
-  onConfirm: () => void;
-  onClose: () => void;
-  busy: boolean;
-  dates: string[];
-}) {
-  const bookableHours = LG_SLOT_HOURS.filter((h) => h <= API_LAST_BOOKABLE_HOUR);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-xl border bg-card p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-base font-semibold">Reschedule lead</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pick a new day and time. The lead will be marked{" "}
-          <span className="font-medium text-foreground">Has Been Rescheduled</span>{" "}
-          and placed in the chosen slot.
-        </p>
-
-        <div className="mt-4 space-y-3">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Day
-            </label>
-            <select
-              value={state.date}
-              onChange={(e) =>
-                setState((r) => (r ? { ...r, date: e.target.value } : r))
-              }
-              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            >
-              {dates.map((dt) => (
-                <option key={dt} value={dt}>
-                  {fmtDayLong(dt)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Time
-            </label>
-            <select
-              value={state.hour}
-              onChange={(e) =>
-                setState((r) =>
-                  r ? { ...r, hour: Number(e.target.value) } : r,
-                )
-              }
-              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            >
-              {bookableHours.map((h) => (
-                <option key={h} value={h}>
-                  {hourLabel(h)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Reason
-            </label>
-            <select
-              value={state.reason}
-              onChange={(e) =>
-                setState((r) => (r ? { ...r, reason: e.target.value } : r))
-              }
-              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            >
-              <option value="">Reason…</option>
-              <option>Customer requested</option>
-              <option>Consultant unavailable</option>
-              <option>No answer</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            className={CANCEL_BTN}
-            onClick={onClose}
-            disabled={busy}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={CREATE_BTN}
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            {busy ? "Rebooking…" : "Confirm rebooking"}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1581,7 +1428,7 @@ function ConsultantSection({
   fieldEdit,
   setFieldEdit,
   saveFieldEdit,
-  setReschedule,
+  onReschedule,
   createLead,
   saveEdit,
   removeLead,
@@ -1590,7 +1437,7 @@ function ConsultantSection({
   bookingName,
   bookBloomeSlot,
   setDisposition,
-  onOpenChecklist,
+  currentUserId,
 }: {
   consultant: ScheduleConsultant;
   color: string;
@@ -1611,10 +1458,9 @@ function ConsultantSection({
   setFieldEdit: React.Dispatch<
     React.SetStateAction<{ apptId: string; key: keyof EntryDraft; value: string } | null>
   >;
-  saveFieldEdit: () => void;
-  setReschedule: React.Dispatch<
-    React.SetStateAction<{ apptId: string; date: string; hour: number; reason: string } | null>
-  >;
+  saveFieldEdit: (override?: string) => void;
+  /** Open the booking picker to reschedule this appointment. */
+  onReschedule: (apptId: string) => void;
   createLead: (cid: string, date: string, slotIdx: number) => void;
   saveEdit: (a: ScheduleAppointment) => void;
   removeLead: (a: ScheduleAppointment) => void;
@@ -1623,9 +1469,11 @@ function ConsultantSection({
   bookingName: string | null;
   bookBloomeSlot: (cid: string, date: string, hour: number) => void;
   setDisposition: (apptId: string, disposition: string) => void;
-  onOpenChecklist?: (a: ScheduleAppointment) => void;
+  currentUserId?: string | null;
 }) {
   const cid = consultant.id;
+  // Disposition is the consultant's call: only the logged-in owner can set it.
+  const isOwnConsultant = !!currentUserId && cid === currentUserId;
   const activeDate = dates[activeDay];
   const dayLeads = dayLeadsByDate.get(activeDate) ?? [];
   const totalBooked = dates.reduce((s, dt) => s + (dayLeadsByDate.get(dt)?.length ?? 0), 0);
@@ -1773,7 +1621,7 @@ function ConsultantSection({
                     ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="[&>tr>td]:border-b [&>tr>td]:border-border">
                 {LG_SLOT_HOURS.map((hour, slotIdx) => {
                   const timeLabel = LG_TIME_SLOTS[slotIdx];
                   const slotLeads = activeLeads.filter(
@@ -1880,7 +1728,7 @@ function ConsultantSection({
                             value={lead.disposition}
                             apptId={lead.id}
                             onSet={setDisposition}
-                            disabled={busy}
+                            disabled={busy || !isOwnConsultant}
                           />
                         </td>
                         {ENTRY_FIELDS.map((f) => (
@@ -1964,7 +1812,7 @@ function ConsultantSection({
                             value={lead.disposition}
                             apptId={lead.id}
                             onSet={setDisposition}
-                            disabled={busy}
+                            disabled={busy || !isOwnConsultant}
                           />
                         </td>
                         {ENTRY_FIELDS.map((f) => {
@@ -1982,22 +1830,41 @@ function ConsultantSection({
                               }
                             >
                               {isEditing ? (
-                                <input
-                                  autoFocus
-                                  type="text"
-                                  value={fieldEdit.value}
-                                  onChange={(e) =>
-                                    setFieldEdit((fe) =>
-                                      fe ? { ...fe, value: e.target.value } : fe,
-                                    )
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") saveFieldEdit();
-                                    if (e.key === "Escape") setFieldEdit(null);
-                                  }}
-                                  onBlur={saveFieldEdit}
-                                  className="w-full rounded border border-primary bg-background px-1 py-0.5 text-[0.68rem] focus:outline-none"
-                                />
+                                f.type === "select" ? (
+                                  <select
+                                    autoFocus
+                                    value={fieldEdit.value}
+                                    onChange={(e) => saveFieldEdit(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Escape") setFieldEdit(null);
+                                    }}
+                                    onBlur={() => setFieldEdit(null)}
+                                    className="w-full rounded border border-primary bg-background px-1 py-0.5 text-[0.68rem] focus:outline-none"
+                                  >
+                                    {f.options!.map((o) => (
+                                      <option key={o} value={o}>
+                                        {o || "—"}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    value={fieldEdit.value}
+                                    onChange={(e) =>
+                                      setFieldEdit((fe) =>
+                                        fe ? { ...fe, value: e.target.value } : fe,
+                                      )
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") saveFieldEdit();
+                                      if (e.key === "Escape") setFieldEdit(null);
+                                    }}
+                                    onBlur={() => saveFieldEdit()}
+                                    className="w-full rounded border border-primary bg-background px-1 py-0.5 text-[0.68rem] focus:outline-none"
+                                  />
+                                )
                               ) : (
                                 val || <span className="text-muted-foreground/40">—</span>
                               )}
@@ -2005,43 +1872,37 @@ function ConsultantSection({
                           );
                         })}
                         <td className="whitespace-nowrap px-2 py-1.5">
-                          <button
-                            type="button"
-                            className={EDIT_BTN}
-                            onClick={() =>
-                              setEditDrafts((d) => ({ ...d, [lead.id]: draftFromAppt(lead) }))
-                            }
-                          >
-                            Edit
-                          </button>{" "}
-                          <button
-                            type="button"
-                            className={cn(EDIT_BTN, "bg-info/10 text-info border-info/30")}
-                            onClick={() =>
-                              setReschedule({
-                                apptId: lead.id,
-                                date: activeDate,
-                                hour,
-                                reason: "",
-                              })
-                            }
-                          >
-                            Reschedule
-                          </button>{" "}
-                          <button
-                            type="button"
-                            className={REMOVE_BTN}
-                            disabled={busy}
-                            onClick={() => removeLead(lead)}
-                          >
-                            ✕
-                          </button>{" "}
-                          <ChecklistButton appt={lead} onOpen={onOpenChecklist} />
+                          <div className="flex flex-col items-stretch gap-1">
+                            <button
+                              type="button"
+                              className={EDIT_BTN}
+                              onClick={() =>
+                                setEditDrafts((d) => ({ ...d, [lead.id]: draftFromAppt(lead) }))
+                              }
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(EDIT_BTN, "bg-info/10 text-info border-info/30")}
+                              onClick={() => onReschedule(lead.id)}
+                            >
+                              Reschedule
+                            </button>
+                            <button
+                              type="button"
+                              className={REMOVE_BTN}
+                              disabled={busy}
+                              onClick={() => removeLead(lead)}
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </td>
                       </tr>,
                     );
-                    // Reschedule is performed via the RescheduleModal (rendered
-                    // once at the top level), driven by the `reschedule` state.
+                    // Reschedule opens the shared booking picker (rendered once
+                    // at the top level), driven by the `rescheduleApptId` state.
                   } else if (!slotAvail) {
                     // ── UNAVAILABLE SLOT ──
                     rows.push(
@@ -2121,7 +1982,7 @@ function ConsultantSection({
                             value={extra.disposition}
                             apptId={extra.id}
                             onSet={setDisposition}
-                            disabled={busy}
+                            disabled={busy || !isOwnConsultant}
                           />
                         </td>
                         {ENTRY_FIELDS.map((f) => (
@@ -2144,8 +2005,7 @@ function ConsultantSection({
                             }
                           >
                             Edit
-                          </button>{" "}
-                          <ChecklistButton appt={extra} onOpen={onOpenChecklist} />
+                          </button>
                         </td>
                       </tr>,
                     );
@@ -2165,7 +2025,7 @@ function ConsultantSection({
                             value={extra.disposition}
                             apptId={extra.id}
                             onSet={setDisposition}
-                            disabled={busy}
+                            disabled={busy || !isOwnConsultant}
                           />
                           </td>
                           {ENTRY_FIELDS.map((f) => (
@@ -2243,7 +2103,7 @@ function ConsultantSection({
                             value={l.disposition}
                             apptId={l.id}
                             onSet={setDisposition}
-                            disabled={busy}
+                            disabled={busy || !isOwnConsultant}
                           />
                         </td>
                         {ENTRY_FIELDS.map((f) => (
@@ -2253,9 +2113,7 @@ function ConsultantSection({
                             )}
                           </td>
                         ))}
-                        <td className="whitespace-nowrap px-2 py-1.5">
-                          <ChecklistButton appt={l} onOpen={onOpenChecklist} />
-                        </td>
+                        <td className="whitespace-nowrap px-2 py-1.5" />
                       </tr>
                     ))}
                   </>

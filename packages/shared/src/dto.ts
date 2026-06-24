@@ -188,14 +188,38 @@ export interface TaskNudgeInfo {
   by: { id: string; name: string };
 }
 
+/** A nested sub-task (lightweight — sub-tasks are not themselves expanded). */
+export interface TaskSubtaskDto {
+  id: string;
+  title: string;
+  completed: boolean;
+  position: number;
+}
+
+export interface TaskCommentDto {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { id: string; name: string };
+}
+
 export interface TaskCardDto {
   id: string;
   listId: string;
   title: string;
   description: string | null;
   priority: TaskPriority;
-  dueDate: string | null; // ISO date
+  dueDate: string | null; // ISO date — the scheduled date
+  deadline: string | null; // ISO date — the hard deadline
+  location: string | null;
+  labels: string[];
+  reminders: string[]; // ISO datetimes
   position: number;
+  completed: boolean;
+  completedAt: string | null; // ISO datetime, null while open
+  parentId: string | null; // null for top-level board cards
+  subtasks: TaskSubtaskDto[]; // populated for top-level cards
+  commentCount: number;
   assignee: { id: string; name: string } | null;
   createdBy: { id: string; name: string };
   /** Most recent nudge; null once the assignee acts on the card. */
@@ -228,7 +252,13 @@ export interface CreateTaskRequest {
   description?: string | null;
   priority?: TaskPriority;
   dueDate?: string | null;
+  deadline?: string | null;
+  location?: string | null;
+  labels?: string[];
+  reminders?: string[];
   assigneeId?: string | null;
+  /** When set, the new card is a sub-task of this card. */
+  parentId?: string | null;
 }
 
 export interface UpdateTaskRequest {
@@ -236,12 +266,21 @@ export interface UpdateTaskRequest {
   description?: string | null;
   priority?: TaskPriority;
   dueDate?: string | null;
+  deadline?: string | null;
+  location?: string | null;
+  labels?: string[];
+  reminders?: string[];
   assigneeId?: string | null;
+  completed?: boolean;
 }
 
 export interface MoveTaskRequest {
   listId: string; // target list (may equal current list)
   position: number; // 0-based index within the target list
+}
+
+export interface CreateTaskCommentRequest {
+  body: string;
 }
 
 // ---- Lead system-recommendation checklist ----------------------------------
@@ -425,4 +464,76 @@ export interface LeadChecklistDto {
 
 export interface SelectChecklistOptionRequest {
   optionId: string;
+}
+
+// ---- Consultant Contacts (Leads -> Consultant Contacts) --------------------
+// Per-consultant callback number + ClickSend sender ID, one pair per brand
+// (Astra Solar / DC Solar). Ported from astrasolar-app's Firebase
+// `/consultantContacts/{consultantId}` node. A null field means "use the
+// system default" for that brand.
+
+export interface ConsultantContactDto {
+  consultantId: string;
+  name: string;
+  role: string | null;
+  email: string;
+  contactPhoneAstra: string | null;
+  senderIdAstra: string | null;
+  contactPhoneDc: string | null;
+  senderIdDc: string | null;
+  updatedAt: string | null;
+  updatedByName: string | null;
+  hasOverride: boolean;
+}
+
+export interface UpsertConsultantContactRequest {
+  contactPhoneAstra?: string | null;
+  senderIdAstra?: string | null;
+  contactPhoneDc?: string | null;
+  senderIdDc?: string | null;
+}
+
+// ---- Blacklist Leads (Leads -> Blacklist Leads) ----------------------------
+// Ported from astrasolar-app's Firebase `/blacklistLeads` node. An entry blocks
+// a person from appearing in Bloome / No Answers / Leads Schedule; a sweep
+// flags matching records (>=2 normalised fields) and logs each removal.
+
+export interface BlacklistEntryDto {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  addedByName: string | null;
+  addedAt: string;
+}
+
+export interface CreateBlacklistEntryRequest {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+export interface BlacklistLogDto {
+  id: string;
+  detectedAt: string;
+  removedAt: string;
+  source: string; // "Bloome" | "No Answers" | "Leads Schedule"
+  matchedFirstName: string | null;
+  matchedLastName: string | null;
+  matchedPhone: string | null;
+  matchedEmail: string | null;
+  matchedAddress: string | null;
+  matchedOn: string; // "phone, email"
+  entryId: string | null;
+  removedByName: string | null;
+}
+
+export interface BlacklistSweepResult {
+  scanned: number;
+  removed: number;
+  bySource: { bloome: number; noAnswers: number; leadsSchedule: number };
 }

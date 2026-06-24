@@ -66,14 +66,21 @@ export async function api<T = unknown>(
   }
 
   if (!res.ok) {
-    let body: unknown;
-    try {
-      body = await res.json();
-    } catch {
-      body = await res.text();
+    // Read the body ONCE — a Response stream can only be consumed a single
+    // time. Reading text and then JSON.parsing it (rather than calling
+    // res.json() then res.text()) avoids "body stream already read" when the
+    // error body is empty or not valid JSON.
+    const raw = await res.text().catch(() => '');
+    let body: unknown = raw || undefined;
+    if (raw) {
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        /* non-JSON error body — keep the raw text */
+      }
     }
     const message =
-      (body as any)?.message || `Request failed (${res.status})`;
+      (body as any)?.message || raw || `Request failed (${res.status})`;
     throw new ApiError(res.status, String(message), body);
   }
 

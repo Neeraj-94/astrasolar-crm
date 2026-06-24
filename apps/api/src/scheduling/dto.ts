@@ -115,7 +115,9 @@ export class CreateAppointmentDto {
 }
 
 export class UpdateAppointmentDto {
-  // Reschedule (both optional — when present together the row moves slot)
+  // Reschedule (all optional — when present together the row moves slot, and
+  // optionally to a different consultant's timeline).
+  @IsOptional() @IsString() consultantId?: string;
   @IsOptional() @Matches(ISO_DATE) date?: string;
   @IsOptional() @IsInt() @Min(0) @Max(23) hour?: number;
   @IsOptional() @IsInt() @IsIn([0, 30]) minute?: number;

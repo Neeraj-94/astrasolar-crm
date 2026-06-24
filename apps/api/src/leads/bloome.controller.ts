@@ -5,7 +5,12 @@ import { CurrentUser, RequirePermissions } from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
 import { BloomeLeadsService } from './bloome.service';
 import { BloomeSyncService } from './bloome-sync.service';
-import { BookBloomeLeadDto, UpdateBloomeLeadDto } from './dto';
+import {
+  BookBloomeLeadDto,
+  BulkAllocateBloomeDto,
+  RedistributeBloomeDto,
+  UpdateBloomeLeadDto,
+} from './dto';
 
 /**
  * Raw Bloome setter leads (imported from Google Sheets).
@@ -26,8 +31,11 @@ export class BloomeLeadsController {
   list(
     @Query('region') region?: string,
     @Query('q') q?: string,
-    @Query('outcome') outcome?: string,
-    @Query('agent') agent?: string,
+    @Query('outcome') outcome?: string | string[],
+    @Query('agent') agent?: string | string[],
+    @Query('dials') dials?: string | string[],
+    @Query('company') company?: string | string[],
+    @Query('sort') sort?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -36,6 +44,9 @@ export class BloomeLeadsController {
       q,
       outcome,
       agent,
+      dials,
+      company,
+      sort,
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
     });
@@ -58,6 +69,26 @@ export class BloomeLeadsController {
   @Get('sync/status')
   syncStatus() {
     return this.sync.status();
+  }
+
+  /** Allocate a setter to the first N unallocated leads matching the filters. */
+  @RequirePermissions(PERMISSIONS.LEADS_WRITE_OWN)
+  @Post('bulk-allocate')
+  bulkAllocate(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: BulkAllocateBloomeDto,
+  ) {
+    return this.bloome.bulkAllocate(user, dto);
+  }
+
+  /** Redistribute the top N No-Answer leads (by dials) to a setter. */
+  @RequirePermissions(PERMISSIONS.LEADS_WRITE_OWN)
+  @Post('redistribute')
+  redistribute(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RedistributeBloomeDto,
+  ) {
+    return this.bloome.redistribute(user, dto);
   }
 
   // Parameterised routes LAST so they can never shadow the static paths above.

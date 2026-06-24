@@ -18,8 +18,15 @@ import type {
   CreateTaskRequest,
   UpdateTaskRequest,
   MoveTaskRequest,
+  TaskCommentDto,
+  ConsultantContactDto,
+  UpsertConsultantContactRequest,
+  BlacklistEntryDto,
+  BlacklistLogDto,
+  CreateBlacklistEntryRequest,
+  BlacklistSweepResult,
 } from '@astra/shared';
-import { apiGet, apiPost, apiPatch, apiDelete, type ApiOptions } from './client';
+import { apiGet, apiPost, apiPatch, apiPut, apiDelete, type ApiOptions } from './client';
 
 export const AuthApi = {
   me: (o?: ApiOptions) => apiGet<AuthUser>('/auth/me', o),
@@ -81,5 +88,41 @@ export const TasksApi = {
   moveTask: (id: string, body: MoveTaskRequest) =>
     apiPatch<{ ok: boolean }>(`/tasks/${id}/move`, body),
   nudgeTask: (id: string) => apiPost<TaskCardDto>(`/tasks/${id}/nudge`),
+  setComplete: (id: string, completed: boolean) =>
+    apiPatch<TaskCardDto>(`/tasks/${id}`, { completed }),
   deleteTask: (id: string) => apiDelete<{ ok: boolean }>(`/tasks/${id}`),
+
+  // Comments
+  listComments: (id: string, o?: ApiOptions) =>
+    apiGet<TaskCommentDto[]>(`/tasks/${id}/comments`, o),
+  addComment: (id: string, body: string) =>
+    apiPost<TaskCommentDto>(`/tasks/${id}/comments`, { body }),
+  deleteComment: (commentId: string) =>
+    apiDelete<{ ok: boolean }>(`/tasks/comments/${commentId}`),
+};
+
+export const ConsultantContactsApi = {
+  list: (o?: ApiOptions) =>
+    apiGet<ConsultantContactDto[]>('/consultant-contacts', o),
+  upsert: (consultantId: string, body: UpsertConsultantContactRequest) =>
+    apiPut<{ ok: boolean; removed?: boolean }>(
+      `/consultant-contacts/${consultantId}`,
+      body,
+    ),
+  remove: (consultantId: string) =>
+    apiDelete<{ ok: boolean }>(`/consultant-contacts/${consultantId}`),
+};
+
+export const BlacklistApi = {
+  listEntries: (o?: ApiOptions) =>
+    apiGet<BlacklistEntryDto[]>('/blacklist/entries', o),
+  listLog: (o?: ApiOptions) => apiGet<BlacklistLogDto[]>('/blacklist/log', o),
+  addEntry: (body: CreateBlacklistEntryRequest) =>
+    apiPost<{ ok: boolean; sweep: BlacklistSweepResult }>(
+      '/blacklist/entries',
+      body,
+    ),
+  removeEntry: (id: string) =>
+    apiDelete<{ ok: boolean }>(`/blacklist/entries/${id}`),
+  sweep: () => apiPost<BlacklistSweepResult>('/blacklist/sweep'),
 };

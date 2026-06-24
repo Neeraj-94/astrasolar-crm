@@ -102,12 +102,6 @@ export const DASHBOARDS: DashboardDef[] = [
         sortOrder: 30,
       },
       {
-        key: "sheets-sync",
-        name: "Sheets Sync",
-        description: "Google Sheets / external spreadsheet integrations.",
-        sortOrder: 40,
-      },
-      {
         key: "no-answers",
         name: "No Answers",
         description: "Leads that could not be contacted or need follow-up.",
@@ -120,9 +114,10 @@ export const DASHBOARDS: DashboardDef[] = [
         sortOrder: 60,
       },
       {
-        key: "sms-integration",
-        name: "SMS Integration",
-        description: "SMS provider, templates, automations, and logs.",
+        key: "blacklist",
+        name: "Blacklist Leads",
+        description:
+          "Block individuals from being booked/added; auto-removes matching leads across Bloome, No Answers, and Leads Schedule.",
         sortOrder: 70,
       },
     ],
@@ -170,6 +165,12 @@ export const DASHBOARDS: DashboardDef[] = [
         name: "Not Interested",
         description: "Archive of leads dispositioned as not interested.",
         sortOrder: 50,
+      },
+      {
+        key: "consultant-contacts",
+        name: "Consultant Contacts",
+        description: "Per-consultant callback numbers and SMS sender IDs for each brand.",
+        sortOrder: 60,
       },
     ],
   },
