@@ -6,7 +6,6 @@ import { TabPlaceholder } from "@/components/tab-placeholder";
 import { LeadsScheduleTab } from "@/components/leads/leads-schedule-tab";
 import { BloomeLeadsTab } from "@/components/leads/bloome-leads-tab";
 import { TeamAvailabilityTab } from "@/components/leads/team-availability-tab";
-import { SheetsSyncTab } from "@/components/leads/sheets-sync-tab";
 import { NoAnswersTab } from "@/components/leads/no-answers-tab";
 import { ConsultantContactsTab } from "@/components/leads/consultant-contacts-tab";
 import { SmsIntegrationTab } from "@/components/leads/sms-integration-tab";
@@ -40,7 +39,6 @@ const TAB_COMPONENTS: Record<string, TabComponent> = {
   // is added to DASHBOARDS.
   "bloome-leads": BloomeLeadsTab,
   "team-availability": TeamAvailabilityTab,
-  "sheets-sync": SheetsSyncTab,
   "no-answers": NoAnswersTab,
   "consultant-contacts": ConsultantContactsTab,
   "sms-integration": SmsIntegrationTab,
