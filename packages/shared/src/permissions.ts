@@ -47,6 +47,10 @@ export const PERMISSIONS = {
   // Consultant Contacts). Read is covered by records:read:own; this gates edits.
   LEADS_CONTACTS_MANAGE: 'leads:contacts:manage',
 
+  // Communications — send an SMS (ClickSend) or place a call (Aircall) to a
+  // lead/customer. Gates the outbound messaging + click-to-dial endpoints.
+  MESSAGING_SEND: 'messaging:send',
+
   // Sales actions
   SALES_READ_TEAM: 'sales:read:team',
   SALES_MANAGE_OWN: 'sales:manage:own',
@@ -88,6 +92,7 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   'booking:create': 'Book a lead with a consultant',
   'leads:contacts:manage':
     'Edit per-consultant callback numbers and SMS sender IDs',
+  'messaging:send': 'Send SMS (ClickSend) and place calls (Aircall) to leads',
   'sales:read:team': "View sales within one's team/branch",
   'sales:manage:own': "Mark a consultation SOLD; edit one's own sale",
   'installs:read:own': 'View installations assigned to oneself',
@@ -201,6 +206,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_REASSIGN,
       P.BOOKING_CREATE,
       P.LEADS_CONTACTS_MANAGE,
+      P.MESSAGING_SEND,
       P.SALES_READ_TEAM,
       P.SALES_MANAGE_OWN, // break-glass (see matrix note)
       P.INSTALLS_READ_OWN,
@@ -257,6 +263,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_WRITE_TEAM,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
+      P.MESSAGING_SEND,
       P.SALES_READ_TEAM,
       P.INSTALLS_READ_OWN,
       P.INSTALLS_WRITE_OWN,
@@ -277,6 +284,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_WRITE_TEAM,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
+      P.MESSAGING_SEND,
       P.SALES_READ_TEAM,
     ],
   },
@@ -291,6 +299,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_CREATE,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
+      P.MESSAGING_SEND,
       P.SALES_MANAGE_OWN,
     ],
   },
@@ -306,6 +315,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
       P.LEADS_CONTACTS_MANAGE,
+      P.MESSAGING_SEND,
     ],
   },
   {
@@ -320,6 +330,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
       P.LEADS_CONTACTS_MANAGE,
+      P.MESSAGING_SEND,
     ],
   },
   {

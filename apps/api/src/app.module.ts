@@ -28,6 +28,8 @@ import { NovaModule } from './nova/nova.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { ConsultantContactsModule } from './consultant-contacts/consultant-contacts.module';
 import { BlacklistModule } from './blacklist/blacklist.module';
+import { ClickSendModule } from './clicksend/clicksend.module';
+import { AircallModule } from './aircall/aircall.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -61,6 +63,8 @@ import { AuditInterceptor } from './common/audit.interceptor';
     ChecklistModule,
     ConsultantContactsModule,
     BlacklistModule,
+    ClickSendModule,
+    AircallModule,
   ],
   providers: [
     // The authorization pipeline runs globally, in order:

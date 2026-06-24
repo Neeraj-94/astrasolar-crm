@@ -1157,9 +1157,10 @@ export function LeadsScheduleClient({
           bookBloomeSlot={bookBloomeSlot}
         />
       ) : (
-        orderedConsultants.map((c) => (
+        orderedConsultants.map((c, i) => (
           <ConsultantSection
             key={c.id}
+            index={i}
             consultant={c}
             color={colorOf(c.id)}
             dates={dates}
@@ -1438,6 +1439,7 @@ function ConsultantSection({
   bookBloomeSlot,
   setDisposition,
   currentUserId,
+  index,
 }: {
   consultant: ScheduleConsultant;
   color: string;
@@ -1470,6 +1472,8 @@ function ConsultantSection({
   bookBloomeSlot: (cid: string, date: string, hour: number) => void;
   setDisposition: (apptId: string, disposition: string) => void;
   currentUserId?: string | null;
+  /** Position in the consultant list — drives the alternating section tint. */
+  index: number;
 }) {
   const cid = consultant.id;
   // Disposition is the consultant's call: only the logged-in owner can set it.
@@ -1505,16 +1509,33 @@ function ConsultantSection({
     (l) => l.minute !== 0 || !LG_SLOT_HOURS.includes(l.hour),
   );
 
+  // Alternating accent: gold, then white, down the consultant list — applied
+  // to the section's title header and borders only (not the table body).
+  const isGold = index % 2 === 0;
+  const headerStripe = isGold
+    ? "bg-amber-100/70 dark:bg-amber-500/10"
+    : "bg-white dark:bg-card";
+  const borderStripe = isGold
+    ? "border-amber-300 dark:border-amber-500/30"
+    : "border-border";
+
   return (
     <div
       id={`lg-section-${cid}`}
-      className="mb-7 overflow-hidden rounded-xl border border-border bg-card scroll-mt-4"
+      className={cn(
+        "mb-7 overflow-hidden rounded-xl border bg-card scroll-mt-4",
+        borderStripe,
+      )}
     >
       {/* Header */}
       <button
         type="button"
         onClick={toggleCollapsed}
-        className="flex w-full items-center justify-between border-b border-border bg-secondary px-5 py-3 text-left hover:bg-accent"
+        className={cn(
+          "flex w-full items-center justify-between border-b px-5 py-3 text-left transition-colors hover:bg-accent",
+          headerStripe,
+          borderStripe,
+        )}
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-serif text-base tracking-wide" style={{ color }}>

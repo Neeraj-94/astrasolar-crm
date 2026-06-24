@@ -14,10 +14,19 @@ import {
   RefreshCw,
   ChevronDown,
   Save,
-  X,
   Users,
   Shuffle,
+  Bookmark,
+  Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { useApi } from "@/lib/api/use-api";
 import { apiPatch, apiPost } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
@@ -943,51 +952,66 @@ export function BloomeLeadsTab() {
         </div>
       )}
 
-      {/* Saved filter presets */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
+      {/* Saved filter presets — dropdown menu */}
+      <div className="flex items-center gap-2 px-1">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Saved filters
         </span>
-        {presets.length === 0 ? (
-          <span className="text-xs text-muted-foreground">None yet</span>
-        ) : (
-          presets.map((p) => (
-            <span
-              key={p.name}
-              className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-xs"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline" className="gap-1.5">
+              <Bookmark className="h-3.5 w-3.5" />
+              {presets.length === 0 ? "None saved" : `${presets.length} saved`}
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64">
+            <DropdownMenuLabel>Saved filters</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {presets.length === 0 ? (
+              <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+                No saved filters yet
+              </div>
+            ) : (
+              presets.map((p) => (
+                <DropdownMenuItem
+                  key={p.name}
+                  onSelect={() => applyPreset(p)}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{p.name}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePreset(p.name);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deletePreset(p.name);
+                      }
+                    }}
+                    aria-label={`Delete preset ${p.name}`}
+                    className="shrink-0 cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </span>
+                </DropdownMenuItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={!hasActiveFilters}
+              onSelect={saveCurrentPreset}
             >
-              <button
-                type="button"
-                onClick={() => applyPreset(p)}
-                className="font-medium hover:text-primary"
-              >
-                {p.name}
-              </button>
-              <button
-                type="button"
-                onClick={() => deletePreset(p.name)}
-                aria-label={`Delete preset ${p.name}`}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))
-        )}
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={saveCurrentPreset}
-          disabled={!hasActiveFilters}
-          title={
-            hasActiveFilters
-              ? "Save the current search + filters as a preset"
-              : "Set a search or filter first"
-          }
-        >
-          <Save className="mr-1.5 h-3.5 w-3.5" />
-          Save current
-        </Button>
+              <Save className="mr-2 h-3.5 w-3.5" />
+              Save current filter
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {leads.loading ? (

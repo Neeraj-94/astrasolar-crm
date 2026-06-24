@@ -143,12 +143,6 @@ export const DASHBOARDS: DashboardDef[] = [
         sortOrder: 10,
       },
       {
-        key: "team-view",
-        name: "Team View",
-        description: "Manager view of every consultant's leads for any date.",
-        sortOrder: 20,
-      },
-      {
         key: "callbacks",
         name: "Call Back Sheet",
         description: "All Call Back leads across every date.",
@@ -165,12 +159,6 @@ export const DASHBOARDS: DashboardDef[] = [
         name: "Not Interested",
         description: "Archive of leads dispositioned as not interested.",
         sortOrder: 50,
-      },
-      {
-        key: "consultant-contacts",
-        name: "Consultant Contacts",
-        description: "Per-consultant callback numbers and SMS sender IDs for each brand.",
-        sortOrder: 60,
       },
     ],
   },

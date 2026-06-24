@@ -1652,3 +1652,119 @@ model LeadChecklist {
   @@index([status])
   @@index([createdById])
 }
+
+// ============================================================================
+//  COMMUNICATIONS — outbound/inbound SMS (ClickSend) and calls (Aircall).
+//
+//  Both are kept as first-class, queryable rows (not just Activity entries) so
+//  delivery status, recordings and per-lead history can be reported on. They
+//  use a loose link to the lead/customer (`leadId`, no hard FK) — the same
+//  polymorphic pattern as Document/AuditLog — so a message/call can reference a
+//  record without forcing a back-relation onto the (large) Lead model. Every
+//  send/event also writes an Activity (human feed) + AuditLog (security trail).
+// ============================================================================
+
+// SmsMessage — one row per ClickSend SMS. Outbound rows are created at send
+// time (status QUEUED/SENT), then advanced by the delivery-receipt webhook.
+model SmsMessage {
+  id          String      @id @default(uuid())
+
+  direction   SmsDirection @default(OUTBOUND)
+  status      SmsStatus    @default(QUEUED)
+
+  toNumber    String                                   // E.164 recipient ("+61…")
+  fromNumber  String?                                  // sender ID / number used
+  body        String
+
+  // Loose links (no FK — mirrors Document). leadId set when texting a lead.
+  leadId      String?
+  // The CRM user who triggered the send (null for inbound).
+  sentById    String?
+
+  brand       Company?                                 // ASTRA | DC — which sender profile
+  senderId    String?                                  // ClickSend alphanumeric sender ID used
+
+  // ClickSend bookkeeping.
+  providerMessageId String?                            // ClickSend message_id
+  messagePrice      String?                            // cost reported by ClickSend
+  errorCode         String?                            // ClickSend error/status code on failure
+  errorText         String?
+
+  segments    Int?                                     // number of SMS parts
+
+  sentAt      DateTime?                                // when ClickSend accepted it
+  deliveredAt DateTime?                                // from the delivery receipt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([leadId])
+  @@index([sentById])
+  @@index([status])
+  @@index([providerMessageId])
+  @@index([toNumber])
+}
+
+enum SmsDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum SmsStatus {
+  QUEUED        // created locally, not yet accepted by ClickSend
+  SENT          // accepted by ClickSend (SUCCESS on submit)
+  DELIVERED     // delivery receipt: delivered
+  FAILED        // submit failed or delivery receipt: undelivered/failed
+  RECEIVED      // inbound message
+}
+
+// CallLog — one row per Aircall call, created/updated from webhook events.
+// Deduped on the Aircall call id (`providerCallId`).
+model CallLog {
+  id            String        @id @default(uuid())
+
+  direction     CallDirection
+  status        CallStatus    @default(INITIAL)
+
+  fromNumber    String?
+  toNumber      String?
+
+  // Loose link to the matched lead (by phone) — no FK (mirrors Document).
+  leadId        String?
+  // The CRM user mapped from the Aircall agent (by email), if matched.
+  agentId       String?
+
+  // Aircall bookkeeping.
+  providerCallId String       @unique                  // Aircall call.id
+  aircallUserEmail String?                             // agent email from Aircall
+  aircallNumberId  String?                             // Aircall line/number id
+
+  durationSeconds Int?
+  recordingUrl    String?                              // Aircall recording (if available)
+  voicemailUrl    String?
+
+  startedAt     DateTime?
+  answeredAt    DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([leadId])
+  @@index([agentId])
+  @@index([status])
+  @@index([direction])
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum CallStatus {
+  INITIAL       // call.created
+  RINGING
+  ANSWERED      // call.answered
+  ENDED         // call.ended / hungup
+  MISSED        // ended without answer
+  VOICEMAIL
+  FAILED
+}
