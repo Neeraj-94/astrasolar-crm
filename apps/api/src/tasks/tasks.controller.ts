@@ -15,6 +15,7 @@ import { CurrentUser, RequirePermissions } from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
 import { TasksService } from './tasks.service';
 import {
+  CreateTaskCommentDto,
   CreateTaskDto,
   CreateTaskListDto,
   MoveTaskDto,
@@ -103,6 +104,35 @@ export class TasksController {
   @Post(':id/nudge')
   nudgeTask(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.tasks.nudgeTask(user, id);
+  }
+
+  // -- comments ---------------------------------------------------------------
+  // Registered before the generic ":id" routes so "comments/:commentId" is not
+  // captured by the ":id" param.
+
+  @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
+  @Delete('comments/:commentId')
+  deleteComment(
+    @CurrentUser() user: AuthUser,
+    @Param('commentId') commentId: string,
+  ) {
+    return this.tasks.deleteComment(user, commentId);
+  }
+
+  @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
+  @Get(':id/comments')
+  listComments(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.tasks.listComments(user, id);
+  }
+
+  @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
+  @Post(':id/comments')
+  addComment(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: CreateTaskCommentDto,
+  ) {
+    return this.tasks.addComment(user, id, dto.body);
   }
 
   @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)

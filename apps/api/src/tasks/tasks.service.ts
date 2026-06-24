@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -42,6 +43,11 @@ const CARD_INCLUDE = {
   assignee: { select: { id: true, name: true } },
   createdBy: { select: { id: true, name: true } },
   nudgedBy: { select: { id: true, name: true } },
+  children: {
+    orderBy: { position: 'asc' },
+    select: { id: true, title: true, completed: true, position: true },
+  },
+  _count: { select: { comments: true } },
 } as const;
 
 /** Minimum gap between nudges on the same task. */
@@ -145,7 +151,12 @@ export class TasksService {
       where: { dashboardKey: board },
       orderBy: { position: 'asc' },
       include: {
-        tasks: { orderBy: { position: 'asc' }, include: CARD_INCLUDE },
+        // Only top-level cards form the board; sub-tasks nest inside their parent.
+        tasks: {
+          where: { parentId: null },
+          orderBy: { position: 'asc' },
+          include: CARD_INCLUDE,
+        },
       },
     });
 
@@ -244,6 +255,7 @@ export class TasksService {
 
   async createTask(user: AuthUser, dto: CreateTaskDto) {
     this.assertBoardAccess(user, dto.board);
+
     const list = await this.prisma.taskList.findUnique({
       where: { id: dto.listId },
     });
@@ -252,18 +264,45 @@ export class TasksService {
     }
     if (dto.assigneeId) await this.assertCanAssign(user, dto.assigneeId);
 
+    // Sub-task: must hang off a parent on the SAME board, and inherits its list.
+    let parentId: string | null = null;
+    let scopeListId = list.id;
+    if (dto.parentId) {
+      const parent = await this.prisma.taskCard.findUnique({
+        where: { id: dto.parentId },
+        include: { list: true },
+      });
+      if (!parent || parent.list.dashboardKey !== dto.board) {
+        throw new NotFoundException('Parent task not found on this board');
+      }
+      if (parent.parentId) {
+        throw new BadRequestException('Sub-tasks cannot be nested further');
+      }
+      parentId = parent.id;
+      scopeListId = parent.listId;
+    }
+
+    // Position is sequential among siblings (top-level cards in the list, or
+    // sub-tasks of the same parent).
     const last = await this.prisma.taskCard.aggregate({
-      where: { listId: list.id },
+      where: { listId: scopeListId, parentId },
       _max: { position: true },
     });
 
     const task = await this.prisma.taskCard.create({
       data: {
-        listId: list.id,
+        listId: scopeListId,
+        parentId,
         title: dto.title.trim(),
         description: dto.description?.trim() || null,
         priority: dto.priority ?? 'MEDIUM',
         dueDate: dto.dueDate ? new Date(`${dto.dueDate}T00:00:00.000Z`) : null,
+        deadline: dto.deadline
+          ? new Date(`${dto.deadline}T00:00:00.000Z`)
+          : null,
+        location: dto.location?.trim() || null,
+        labels: dto.labels ?? [],
+        reminders: (dto.reminders ?? []).map((r) => new Date(r)),
         assigneeId: dto.assigneeId || null,
         createdById: user.id,
         position: (last._max.position ?? -1) + 1,
@@ -273,7 +312,7 @@ export class TasksService {
 
     await this.audit.record({
       userId: user.id,
-      action: 'TASK_CREATED',
+      action: parentId ? 'SUBTASK_CREATED' : 'TASK_CREATED',
       entity: 'TaskCard',
       entityId: task.id,
       metadata: { board: dto.board, list: list.name, title: task.title },
@@ -295,10 +334,20 @@ export class TasksService {
       task.nudgedAt !== null &&
       (user.id === task.assigneeId || assigneeChanged);
 
+    // Toggling completion stamps/clears completedAt to match.
+    const completionChanged =
+      dto.completed !== undefined && dto.completed !== task.completed;
+
     const updated = await this.prisma.taskCard.update({
       where: { id: task.id },
       data: {
         ...(clearNudge ? { nudgedAt: null, nudgedById: null } : {}),
+        ...(completionChanged
+          ? {
+              completed: dto.completed,
+              completedAt: dto.completed ? new Date() : null,
+            }
+          : {}),
         ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
         ...(dto.description !== undefined
           ? { description: dto.description?.trim() || null }
@@ -311,6 +360,20 @@ export class TasksService {
                 : null,
             }
           : {}),
+        ...(dto.deadline !== undefined
+          ? {
+              deadline: dto.deadline
+                ? new Date(`${dto.deadline}T00:00:00.000Z`)
+                : null,
+            }
+          : {}),
+        ...(dto.location !== undefined
+          ? { location: dto.location?.trim() || null }
+          : {}),
+        ...(dto.labels !== undefined ? { labels: dto.labels } : {}),
+        ...(dto.reminders !== undefined
+          ? { reminders: dto.reminders.map((r) => new Date(r)) }
+          : {}),
         ...(dto.assigneeId !== undefined
           ? { assigneeId: dto.assigneeId || null }
           : {}),
@@ -318,6 +381,65 @@ export class TasksService {
       include: CARD_INCLUDE,
     });
     return this.serializeCard(updated);
+  }
+
+  // -- comments ---------------------------------------------------------------
+
+  async listComments(user: AuthUser, cardId: string) {
+    await this.requireTask(user, cardId); // board-access check
+    const rows = await this.prisma.taskComment.findMany({
+      where: { cardId },
+      orderBy: { createdAt: 'asc' },
+      include: { author: { select: { id: true, name: true } } },
+    });
+    return rows.map((c) => this.serializeComment(c));
+  }
+
+  async addComment(user: AuthUser, cardId: string, body: string) {
+    const { task, list } = await this.requireTask(user, cardId);
+    const comment = await this.prisma.taskComment.create({
+      data: { cardId, authorId: user.id, body: body.trim() },
+      include: { author: { select: { id: true, name: true } } },
+    });
+    await this.audit.record({
+      userId: user.id,
+      action: 'TASK_COMMENTED',
+      entity: 'TaskCard',
+      entityId: task.id,
+      metadata: { board: list.dashboardKey, title: task.title },
+    });
+    return this.serializeComment(comment);
+  }
+
+  async deleteComment(user: AuthUser, commentId: string) {
+    const comment = await this.prisma.taskComment.findUnique({
+      where: { id: commentId },
+      include: { card: { include: { list: true } } },
+    });
+    if (!comment) throw new NotFoundException('Comment not found');
+    this.assertBoardAccess(
+      user,
+      comment.card.list.dashboardKey as TaskBoardKeyValue,
+    );
+    if (comment.authorId !== user.id) {
+      throw new ForbiddenException('You can only delete your own comments');
+    }
+    await this.prisma.taskComment.delete({ where: { id: commentId } });
+    return { ok: true };
+  }
+
+  private serializeComment(c: {
+    id: string;
+    body: string;
+    createdAt: Date;
+    author: { id: string; name: string };
+  }) {
+    return {
+      id: c.id,
+      body: c.body,
+      createdAt: c.createdAt.toISOString(),
+      author: c.author,
+    };
   }
 
   /**
@@ -493,7 +615,21 @@ export class TasksService {
     description: string | null;
     priority: string;
     dueDate: Date | null;
+    deadline: Date | null;
+    location: string | null;
+    labels: string[];
+    reminders: Date[];
     position: number;
+    completed: boolean;
+    completedAt: Date | null;
+    parentId: string | null;
+    children: {
+      id: string;
+      title: string;
+      completed: boolean;
+      position: number;
+    }[];
+    _count: { comments: number };
     assignee: { id: string; name: string } | null;
     createdBy: { id: string; name: string };
     nudgedAt: Date | null;
@@ -508,7 +644,21 @@ export class TasksService {
       description: t.description,
       priority: t.priority,
       dueDate: toIsoDate(t.dueDate),
+      deadline: toIsoDate(t.deadline),
+      location: t.location,
+      labels: t.labels,
+      reminders: t.reminders.map((r) => r.toISOString()),
       position: t.position,
+      completed: t.completed,
+      completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+      parentId: t.parentId,
+      subtasks: t.children.map((c) => ({
+        id: c.id,
+        title: c.title,
+        completed: c.completed,
+        position: c.position,
+      })),
+      commentCount: t._count.comments,
       assignee: t.assignee,
       createdBy: t.createdBy,
       nudge:

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -18,10 +19,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ScopeService } from '../common/scope.service';
 import { AuditService } from '../common/audit.service';
 import { LeadHistoryService } from '../history/lead-history.service';
+import { AvailabilityService } from '../scheduling/availability.service';
 import type { AuthUser } from '../common/auth-user';
 import type {
   AddActivityDto,
   BookLeadDto,
+  BookLeadSlotDto,
   CreateLeadDto,
   UpdateDispositionDto,
   UpdateOutcomeDto,
@@ -34,6 +37,7 @@ export class LeadsService {
     private readonly scope: ScopeService,
     private readonly audit: AuditService,
     private readonly history: LeadHistoryService,
+    private readonly availability: AvailabilityService,
   ) {}
 
   async list(
@@ -41,16 +45,45 @@ export class LeadsService {
     filters: {
       stage?: LeadStage;
       disposition?: SalesDisposition | SalesDisposition[];
+      outcome?: LeadOutcome | LeadOutcome[];
       userId?: string;
     } = {},
   ) {
-    const where = await this.scope.leadWhere(user, filters.userId);
-    if (filters.stage) where.stage = filters.stage;
+    const scopeWhere = await this.scope.leadWhere(user, filters.userId);
+    if (filters.stage) scopeWhere.stage = filters.stage;
+    // Blacklisted leads are soft-deleted (Leads -> Blacklist Leads sweep) and
+    // never surface in the No Answers tab or other lead lists.
+    scopeWhere.blacklisted = false;
+
+    // Match leads in EITHER set: disposition-in-set OR outcome-in-set. Kept as
+    // a separate OR branch (AND'd with the scope filter) so it never clobbers
+    // the scope's own OR clause.
+    const statusOr: Prisma.LeadWhereInput[] = [];
     if (filters.disposition) {
-      where.disposition = Array.isArray(filters.disposition)
-        ? { in: filters.disposition }
-        : filters.disposition;
+      statusOr.push({
+        disposition: Array.isArray(filters.disposition)
+          ? { in: filters.disposition }
+          : filters.disposition,
+      });
     }
+    if (filters.outcome) {
+      statusOr.push({
+        outcome: Array.isArray(filters.outcome)
+          ? { in: filters.outcome }
+          : filters.outcome,
+      });
+    }
+
+    const where: Prisma.LeadWhereInput =
+      statusOr.length === 0
+        ? scopeWhere
+        : {
+            AND: [
+              scopeWhere,
+              statusOr.length === 1 ? statusOr[0] : { OR: statusOr },
+            ],
+          };
+
     return this.prisma.lead.findMany({
       where,
       orderBy: [
@@ -207,6 +240,129 @@ export class LeadsService {
       );
       return updated;
     });
+  }
+
+  /**
+   * Book an existing lead into a consultant's Leads Schedule slot — the same
+   * day/slot picker the Bloome tab uses (Book Appointment). Creates a linked
+   * Appointment on the schedule grid (contact snapshot from the lead), stamps
+   * the lead BOOKED/APPOINTMENT, and clears any disposition (e.g. NO_ANSWER) so
+   * a rebooked lead leaves the No Answers list. Availability + slot-occupancy
+   * are guarded exactly like the Bloome booking path.
+   */
+  async bookIntoSlot(user: AuthUser, id: string, dto: BookLeadSlotDto) {
+    const lead = await this.loadForWrite(user, id);
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    const startsAt = new Date(
+      `${dto.date}T${pad(dto.hour)}:${pad(dto.minute)}:00`,
+    );
+    const endsAt = new Date(startsAt.getTime() + 30 * 60 * 1000);
+    const check = await this.availability.canBook({
+      consultantId: dto.consultantId,
+      startsAt,
+      endsAt,
+    });
+    if (!check.ok) {
+      throw new BadRequestException(
+        `Consultant is not available at that time: ${check.conflicts
+          .map((c) => c.reason)
+          .join('; ')}`,
+      );
+    }
+
+    const dbDate = new Date(`${dto.date}T00:00:00.000Z`);
+    const taken = await this.prisma.appointment.findFirst({
+      where: {
+        consultantId: dto.consultantId,
+        date: dbDate,
+        hour: dto.hour,
+        minute: dto.minute,
+      },
+      select: { id: true },
+    });
+    if (taken) {
+      throw new ConflictException('That timeslot is already booked.');
+    }
+
+    const customerName =
+      [lead.firstName, lead.surName].filter(Boolean).join(' ').trim() || null;
+    const bookingTime = `${pad(dto.hour)}:${dto.minute === 0 ? '00' : '30'}`;
+
+    // Carry the lead's prior booked slot into the appointment's reschedule
+    // audit, so a rebook reads as a move on the schedule.
+    const prevHour = lead.bookingTime
+      ? Number(lead.bookingTime.split(':')[0])
+      : NaN;
+    const prevMinute = lead.bookingTime
+      ? Number(lead.bookingTime.split(':')[1])
+      : NaN;
+    const hasPrevSlot =
+      !!lead.bookingDate &&
+      Number.isFinite(prevHour) &&
+      Number.isFinite(prevMinute);
+
+    const appointment = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.appointment.create({
+        data: {
+          leadId: lead.id,
+          consultantId: dto.consultantId,
+          date: dbDate,
+          hour: dto.hour,
+          minute: dto.minute,
+          durationMinutes: 30,
+          bookedByUserId: user.id,
+          bookedByName: user.name,
+          source: lead.source,
+          company: lead.company,
+          bills: lead.billSpend,
+          notes: lead.consultantNotes ?? lead.leadGenNotes,
+          customerName,
+          firstName: lead.firstName,
+          lastName: lead.surName,
+          phone: lead.phone,
+          email: lead.email,
+          address: lead.address,
+          state: lead.state,
+          postcode: lead.postCode,
+          originalDate: hasPrevSlot ? lead.bookingDate : undefined,
+          originalHour: hasPrevSlot ? prevHour : undefined,
+          originalMinute: hasPrevSlot ? prevMinute : undefined,
+          rescheduledAt: hasPrevSlot ? new Date() : undefined,
+        },
+      });
+      const updated = await tx.lead.update({
+        where: { id },
+        data: {
+          stage: LeadStage.BOOKED,
+          outcome: LeadOutcome.APPOINTMENT,
+          disposition: null,
+          consultantId: dto.consultantId,
+          bookingDate: dbDate,
+          bookingTime,
+        },
+      });
+      await this.history.recordFromLead(tx, updated, user.id);
+      await this.audit.record(
+        {
+          userId: user.id,
+          action: 'LEAD_REBOOKED',
+          entity: 'Lead',
+          entityId: id,
+          metadata: {
+            appointmentId: created.id,
+            consultantId: dto.consultantId,
+            date: dto.date,
+            hour: dto.hour,
+            minute: dto.minute,
+          },
+        },
+        tx,
+      );
+      return created;
+    });
+
+    return { ok: true, appointment };
   }
 
   /**

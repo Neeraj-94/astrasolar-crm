@@ -43,6 +43,9 @@ export const PERMISSIONS = {
   LEADS_WRITE_OWN: 'leads:write:own',
   LEADS_REASSIGN: 'leads:reassign',
   BOOKING_CREATE: 'booking:create',
+  // Manage per-consultant callback numbers + SMS sender IDs (Leads ->
+  // Consultant Contacts). Read is covered by records:read:own; this gates edits.
+  LEADS_CONTACTS_MANAGE: 'leads:contacts:manage',
 
   // Sales actions
   SALES_READ_TEAM: 'sales:read:team',
@@ -83,6 +86,8 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   'leads:write:own': "Edit one's own leads",
   'leads:reassign': "Reassign a lead's owner",
   'booking:create': 'Book a lead with a consultant',
+  'leads:contacts:manage':
+    'Edit per-consultant callback numbers and SMS sender IDs',
   'sales:read:team': "View sales within one's team/branch",
   'sales:manage:own': "Mark a consultation SOLD; edit one's own sale",
   'installs:read:own': 'View installations assigned to oneself',
@@ -195,6 +200,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_WRITE_OWN,
       P.LEADS_REASSIGN,
       P.BOOKING_CREATE,
+      P.LEADS_CONTACTS_MANAGE,
       P.SALES_READ_TEAM,
       P.SALES_MANAGE_OWN, // break-glass (see matrix note)
       P.INSTALLS_READ_OWN,
@@ -214,6 +220,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.RECORDS_READ_TEAM,
       P.RECORDS_READ_OWN,
       P.FINANCE_READ_ALL,
+      P.LEADS_CONTACTS_MANAGE,
       P.SALES_READ_TEAM,
     ],
   },
@@ -298,6 +305,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_CREATE,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
+      P.LEADS_CONTACTS_MANAGE,
     ],
   },
   {
@@ -311,6 +319,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.LEADS_CREATE,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
+      P.LEADS_CONTACTS_MANAGE,
     ],
   },
   {

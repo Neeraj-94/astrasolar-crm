@@ -8,13 +8,19 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { LeadStage, PERMISSIONS, SalesDisposition } from '@astra/shared';
+import {
+  LeadOutcome,
+  LeadStage,
+  PERMISSIONS,
+  SalesDisposition,
+} from '@astra/shared';
 import { LeadsService } from './leads.service';
 import { CurrentUser, RequirePermissions } from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
 import {
   AddActivityDto,
   BookLeadDto,
+  BookLeadSlotDto,
   CreateLeadDto,
   ReassignDto,
   UpdateDispositionDto,
@@ -33,19 +39,28 @@ export class LeadsController {
     @CurrentUser() user: AuthUser,
     @Query('stage') stage?: LeadStage,
     @Query('disposition') disposition?: string,
+    @Query('outcome') outcome?: string,
     @Query('userId') userId?: string,
   ) {
-    // `disposition` accepts a single value or a comma-separated list
-    // (e.g. NOT_INTERESTED,DNQ,CANCELLED).
+    // `disposition` and `outcome` each accept a single value or a
+    // comma-separated list (e.g. NOT_INTERESTED,DNQ,CANCELLED). When both are
+    // supplied the service matches leads in EITHER set (disposition OR outcome).
     const dispositions = disposition
       ? (disposition
           .split(',')
           .map((d) => d.trim())
           .filter(Boolean) as SalesDisposition[])
       : undefined;
+    const outcomes = outcome
+      ? (outcome
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean) as LeadOutcome[])
+      : undefined;
     return this.leads.list(user, {
       stage,
       disposition: dispositions,
+      outcome: outcomes,
       userId,
     });
   }
@@ -87,6 +102,17 @@ export class LeadsController {
     @Body() dto: BookLeadDto,
   ) {
     return this.leads.book(user, id, dto);
+  }
+
+  /** Book / rebook an existing lead into a schedule slot (Book Appointment). */
+  @RequirePermissions(PERMISSIONS.BOOKING_CREATE)
+  @Post(':id/book-slot')
+  bookIntoSlot(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: BookLeadSlotDto,
+  ) {
+    return this.leads.bookIntoSlot(user, id, dto);
   }
 
   @RequirePermissions(PERMISSIONS.LEADS_WRITE_OWN)

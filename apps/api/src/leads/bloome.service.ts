@@ -57,7 +57,9 @@ export class BloomeLeadsService {
   ) {}
 
   private buildWhere(query: BloomeListQuery): Prisma.BloomeLeadWhereInput {
-    const where: Prisma.BloomeLeadWhereInput = {};
+    // Blacklisted leads are soft-deleted (Leads -> Blacklist Leads sweep) and
+    // never surface in the Bloome tab or bulk actions.
+    const where: Prisma.BloomeLeadWhereInput = { blacklisted: false };
     const and: Prisma.BloomeLeadWhereInput[] = [];
     if (query.region) where.region = query.region;
 

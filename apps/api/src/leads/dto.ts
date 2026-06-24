@@ -69,6 +69,27 @@ export class BookLeadDto {
   scheduledAt!: string;
 }
 
+/**
+ * Book an existing lead into a consultant's Leads Schedule slot — the same
+ * day/slot picker the Bloome tab uses. Mirrors BookBloomeLeadDto so the shared
+ * Book Appointment dialog drives both flows.
+ */
+export class BookLeadSlotDto {
+  @IsString()
+  consultantId!: string;
+
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  date!: string; // YYYY-MM-DD
+
+  @IsInt()
+  @Min(8)
+  @Max(19)
+  hour!: number;
+
+  @IsIn([0, 30])
+  minute!: number;
+}
+
 export class UpdateDispositionDto {
   @IsEnum(SalesDisposition)
   disposition!: SalesDisposition;

@@ -8,6 +8,7 @@ import { TeamViewTab } from "@/components/sales/team-view-tab";
 import { CallbacksTab } from "@/components/sales/callbacks-tab";
 import { PastPresosTab } from "@/components/sales/past-presos-tab";
 import { NotInterestedTab } from "@/components/sales/not-interested-tab";
+import { ConsultantContactsTab } from "@/components/sales/consultant-contacts-tab";
 import { LeadsListTab } from "@/components/leads/leads-list-tab";
 import { SalesListTab } from "@/components/sales/sales-list-tab";
 import { TaskBoardTab } from "@/components/tasks/task-board-tab";
@@ -31,6 +32,7 @@ const TAB_COMPONENTS: Record<string, () => JSX.Element> = {
   callbacks: CallbacksTab,
   "past-presos": PastPresosTab,
   "not-interested": NotInterestedTab,
+  "consultant-contacts": ConsultantContactsTab,
 };
 
 export default async function SalesTabPage({ params }: Props) {

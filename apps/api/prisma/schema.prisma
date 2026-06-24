@@ -86,8 +86,10 @@ model User {
   taskAssignments          TaskCard[]               @relation("TaskAssignee")
   tasksCreated             TaskCard[]               @relation("TaskCreator")
   taskNudgesSent           TaskCard[]               @relation("TaskNudger")
+  taskComments             TaskComment[]            @relation("TaskCommentAuthor")
   notifications            Notification[]           @relation("UserNotifications")
   checklistsCreated        LeadChecklist[]          @relation("ChecklistCreatedBy")
+  consultantContact        ConsultantContact?       @relation("ConsultantContact")
 
   sortOrder     Int?                             // manual drag-and-drop row order (null = default sort)
 
@@ -95,6 +97,33 @@ model User {
   updatedAt     DateTime @updatedAt
 
   @@index([teamId])
+}
+
+// Per-consultant callback number + ClickSend sender ID, one pair per brand
+// (Astra Solar / DC Solar). Ported from the astrasolar-app Firebase node
+// `/consultantContacts/{consultantId}`. A null/empty field means "fall back to
+// the system default" for that brand. Managed in Leads → Consultant Contacts;
+// consumed by the SMS sender resolver (brand derived from the lead's company).
+model ConsultantContact {
+  id           String @id @default(uuid())
+  consultantId String @unique
+  consultant   User   @relation("ConsultantContact", fields: [consultantId], references: [id], onDelete: Cascade)
+
+  // Astra Solar
+  contactPhoneAstra String?
+  senderIdAstra     String?
+  // DC Solar
+  contactPhoneDc String?
+  senderIdDc     String?
+
+  // Light audit trail surfaced in the UI ("Last updated … by …").
+  updatedById   String?
+  updatedByName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([consultantId])
 }
 
 model Team {
@@ -208,6 +237,12 @@ model Lead {
 
   sortOrder     Int?                                             // manual drag-and-drop row order (null = default sort)
   updatedAt     DateTime           @updatedAt
+
+  // Blacklist enforcement (Leads -> Blacklist Leads). Set true by the sweep
+  // when this lead matches a BlacklistEntry; filtered out of the No Answers tab.
+  blacklisted     Boolean   @default(false)
+  blacklistedAt   DateTime?
+  blacklistEntryId String?
 
   @@index([stage])
   @@index([leadGenId])
@@ -705,6 +740,12 @@ model BloomeLead {
   appTime        String?                             // appointment time as recorded (24h)
   existingSystem String?
 
+  // Blacklist enforcement (Leads -> Blacklist Leads). Set true by the sweep
+  // when this Bloome lead matches a BlacklistEntry; filtered out of the tab.
+  blacklisted      Boolean   @default(false)
+  blacklistedAt    DateTime?
+  blacklistEntryId String?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -813,12 +854,71 @@ model Appointment {
   cancelPending    String?                          // 'cancel' | 'dnq' | 'not_interested'
   cancelPendingAt  DateTime?
 
+  // Blacklist enforcement (Leads -> Blacklist Leads). Set true by the sweep
+  // when this appointment matches a BlacklistEntry; filtered out of the
+  // Leads Schedule grid.
+  blacklisted      Boolean   @default(false)
+  blacklistedAt    DateTime?
+  blacklistEntryId String?
+
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   @@index([date])
   @@index([consultantId, date])
   @@index([leadId])
+}
+
+// ============================================================================
+//  BLACKLIST LEADS (Leads -> Blacklist Leads)
+//
+//  Ported from the astrasolar-app Firebase node `/blacklistLeads`. An entry
+//  blocks a person from appearing in Bloome / No Answers / Leads Schedule: a
+//  sweep flags any record matching the entry on >=2 normalised fields
+//  (phone / email / name / address) and writes a removal-log row.
+// ============================================================================
+
+model BlacklistEntry {
+  id        String  @id @default(uuid())
+  firstName String?
+  lastName  String?
+  phone     String?
+  email     String?
+  address   String?
+
+  addedById   String?
+  addedByName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  removals  BlacklistRemovalLog[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+model BlacklistRemovalLog {
+  id         String   @id @default(uuid())
+  detectedAt DateTime @default(now())
+  removedAt  DateTime @default(now())
+  source     String                               // "Bloome" | "No Answers" | "Leads Schedule"
+
+  // Snapshot of the removed lead (so the log survives the source record).
+  matchedFirstName String?
+  matchedLastName  String?
+  matchedPhone     String?
+  matchedEmail     String?
+  matchedAddress   String?
+  matchedOn        String                          // "phone, email" — the fields that aligned
+
+  entryId      String?
+  entry        BlacklistEntry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  removedById   String?
+  removedByName String?
+
+  @@index([detectedAt])
+  @@index([entryId])
 }
 
 // ============================================================================
@@ -855,6 +955,24 @@ model TaskCard {
   dueDate     DateTime?    @db.Date
   position    Int                                  // 0-based order within the list
 
+  // Completion state (drives the "Completed tasks" toggle in the Display menu).
+  completed   Boolean      @default(false)
+  completedAt DateTime?
+
+  // Task-detail fields (Todoist-style detail panel).
+  deadline    DateTime?    @db.Date              // hard deadline, distinct from the scheduled dueDate
+  location    String?
+  labels      String[]     @default([])
+  reminders   DateTime[]   @default([])          // scheduled reminder datetimes
+
+  // Sub-tasks: a card may nest under a parent card (same list/board). Top-level
+  // board cards have parentId = null; sub-tasks are excluded from board columns.
+  parentId    String?
+  parent      TaskCard?    @relation("TaskSubtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  children    TaskCard[]   @relation("TaskSubtasks")
+
+  comments    TaskComment[]
+
   assigneeId  String?
   assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdById String
@@ -871,6 +989,21 @@ model TaskCard {
 
   @@index([listId, position])
   @@index([assigneeId])
+  @@index([completed])
+  @@index([parentId])
+}
+
+// A comment on a task card (detail-panel discussion thread).
+model TaskComment {
+  id        String   @id @default(uuid())
+  cardId    String
+  card      TaskCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
 }
 
 // ============================================================================

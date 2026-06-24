@@ -1,6 +1,8 @@
 import {
+  IsBoolean,
   IsIn,
   IsInt,
+  IsISO8601,
   IsOptional,
   IsString,
   Matches,
@@ -44,7 +46,14 @@ export class CreateTaskDto {
   @IsOptional() @IsString() @MaxLength(4000) description?: string | null;
   @IsOptional() @IsIn(TASK_PRIORITIES) priority?: TaskPriorityValue;
   @IsOptional() @Matches(ISO_DATE) dueDate?: string | null;
+  @IsOptional() @Matches(ISO_DATE) deadline?: string | null;
+  @IsOptional() @IsString() @MaxLength(200) location?: string | null;
+  @IsOptional() @IsString({ each: true }) @MaxLength(50, { each: true })
+  labels?: string[];
+  @IsOptional() @IsISO8601({ strict: false }, { each: true })
+  reminders?: string[];
   @IsOptional() @IsString() assigneeId?: string | null;
+  @IsOptional() @IsString() parentId?: string | null;
 }
 
 export class UpdateTaskDto {
@@ -52,10 +61,21 @@ export class UpdateTaskDto {
   @IsOptional() @IsString() @MaxLength(4000) description?: string | null;
   @IsOptional() @IsIn(TASK_PRIORITIES) priority?: TaskPriorityValue;
   @IsOptional() @Matches(ISO_DATE) dueDate?: string | null;
+  @IsOptional() @Matches(ISO_DATE) deadline?: string | null;
+  @IsOptional() @IsString() @MaxLength(200) location?: string | null;
+  @IsOptional() @IsString({ each: true }) @MaxLength(50, { each: true })
+  labels?: string[];
+  @IsOptional() @IsISO8601({ strict: false }, { each: true })
+  reminders?: string[];
   @IsOptional() @IsString() assigneeId?: string | null;
+  @IsOptional() @IsBoolean() completed?: boolean;
 }
 
 export class MoveTaskDto {
   @IsString() listId!: string;
   @IsInt() @Min(0) position!: number;
+}
+
+export class CreateTaskCommentDto {
+  @IsString() @MaxLength(4000) body!: string;
 }

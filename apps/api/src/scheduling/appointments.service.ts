@@ -110,6 +110,8 @@ export class AppointmentsService {
   }) {
     const rows = await this.prisma.appointment.findMany({
       where: {
+        // Blacklisted appointments are soft-deleted (Blacklist Leads sweep).
+        blacklisted: false,
         date: { gte: isoToDbDate(args.from), lte: isoToDbDate(args.to) },
         ...(args.consultantIds?.length
           ? { consultantId: { in: args.consultantIds } }

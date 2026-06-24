@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { PhoneOff, RefreshCw, CalendarClock, Save, X, Plus } from "lucide-react";
 import { useApi } from "@/lib/api/use-api";
-import { apiPatch } from "@/lib/api/client";
+import { apiPatch, apiPost } from "@/lib/api/client";
+import { BookAppointmentDialog } from "./book-appointment-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -21,6 +21,7 @@ import {
   TD,
   StatusBadge,
   type BadgeTone,
+  Pagination,
 } from "./shared";
 
 /**
@@ -208,8 +209,22 @@ interface Override {
 }
 
 export function NoAnswersTab() {
-  const router = useRouter();
-  const leads = useApi<LeadRow[]>("/leads?disposition=NO_ANSWER");
+  // Leads needing a call-back / follow-up: matched on EITHER a consultant
+  // disposition of No Answer / Not Interested / DNQ / Cancelled, OR a lead-gen
+  // outcome of Call Back (HOT_CALL_BACK) / DNQ / No Answer / Not Interested.
+  // ("Cancelled" has no outcome equivalent — it is covered by the disposition
+  // set above.) The API returns leads matching either set.
+  const leads = useApi<LeadRow[]>(
+    "/leads" +
+      "?disposition=NO_ANSWER,NOT_INTERESTED,DNQ,CANCELLED" +
+      "&outcome=HOT_CALL_BACK,DNQ,NO_ANSWER,NOT_INTERESTED",
+  );
+
+  // Lead currently being rebooked via the shared Book Appointment dialog.
+  const [bookingLead, setBookingLead] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
@@ -217,6 +232,8 @@ export function NoAnswersTab() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => setPresets(loadPresets()), []);
 
@@ -245,6 +262,19 @@ export function NoAnswersTab() {
 
   const hasActiveFilters =
     q.trim().length > 0 || Object.values(filters).some((a) => a.length > 0);
+
+  // Reset to the first page whenever the filtered set changes (search/filters/
+  // data), and keep the page in range if the result count shrinks.
+  useEffect(() => {
+    setPage(1);
+  }, [q, filters]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize],
+  );
 
   function setFacet(facet: Facet, next: string[]) {
     setFilters((f) => ({ ...f, [facet]: next }));
@@ -454,7 +484,7 @@ export function NoAnswersTab() {
               </tr>
             </THead>
             <TBody>
-              {filtered.map((l) => (
+              {paged.map((l) => (
                 <Row
                   key={l.id}
                   l={l}
@@ -465,13 +495,49 @@ export function NoAnswersTab() {
                   onLastCalled={(d) => patchOverride(l.id, { lastCalled: d })}
                   onOutcome={(v) => updateDisposition(l.id, v)}
                   onRebook={() =>
-                    router.push(`/leads/leads-schedule?rebookLeadId=${l.id}`)
+                    setBookingLead({
+                      id: l.id,
+                      name:
+                        `${l.firstName} ${l.surName}`.trim() || "this lead",
+                    })
                   }
                 />
               ))}
             </TBody>
           </DataTable>
+          <Pagination
+            page={safePage}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => {
+              setPageSize(s);
+              setPage(1);
+            }}
+            className="border-t"
+          />
         </div>
+      )}
+
+      {bookingLead && (
+        <BookAppointmentDialog
+          leadName={bookingLead.name}
+          title="Rebook Appointment"
+          confirmVerb="Rebook"
+          onSubmitSlot={async (slot) => {
+            await apiPost(`/leads/${bookingLead.id}/book-slot`, {
+              consultantId: slot.consultantId,
+              date: slot.date,
+              hour: slot.hour,
+              minute: slot.minute,
+            });
+          }}
+          onClose={() => setBookingLead(null)}
+          onBooked={() => {
+            setBookingLead(null);
+            leads.reload();
+          }}
+        />
       )}
     </div>
   );
