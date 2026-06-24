@@ -108,11 +108,25 @@ export function BookAppointmentDialog({
   leadName,
   onClose,
   onBooked,
+  title = "Book Appointment",
+  confirmVerb = "Book",
+  onSubmitSlot,
 }: {
-  leadId: string;
+  /** Bloome lead id — required unless a custom `onSubmitSlot` is provided. */
+  leadId?: string;
   leadName: string;
   onClose: () => void;
   onBooked: () => void;
+  /** Modal heading. Defaults to "Book Appointment". */
+  title?: string;
+  /** Verb used in the confirm prompt ("Book" / "Reschedule"). */
+  confirmVerb?: string;
+  /**
+   * Custom slot handler. When provided it is used instead of the default
+   * Bloome booking call, letting the same picker drive e.g. a reschedule.
+   * Should throw on failure so the dialog can surface the error.
+   */
+  onSubmitSlot?: (slot: OpenSlot) => Promise<void>;
 }) {
   const slotLabels = React.useMemo(() => {
     const m = new Map<string, string>();
@@ -226,18 +240,22 @@ export function BookAppointmentDialog({
     const consultant = consultantById.get(slot.consultantId);
     const name = consultant?.name || consultant?.email || "this consultant";
     const ok = window.confirm(
-      `Book ${leadName} with ${name} on ${fmtDayShort(slot.date)} at ${slotLabel(slot)}?`,
+      `${confirmVerb} ${leadName} with ${name} on ${fmtDayShort(slot.date)} at ${slotLabel(slot)}?`,
     );
     if (!ok) return;
     setBooking(true);
     setError(null);
     try {
-      await apiPost(`/leads/bloome/${leadId}/book`, {
-        consultantId: slot.consultantId,
-        date: slot.date,
-        hour: slot.hour,
-        minute: slot.minute,
-      });
+      if (onSubmitSlot) {
+        await onSubmitSlot(slot);
+      } else {
+        await apiPost(`/leads/bloome/${leadId}/book`, {
+          consultantId: slot.consultantId,
+          date: slot.date,
+          hour: slot.hour,
+          minute: slot.minute,
+        });
+      }
       onBooked();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Booking failed");
@@ -267,7 +285,7 @@ export function BookAppointmentDialog({
       <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border bg-card shadow-lg">
         {/* Header */}
         <div className="flex items-center gap-3 border-b px-5 py-4">
-          <h2 className="text-sm font-semibold">Book Appointment</h2>
+          <h2 className="text-sm font-semibold">{title}</h2>
           <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             <span className="font-medium text-primary">{leadName}</span>
           </span>

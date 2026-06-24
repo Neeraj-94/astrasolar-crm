@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -254,17 +255,36 @@ export class AppointmentsService {
     const existing = await this.prisma.appointment.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Appointment not found');
 
+    // The disposition is the assigned consultant's call: only they may set it.
+    // `been_rescheduled` is excluded — that is the system transition applied
+    // when a lead is rebooked through the schedule, not a consultant verdict.
+    if (
+      dto.disposition !== undefined &&
+      dto.disposition !== 'been_rescheduled' &&
+      existing.consultantId !== user.id
+    ) {
+      throw new ForbiddenException(
+        'Only the assigned consultant can change the disposition.',
+      );
+    }
+
+    const destConsultantId = dto.consultantId ?? existing.consultantId;
+    const consultantChanged = destConsultantId !== existing.consultantId;
+
     const moving =
+      consultantChanged ||
       (dto.date !== undefined && dto.date !== dbDateToISO(existing.date)) ||
       (dto.hour !== undefined && dto.hour !== existing.hour) ||
       (dto.minute !== undefined && dto.minute !== existing.minute);
 
     if (moving) {
+      const destDate = dto.date ?? dbDateToISO(existing.date);
+      const destHour = dto.hour ?? existing.hour;
       const taken = await this.prisma.appointment.findFirst({
         where: {
-          consultantId: existing.consultantId,
+          consultantId: destConsultantId,
           date: dto.date ? isoToDbDate(dto.date) : existing.date,
-          hour: dto.hour ?? existing.hour,
+          hour: destHour,
           minute: dto.minute ?? existing.minute,
           id: { not: id },
         },
@@ -274,11 +294,10 @@ export class AppointmentsService {
         throw new ConflictException('That timeslot is already booked.');
       }
 
-      // Moving a lead must land on a submitted-available hour as well.
-      const destDate = dto.date ?? dbDateToISO(existing.date);
-      const destHour = dto.hour ?? existing.hour;
+      // Moving a lead must land on a submitted-available hour for the
+      // destination consultant as well.
       const bookable = await this.availability.isHourBookable(
-        existing.consultantId,
+        destConsultantId,
         destDate,
         destHour,
       );
@@ -311,6 +330,7 @@ export class AppointmentsService {
     const row = await this.prisma.appointment.update({
       where: { id },
       data: {
+        ...(consultantChanged ? { consultantId: destConsultantId } : {}),
         ...(dto.date !== undefined ? { date: isoToDbDate(dto.date) } : {}),
         ...(dto.hour !== undefined ? { hour: dto.hour } : {}),
         ...(dto.minute !== undefined ? { minute: dto.minute } : {}),
@@ -341,6 +361,14 @@ export class AppointmentsService {
         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
       },
     });
+
+    // Keep the linked lead's consultant assignment in step with the move.
+    if (consultantChanged && row.leadId) {
+      await this.prisma.lead.update({
+        where: { id: row.leadId },
+        data: { consultantId: destConsultantId },
+      });
+    }
 
     await this.audit.record({
       userId: user.id,

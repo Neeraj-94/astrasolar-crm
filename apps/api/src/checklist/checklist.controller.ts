@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseFilters,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@astra/shared';
 import { ChecklistService } from './checklist.service';
 import { CurrentUser, RequirePermissions } from '../common/decorators';
 import type { AuthUser } from '../common/auth-user';
 import { SaveChecklistDto, SelectOptionDto } from './dto';
+import { ChecklistExceptionFilter } from './checklist-exception.filter';
 
 /**
  * Per-lead system-recommendation checklist. Nested under the lead so it's
@@ -13,6 +22,7 @@ import { SaveChecklistDto, SelectOptionDto } from './dto';
  * scope, the booked-status precondition, and ownership of the option.
  */
 @ApiTags('checklist')
+@UseFilters(ChecklistExceptionFilter)
 @Controller('leads/:leadId/checklist')
 export class ChecklistController {
   constructor(private readonly checklist: ChecklistService) {}
