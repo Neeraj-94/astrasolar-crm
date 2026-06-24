@@ -698,6 +698,7 @@ model BloomeLead {
   agent          String?                             // Bloome setter (Daniel, Ambrose, ...)
   dials          Int       @default(0)
   outcome        String?                             // raw label ("Appointment", "Hot Call Back", ...)
+  company        String?                             // assigned company ("Astra" default | "DCsolar")
   notes          String?
   lastCalled     String?                             // free-form date text from the sheet
   appDate        String?                             // appointment date as recorded (dd/mm/yyyy)
@@ -711,6 +712,7 @@ model BloomeLead {
   @@index([region])
   @@index([outcome])
   @@index([agent])
+  @@index([company])
   @@index([mobile])
   @@index([timestamp])
 }
