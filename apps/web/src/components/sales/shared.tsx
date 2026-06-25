@@ -13,7 +13,6 @@ import { ClipboardList, Flame, Phone, Mail, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DataTable,
-  DragTH,
   TR,
   type SortableConfig,
 } from "@/components/leads/shared/data-table";
@@ -246,6 +245,22 @@ interface LeadsTableProps {
   sortable?: SortableConfig;
   /** Open the system-recommendation checklist for a booked lead (Actions col). */
   onOpenChecklist?: (lead: SalesLead) => void;
+  /**
+   * Persist an edited note. When provided, the cbNotes / followUpNotes columns
+   * render as inline-editable textareas (saved on blur) instead of read-only
+   * text — matching the legacy Call Back / Past Preso sheets.
+   */
+  onSaveNote?: (
+    lead: SalesLead,
+    field: "cbNotes" | "followUpNotes",
+    value: string,
+  ) => void;
+  /**
+   * Height of the scroll viewport. Defaults to ~80% of the screen so most rows
+   * are visible without scrolling, while the table still fits within the
+   * viewport (the header sticks as you scroll the rest).
+   */
+  maxHeight?: string;
 }
 
 const HEADER_LABEL: Record<LeadColumn, string> = {
@@ -277,6 +292,21 @@ function ageDays(iso: string): string {
   return days === 0 ? "today" : days === 1 ? "1d" : `${days}d`;
 }
 
+/** Per-column horizontal alignment (header + cell stay in sync). */
+const COLUMN_ALIGN: Partial<Record<LeadColumn, "center" | "right">> = {
+  index: "center",
+  hot: "center",
+  attempts: "center",
+};
+
+function alignClass(c: LeadColumn): string {
+  const a = COLUMN_ALIGN[c];
+  return a === "center" ? "text-center" : a === "right" ? "text-right" : "text-left";
+}
+
+/** Default scroll-viewport height: ~80% of the screen, capped to fit on-screen. */
+const DEFAULT_TABLE_HEIGHT = "min(80vh, calc(100vh - 16rem))";
+
 export function LeadsTable({
   rows,
   columns,
@@ -285,6 +315,8 @@ export function LeadsTable({
   dispositionOptions,
   sortable,
   onOpenChecklist,
+  onSaveNote,
+  maxHeight = DEFAULT_TABLE_HEIGHT,
 }: LeadsTableProps) {
   if (rows.length === 0) {
     return (
@@ -293,17 +325,21 @@ export function LeadsTable({
       </div>
     );
   }
+  const stickyTh =
+    "sticky top-0 z-10 bg-muted px-3 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground border-b whitespace-nowrap";
   return (
     <div className="rounded-md border bg-card">
-      <DataTable sortable={sortable}>
+      <DataTable sortable={sortable} maxHeight={maxHeight}>
         <thead>
-          <tr className="bg-muted/40">
-            {sortable && <DragTH />}
-            {columns.map((c) => (
+          <tr>
+            {sortable && (
               <th
-                key={c}
-                className="px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground border-b whitespace-nowrap"
-              >
+                aria-label="Reorder"
+                className="sticky top-0 z-10 bg-muted w-8 px-2 py-2.5 border-b"
+              />
+            )}
+            {columns.map((c) => (
+              <th key={c} className={cn(stickyTh, alignClass(c))}>
                 {HEADER_LABEL[c]}
               </th>
             ))}
@@ -319,11 +355,15 @@ export function LeadsTable({
               {columns.map((c) => (
                 <td
                   key={c}
-                  className="px-3 py-2 border-b align-top text-sm whitespace-nowrap"
+                  className={cn(
+                    "px-3 py-2 border-b align-middle text-sm whitespace-nowrap",
+                    alignClass(c),
+                  )}
                 >
                   <Cell row={r} index={i} column={c} onDispose={onDispose}
                     dispositionOptions={dispositionOptions}
-                    onOpenChecklist={onOpenChecklist} />
+                    onOpenChecklist={onOpenChecklist}
+                    onSaveNote={onSaveNote} />
                 </td>
               ))}
             </TR>
@@ -341,6 +381,7 @@ function Cell({
   onDispose,
   dispositionOptions,
   onOpenChecklist,
+  onSaveNote,
 }: {
   row: SalesLead;
   index: number;
@@ -348,6 +389,11 @@ function Cell({
   onDispose?: (lead: SalesLead, next: Disposition) => void;
   dispositionOptions?: Disposition[];
   onOpenChecklist?: (lead: SalesLead) => void;
+  onSaveNote?: (
+    lead: SalesLead,
+    field: "cbNotes" | "followUpNotes",
+    value: string,
+  ) => void;
 }) {
   switch (column) {
     case "index":
@@ -425,9 +471,23 @@ function Cell({
     case "lgNotes":
       return <NoteCell text={row.lgNotes} />;
     case "cbNotes":
-      return <NoteCell text={row.cbNotes} />;
+      return onSaveNote ? (
+        <EditableNoteCell
+          value={row.cbNotes ?? ""}
+          onSave={(v) => onSaveNote(row, "cbNotes", v)}
+        />
+      ) : (
+        <NoteCell text={row.cbNotes} />
+      );
     case "followUpNotes":
-      return <NoteCell text={row.followUpNotes} />;
+      return onSaveNote ? (
+        <EditableNoteCell
+          value={row.followUpNotes ?? ""}
+          onSave={(v) => onSaveNote(row, "followUpNotes", v)}
+        />
+      ) : (
+        <NoteCell text={row.followUpNotes} />
+      );
     case "attempts":
       return <span className="tabular-nums">{row.attempts ?? 0}</span>;
     case "dateSet":
@@ -480,6 +540,16 @@ function Cell({
               {hasChecklist ? "View / Edit" : "Build Checklist"}
             </button>
           )}
+          {row.phone && (
+            <a
+              href={`tel:${row.phone}`}
+              className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs text-primary hover:bg-primary/10"
+              title={`Call ${row.name}`}
+            >
+              <Phone className="h-3 w-3" />
+              Call
+            </a>
+          )}
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
@@ -505,5 +575,31 @@ function NoteCell({ text }: { text?: string }) {
     >
       {text}
     </span>
+  );
+}
+
+/**
+ * Inline-editable note — an uncontrolled textarea that persists on blur only
+ * when the value actually changed (mirrors the legacy onblur save handlers on
+ * the Call Back / Past Preso sheets).
+ */
+function EditableNoteCell({
+  value,
+  onSave,
+}: {
+  value: string;
+  onSave: (next: string) => void;
+}) {
+  return (
+    <textarea
+      defaultValue={value}
+      onBlur={(e) => {
+        const next = e.target.value;
+        if (next !== value) onSave(next);
+      }}
+      placeholder="Add a note…"
+      rows={2}
+      className="w-44 min-h-[36px] max-h-24 resize-y rounded-md border border-input bg-background px-2 py-1 text-xs leading-snug text-foreground"
+    />
   );
 }

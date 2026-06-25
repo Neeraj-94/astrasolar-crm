@@ -1,20 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Bell, Calculator, Plus, Sparkles, X } from "lucide-react";
+import { Calculator, Plus, Sparkles, X } from "lucide-react";
 import { NovaWidget } from "@/components/nova/nova-widget";
 import { PriceCalcModal } from "@/components/price-calc/price-calc-widget";
-import { NotificationList } from "@/components/notifications/notification-list";
-import {
-  notificationHref,
-  useNotifications,
-  type NotificationItem,
-} from "@/components/notifications/notifications-context";
+import { apiGet } from "@/lib/api/client";
 
 const ACCENT = "#00d4ff";
 
-type Panel = "nova" | "calc" | "notify" | null;
+type Panel = "nova" | "calc" | null;
 
 interface Props {
   userName?: string;
@@ -24,40 +18,48 @@ interface Props {
 
 /**
  * Floating action cluster (speed-dial). A single button bottom-right expands to
- * reveal the in-app tools — Notifications, the System Price Calculator, and Ask
- * Nova — and collapses them back under one entity. Each mini-button opens its
- * own panel.
+ * reveal the in-app tools — the System Price Calculator and Ask Nova — and
+ * collapses them back under one entity. Notifications live in the header bell.
  */
 export function FloatingDock({ userName, canUseNova, canUsePriceCalc }: Props) {
-  const { unread } = useNotifications();
   const [expanded, setExpanded] = useState(false);
   const [active, setActive] = useState<Panel>(null);
+  const [briefing, setBriefing] = useState<string | null>(null);
+  const briefingFetched = useRef(false);
+
+  // On app open, fetch Nova's daily briefing. The server returns it only the
+  // first time per day (`fresh`); when it does, we pop Nova open and let her
+  // read it aloud. Subsequent opens that day return nothing, so nothing happens.
+  useEffect(() => {
+    if (!canUseNova || briefingFetched.current) return;
+    briefingFetched.current = true;
+    apiGet<{ fresh: boolean; text: string | null }>("/nova/briefing")
+      .then((res) => {
+        if (res?.fresh && res.text) {
+          setBriefing(res.text);
+          setActive((cur) => cur ?? "nova"); // don't steal focus from an open panel
+        }
+      })
+      .catch(() => {
+        /* no briefing on failure — stay quiet */
+      });
+  }, [canUseNova]);
 
   // Mini-actions, in the order they stack upward from the main button.
   const actions: {
     key: Exclude<Panel, null>;
     label: string;
     icon: React.ReactNode;
-    badge?: number;
     show: boolean;
     style?: React.CSSProperties;
     className: string;
   }[] = [
     {
-      key: "notify",
-      label: "Notifications",
-      icon: <Bell size={20} />,
-      badge: unread,
-      show: true,
-      className: "bg-card text-foreground ring-1 ring-border",
-    },
-    {
       key: "calc",
       label: "Price Calculator",
       icon: <Calculator size={20} />,
       show: !!canUsePriceCalc,
-      className:
-        "bg-success text-success-foreground ring-1 ring-border",
+      className: "bg-success text-success-foreground ring-1 ring-border",
     },
     {
       key: "nova",
@@ -81,8 +83,8 @@ export function FloatingDock({ userName, canUseNova, canUsePriceCalc }: Props) {
 
   return (
     <>
-      {/* Cluster — hidden while a corner panel is open so it doesn't overlap. */}
-      {active !== "nova" && active !== "notify" && (
+      {/* Cluster — hidden while the Nova corner panel is open so it doesn't overlap. */}
+      {active !== "nova" && (
         <>
           {/* Outside-click catcher while expanded. */}
           {expanded && (
@@ -110,11 +112,6 @@ export function FloatingDock({ userName, canUseNova, canUsePriceCalc }: Props) {
                   }
                 >
                   {a.icon}
-                  {a.badge && a.badge > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.05rem] items-center justify-center rounded-full bg-destructive px-1 text-[0.6rem] font-semibold leading-4 text-destructive-foreground">
-                      {a.badge > 99 ? "99+" : a.badge}
-                    </span>
-                  ) : null}
                 </button>
               ))}
 
@@ -135,12 +132,6 @@ export function FloatingDock({ userName, canUseNova, canUsePriceCalc }: Props) {
               ) : (
                 <Plus size={26} style={{ color: ACCENT }} />
               )}
-              {/* Aggregate unread badge while collapsed. */}
-              {!expanded && unread > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-destructive px-1 text-[0.62rem] font-semibold leading-4 text-destructive-foreground">
-                  {unread > 99 ? "99+" : unread}
-                </span>
-              )}
             </button>
           </div>
         </>
@@ -152,66 +143,13 @@ export function FloatingDock({ userName, canUseNova, canUsePriceCalc }: Props) {
           userName={userName}
           open={active === "nova"}
           onClose={() => setActive(null)}
+          briefing={briefing}
         />
       )}
 
       {canUsePriceCalc && active === "calc" && (
         <PriceCalcModal onClose={() => setActive(null)} />
       )}
-
-      {active === "notify" && (
-        <NotificationPanel onClose={() => setActive(null)} />
-      )}
     </>
-  );
-}
-
-/** Floating notification centre opened from the dock. */
-function NotificationPanel({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  const { items, unread, loadList, markRead, markAllRead } = useNotifications();
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    loadList();
-  }, [loadList]);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [onClose]);
-
-  function activate(n: NotificationItem) {
-    markRead(n);
-    const href = notificationHref(n);
-    if (href) {
-      onClose();
-      router.push(href);
-    }
-  }
-
-  return (
-    <div
-      ref={ref}
-      className="fixed bottom-5 right-5 z-50 w-[min(20rem,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border bg-popover shadow-2xl"
-    >
-      <NotificationList
-        items={items}
-        unread={unread}
-        onMarkAllRead={markAllRead}
-        onActivate={activate}
-      />
-      <div className="flex justify-end border-t px-3 py-2">
-        <button
-          onClick={onClose}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-3 w-3" /> Close
-        </button>
-      </div>
-    </div>
   );
 }

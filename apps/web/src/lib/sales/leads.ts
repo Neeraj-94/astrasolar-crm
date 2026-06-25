@@ -74,6 +74,26 @@ export const DISPOSITION_LABEL: Record<Disposition, string> = {
   dnq: "DNQ",
 };
 
+/**
+ * Disposition options shared by the Call Back Sheet, Past Preso's and Not
+ * Interested sheets. Mirrors the legacy astrasolar-app dropdown (the base
+ * DISPOSITIONS list plus the Call Back-only extras) so a row on any of those
+ * sheets can be revived / re-dispositioned in one click.
+ */
+export const SHEET_DISPOSITION_OPTIONS: Disposition[] = [
+  "callback",
+  "still_deciding",
+  "maybe_future",
+  "resent_proposal",
+  "presented",
+  "sold",
+  "no_answer",
+  "reschedule",
+  "not_interested",
+  "dnq",
+  "cancel",
+];
+
 export const STATE_OPTIONS = [
   "ACT",
   "TAS Hobart",

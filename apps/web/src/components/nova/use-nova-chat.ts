@@ -102,5 +102,18 @@ export function useNovaChat() {
     setError(null);
   }, []);
 
-  return { messages, loading, error, send, reset };
+  // Seed an assistant message that didn't come from a send() — used for Nova's
+  // daily briefing, which the server generates and we drop in as her opener.
+  // PDF blocks are still parsed so report-style briefings render their button.
+  const seed = useCallback((text: string) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+    const { clean, blocks } = extractPdfBlocks(trimmed);
+    setMessages((m) => [
+      ...m,
+      { id: nextId(), role: "assistant", text: clean, pdfs: blocks },
+    ]);
+  }, []);
+
+  return { messages, loading, error, send, reset, seed };
 }

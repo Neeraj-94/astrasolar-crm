@@ -14,6 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@astra/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { NovaService } from './nova.service';
+import { NovaBriefingService } from './nova-briefing.service';
 import { NovaVoiceService } from './nova-voice.service';
 import {
   NovaSettingsService,
@@ -39,6 +40,7 @@ import {
 export class NovaController {
   constructor(
     private readonly nova: NovaService,
+    private readonly briefing: NovaBriefingService,
     private readonly voice: NovaVoiceService,
     private readonly settings: NovaSettingsService,
     private readonly prisma: PrismaService,
@@ -56,6 +58,17 @@ export class NovaController {
   @Get('conversations')
   conversations(@CurrentUser() user: AuthUser) {
     return this.nova.listConversations(user);
+  }
+
+  /**
+   * The user's personalised daily briefing. Called when the app opens; returns
+   * `{ fresh:true, text }` the first time per day (the frontend pops Nova open
+   * and reads it aloud), or `{ fresh:false }` on subsequent opens that day.
+   */
+  @RequirePermissions(PERMISSIONS.NOVA_USE)
+  @Get('briefing')
+  briefingForUser(@CurrentUser() user: AuthUser) {
+    return this.briefing.briefing(user);
   }
 
   /**

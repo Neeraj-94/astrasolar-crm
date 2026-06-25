@@ -21,7 +21,8 @@ export interface NotificationItem {
   createdAt: string;
 }
 
-const POLL_MS = 60_000;
+// Short poll so newly-created/nudged tasks surface in near-real-time.
+const POLL_MS = 15_000;
 
 interface NotificationsValue {
   items: NotificationItem[];
@@ -63,13 +64,19 @@ export function NotificationsProvider({
     }
   }, []);
 
+  // Poll the unread count AND the list so the bell badge and any open panel
+  // both update live, without the user having to reopen the panel.
   useEffect(() => {
     loadCount();
+    loadList();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible") loadCount();
+      if (document.visibilityState === "visible") {
+        loadCount();
+        loadList();
+      }
     }, POLL_MS);
     return () => clearInterval(id);
-  }, [loadCount]);
+  }, [loadCount, loadList]);
 
   const markRead = useCallback(
     async (n: NotificationItem) => {
@@ -125,5 +132,10 @@ export function useNotifications(): NotificationsValue {
 /** Deep-link target for a notification, or null if it isn't actionable. */
 export function notificationHref(n: NotificationItem): string | null {
   if (n.type === "LEAD_NEEDS_REBOOKING") return "/leads/leads-schedule";
+  // Task notifications deep-link to the owning dashboard's Task Overview tab.
+  if (n.type === "TASK_ASSIGNED" || n.type === "TASK_NUDGED") {
+    const board = n.data?.board;
+    if (typeof board === "string") return `/${board}/task-overview`;
+  }
   return null;
 }
