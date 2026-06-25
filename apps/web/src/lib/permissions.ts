@@ -127,6 +127,13 @@ export const DASHBOARDS: DashboardDef[] = [
           "Block individuals from being booked/added; auto-removes matching leads across Bloome, No Answers, and Leads Schedule.",
         sortOrder: 70,
       },
+      {
+        key: "audit-logs",
+        name: "Audit Logs",
+        description:
+          "Read-only, append-only trail of every change to any lead — field edits, status changes, bookings, reassignments and conversions — by any lead-gen user, with filtering and search.",
+        sortOrder: 80,
+      },
     ],
   },
   {

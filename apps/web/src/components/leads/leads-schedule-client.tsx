@@ -34,6 +34,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { apiDelete, apiPatch, apiPost } from "@/lib/api/client";
 import { useApi } from "@/lib/api/use-api";
 import { cn } from "@/lib/utils";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import type { ParsedAddress } from "@/lib/google/maps-loader";
 import {
   DISPOSITIONS,
   DISPOSITION_LABEL,
@@ -133,6 +135,27 @@ const EMPTY_DRAFT: EntryDraft = {
   notes: "",
   company: "",
 };
+
+// Valid values for the State <select>, so a Google-parsed state is only
+// applied when it maps to an option the form actually offers.
+const STATE_OPTIONS = new Set(
+  (ENTRY_FIELDS.find((f) => f.key === "state")?.options ?? []).filter(Boolean),
+);
+
+/**
+ * Merge a Google-parsed address into an entry draft. Street + suburb go into
+ * the single `address` column (there is no separate suburb field); postcode
+ * and state fill in when present/valid.
+ */
+function applyPlaceToDraft(prev: EntryDraft, a: ParsedAddress): EntryDraft {
+  const street = [a.addressLine1, a.suburb].filter(Boolean).join(", ");
+  return {
+    ...prev,
+    address: street || a.formatted,
+    postcode: a.postcode || prev.postcode,
+    state: STATE_OPTIONS.has(a.state) ? a.state : prev.state,
+  };
+}
 
 function draftFromAppt(a: ScheduleAppointment): EntryDraft {
   return {
@@ -1688,6 +1711,27 @@ function ConsultantSection({
                                   </option>
                                 ))}
                               </select>
+                            ) : f.key === "address" ? (
+                              <AddressAutocomplete
+                                value={entryDraft[f.key]}
+                                onChange={(v) =>
+                                  setEntryDrafts((d) => ({
+                                    ...d,
+                                    [entryKey]: { ...d[entryKey], address: v },
+                                  }))
+                                }
+                                onSelect={(a) =>
+                                  setEntryDrafts((d) => ({
+                                    ...d,
+                                    [entryKey]: applyPlaceToDraft(
+                                      d[entryKey] ?? EMPTY_DRAFT,
+                                      a,
+                                    ),
+                                  }))
+                                }
+                                placeholder="Address"
+                                className={cn(ENTRY_INPUT, f.width, "h-7")}
+                              />
                             ) : (
                               <input
                                 type={f.key === "email" ? "email" : "text"}
@@ -1771,6 +1815,27 @@ function ConsultantSection({
                                   </option>
                                 ))}
                               </select>
+                            ) : f.key === "address" ? (
+                              <AddressAutocomplete
+                                value={editDraft[f.key]}
+                                onChange={(v) =>
+                                  setEditDrafts((d) => ({
+                                    ...d,
+                                    [lead.id]: { ...d[lead.id], address: v },
+                                  }))
+                                }
+                                onSelect={(a) =>
+                                  setEditDrafts((d) => ({
+                                    ...d,
+                                    [lead.id]: applyPlaceToDraft(
+                                      d[lead.id] ?? EMPTY_DRAFT,
+                                      a,
+                                    ),
+                                  }))
+                                }
+                                placeholder="Address"
+                                className={cn(ENTRY_INPUT, f.width, "h-7")}
+                              />
                             ) : (
                               <input
                                 type={f.key === "email" ? "email" : "text"}

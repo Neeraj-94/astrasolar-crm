@@ -30,6 +30,7 @@ import {
 import { useApi } from "@/lib/api/use-api";
 import { apiPatch, apiPost } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { BookAppointmentDialog } from "./book-appointment-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -1103,11 +1104,10 @@ export function BloomeLeadsTab() {
                   {/* Location */}
                   <TD>
                     <div className="flex flex-col gap-0.5">
-                      <TextCell
+                      <AddressCell
                         value={l.address}
-                        placeholder="Address"
                         className="w-36"
-                        onSave={(address) => saveField(l.id, { address })}
+                        onSave={(patch) => saveField(l.id, patch)}
                       />
                       <div className="flex gap-0.5">
                         <TextCell
@@ -1354,6 +1354,72 @@ function TextCell({
           {placeholder ?? "—"}
         </span>
       )}
+    </button>
+  );
+}
+
+/**
+ * Click-to-edit address cell backed by Google Places autocomplete. Picking a
+ * suggestion fills address + suburb + postcode in a single patch; free typing
+ * still saves just the address line. Degrades to a plain input without a key.
+ */
+function AddressCell({
+  value,
+  className,
+  onSave,
+}: {
+  value: string | null;
+  className?: string;
+  onSave: (patch: EditablePatch) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  function commit() {
+    setEditing(false);
+    const next = draft.trim() || null;
+    if (next !== (value ?? null)) onSave({ address: next });
+  }
+
+  if (editing) {
+    return (
+      <AddressAutocomplete
+        autoFocus
+        value={draft}
+        onChange={setDraft}
+        onSelect={(a) => {
+          const address = a.addressLine1 || a.formatted || null;
+          setDraft(address ?? "");
+          setEditing(false);
+          onSave({
+            address,
+            suburb: a.suburb || null,
+            postcode: a.postcode || null,
+          });
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        placeholder="Address"
+        className={`${cellInputClass} ${className ?? ""}`}
+        aria-label="Edit address"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setDraft(value ?? "");
+        setEditing(true);
+      }}
+      className={`block max-w-full truncate rounded px-1 py-0.5 text-left text-xs hover:bg-accent ${className ?? ""}`}
+      title={value ?? "Address"}
+    >
+      {value ?? <span className="italic text-muted-foreground">Address</span>}
     </button>
   );
 }

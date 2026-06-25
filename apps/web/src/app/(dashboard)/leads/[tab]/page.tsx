@@ -10,6 +10,7 @@ import { TeamAvailabilityTab } from "@/components/leads/team-availability-tab";
 import { NoAnswersTab } from "@/components/leads/no-answers-tab";
 import { ConsultantContactsTab } from "@/components/leads/consultant-contacts-tab";
 import { BlacklistTab } from "@/components/leads/blacklist-tab";
+import { LeadsAuditLogsTab } from "@/components/leads/leads-audit-logs-tab";
 import { TaskBoardTab } from "@/components/tasks/task-board-tab";
 
 interface Props {
@@ -44,6 +45,7 @@ const TAB_COMPONENTS: Record<string, TabComponent> = {
   "no-answers": NoAnswersTab,
   "consultant-contacts": ConsultantContactsTab,
   blacklist: BlacklistTab,
+  "audit-logs": LeadsAuditLogsTab,
 };
 
 export default async function LeadsTabPage({ params }: Props) {
