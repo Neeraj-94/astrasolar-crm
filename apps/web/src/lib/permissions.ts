@@ -84,6 +84,13 @@ export const DASHBOARDS: DashboardDef[] = [
         isDefault: true,
       },
       {
+        key: "lead-statistics",
+        name: "Lead Statistics",
+        description:
+          "Lead-gen performance — dials, call backs, and appointments per agent and per lead, with switchable time ranges and chart types.",
+        sortOrder: 8,
+      },
+      {
         key: "leads-schedule",
         name: "Leads Schedule",
         description: "Schedule and manage consultant appointments and leads.",

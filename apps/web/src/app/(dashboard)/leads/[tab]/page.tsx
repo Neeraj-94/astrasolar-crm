@@ -4,6 +4,7 @@ import { requireTab } from "@/components/dashboard-shell";
 import { TabPlaceholder } from "@/components/tab-placeholder";
 
 import { LeadsScheduleTab } from "@/components/leads/leads-schedule-tab";
+import { LeadStatisticsTab } from "@/components/leads/lead-statistics-tab";
 import { BloomeLeadsTab } from "@/components/leads/bloome-leads-tab";
 import { TeamAvailabilityTab } from "@/components/leads/team-availability-tab";
 import { NoAnswersTab } from "@/components/leads/no-answers-tab";
@@ -32,6 +33,7 @@ type TabComponent = () => JSX.Element | Promise<JSX.Element>;
 
 const TAB_COMPONENTS: Record<string, TabComponent> = {
   "task-overview": () => <TaskBoardTab board="leads" />,
+  "lead-statistics": LeadStatisticsTab,
   "leads-schedule": LeadsScheduleTab,
   // Real Bloome sheet data (API /leads/bloome, imported from Google Sheets).
   // The API-backed pipeline list (LeadsListTab: create + book + dispositions)
