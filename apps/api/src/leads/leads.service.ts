@@ -520,4 +520,159 @@ export class LeadsService {
     const count = await tx.sale.count();
     return `S-${year}-${String(count + 1).padStart(4, '0')}`;
   }
+
+  // ==========================================================================
+  //  AUDIT — read-only, team-wide trail of every change to any lead.
+  //
+  //  Powers the Leads -> Audit Logs tab. Reads the append-only AuditLog rows
+  //  the existing lead mutations already write (outcome/booking/disposition/
+  //  reassign/convert). Visibility is TEAM-WIDE: any user who can open the
+  //  Leads dashboard sees every lead-gen user's changes — the route is gated
+  //  on DASHBOARD_LEADGEN, not on the record-visibility scope, by design.
+  //
+  //  Each row is flattened for the table: field changed (+ old/new value when
+  //  the writer captured them in metadata), originating tab/context, acting
+  //  user, the affected lead's reference, and a timestamp.
+  // ==========================================================================
+  async listAudit(filters: {
+    leadId?: string;
+    userId?: string;
+    action?: string;
+    from?: string;
+    to?: string;
+    take?: number;
+  }) {
+    const take = Math.min(filters.take ?? 200, 500);
+
+    // Date-range bound on createdAt (inclusive). `to` is widened to end-of-day.
+    const createdAt =
+      filters.from || filters.to
+        ? {
+            gte: filters.from ? new Date(filters.from) : undefined,
+            lte: filters.to
+              ? new Date(`${filters.to}T23:59:59.999Z`)
+              : undefined,
+          }
+        : undefined;
+
+    // Lead-affecting audit rows. LEAD_* actions are recorded on entity "Lead";
+    // conversion is recorded on entity "Sale" but carries the originating
+    // leadId in metadata, so include those too and resolve them back.
+    const where: Prisma.AuditLogWhereInput = {
+      action: filters.action || undefined,
+      createdAt,
+      userId: filters.userId || undefined,
+      OR: [
+        {
+          entity: 'Lead',
+          ...(filters.leadId ? { entityId: filters.leadId } : {}),
+        },
+        {
+          entity: 'Sale',
+          action: 'LEAD_CONVERTED',
+          ...(filters.leadId
+            ? { metadata: { path: ['leadId'], equals: filters.leadId } }
+            : {}),
+        },
+      ],
+    };
+
+    const rows = await this.prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take,
+    });
+
+    // Resolve acting-user display names.
+    const actorIds = [...new Set(rows.map((r) => r.userId))];
+    const actors = await this.prisma.user.findMany({
+      where: { id: { in: actorIds } },
+      select: { id: true, name: true, email: true },
+    });
+    const actorById = new Map(actors.map((u) => [u.id, u]));
+
+    // Resolve the affected lead reference for each row. For Sale-entity
+    // conversion rows the lead id lives in metadata.leadId.
+    const leadIdOf = (r: (typeof rows)[number]): string | null => {
+      if (r.entity === 'Lead') return r.entityId;
+      const meta = (r.metadata ?? {}) as Record<string, unknown>;
+      return typeof meta.leadId === 'string' ? meta.leadId : null;
+    };
+    const leadIds = [
+      ...new Set(rows.map(leadIdOf).filter(Boolean) as string[]),
+    ];
+    const leads = await this.prisma.lead.findMany({
+      where: { id: { in: leadIds } },
+      select: { id: true, firstName: true, surName: true, phone: true },
+    });
+    const leadById = new Map(leads.map((l) => [l.id, l]));
+
+    return rows.map((r) => {
+      const meta = (r.metadata ?? {}) as Record<string, unknown>;
+      const leadId = leadIdOf(r);
+      const lead = leadId ? leadById.get(leadId) : null;
+      const actor = actorById.get(r.userId);
+
+      // Field / old / new — surfaced when the writer captured them. Falls back
+      // to a best-effort read of common metadata shapes per action.
+      const field =
+        (typeof meta.field === 'string' && meta.field) ||
+        ACTION_FIELD[r.action] ||
+        null;
+      const oldValue = meta.oldValue ?? meta.old ?? meta.from ?? null;
+      const newValue =
+        meta.newValue ??
+        meta.new ??
+        meta.to ??
+        meta.outcome ??
+        meta.disposition ??
+        meta.consultantId ??
+        meta.newOwnerId ??
+        null;
+      const context =
+        (typeof meta.tab === 'string' && meta.tab) ||
+        (typeof meta.context === 'string' && meta.context) ||
+        r.source ||
+        null;
+
+      return {
+        id: r.id,
+        createdAt: r.createdAt,
+        action: r.action,
+        leadId,
+        leadName: lead ? `${lead.firstName} ${lead.surName}`.trim() : null,
+        leadPhone: lead?.phone ?? null,
+        actorId: r.userId,
+        actorName: actor?.name ?? null,
+        actorEmail: actor?.email ?? null,
+        field,
+        oldValue: oldValue === null ? null : stringifyValue(oldValue),
+        newValue: newValue === null ? null : stringifyValue(newValue),
+        context,
+        source: r.source,
+        metadata: r.metadata,
+      };
+    });
+  }
+}
+
+// Human-friendly field label per action, used when the writer didn't record an
+// explicit `field` in metadata. Keep in sync with the lead mutation methods.
+const ACTION_FIELD: Record<string, string> = {
+  LEAD_OUTCOME_CHANGED: 'outcome',
+  LEAD_DISPOSITION_CHANGED: 'disposition',
+  BOOKING_CREATED: 'booking',
+  LEAD_REASSIGNED: 'leadGenId',
+  LEAD_CONVERTED: 'stage',
+};
+
+function stringifyValue(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
 }

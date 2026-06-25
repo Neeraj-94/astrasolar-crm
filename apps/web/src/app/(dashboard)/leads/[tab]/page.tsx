@@ -4,11 +4,13 @@ import { requireTab } from "@/components/dashboard-shell";
 import { TabPlaceholder } from "@/components/tab-placeholder";
 
 import { LeadsScheduleTab } from "@/components/leads/leads-schedule-tab";
+import { LeadStatisticsTab } from "@/components/leads/lead-statistics-tab";
 import { BloomeLeadsTab } from "@/components/leads/bloome-leads-tab";
 import { TeamAvailabilityTab } from "@/components/leads/team-availability-tab";
 import { NoAnswersTab } from "@/components/leads/no-answers-tab";
 import { ConsultantContactsTab } from "@/components/leads/consultant-contacts-tab";
 import { BlacklistTab } from "@/components/leads/blacklist-tab";
+import { LeadsAuditLogsTab } from "@/components/leads/leads-audit-logs-tab";
 import { TaskBoardTab } from "@/components/tasks/task-board-tab";
 
 interface Props {
@@ -32,6 +34,7 @@ type TabComponent = () => JSX.Element | Promise<JSX.Element>;
 
 const TAB_COMPONENTS: Record<string, TabComponent> = {
   "task-overview": () => <TaskBoardTab board="leads" />,
+  "lead-statistics": LeadStatisticsTab,
   "leads-schedule": LeadsScheduleTab,
   // Real Bloome sheet data (API /leads/bloome, imported from Google Sheets).
   // The API-backed pipeline list (LeadsListTab: create + book + dispositions)
@@ -42,6 +45,7 @@ const TAB_COMPONENTS: Record<string, TabComponent> = {
   "no-answers": NoAnswersTab,
   "consultant-contacts": ConsultantContactsTab,
   blacklist: BlacklistTab,
+  "audit-logs": LeadsAuditLogsTab,
 };
 
 export default async function LeadsTabPage({ params }: Props) {

@@ -204,3 +204,62 @@
     background-size: 32px 32px;
   }
 }
+
+/* -------------------------------------------------------------------------
+ * Google Places Autocomplete dropdown (.pac-container)
+ * Themed to match the dark UI and lifted above dialogs / modals.
+ * ---------------------------------------------------------------------- */
+.pac-container {
+  z-index: 10000; /* above shadcn dialogs (which sit around z-50) */
+  margin-top: 4px;
+  /* The dropdown defaults to the (often tiny) input's width, which clips long
+     addresses. Force a comfortable minimum so the whole suggestion shows even
+     in dense tables with small inputs, while still fitting narrow screens. */
+  min-width: 22rem;
+  max-width: min(28rem, 92vw);
+  width: max-content !important;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background-color: hsl(var(--popover));
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.3),
+    0 4px 6px -4px rgb(0 0 0 / 0.3);
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.pac-container .pac-item {
+  padding: 0.45rem 0.7rem;
+  border-top: 1px solid hsl(var(--border));
+  color: hsl(var(--popover-foreground));
+  /* Keep suggestion text readable regardless of the input's font size, and
+     let long addresses wrap instead of being truncated with an ellipsis. */
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  cursor: pointer;
+}
+
+.pac-container .pac-item-query {
+  font-size: 0.8125rem;
+}
+
+.pac-container .pac-item:first-child {
+  border-top: none;
+}
+
+.pac-container .pac-item:hover,
+.pac-container .pac-item-selected {
+  background-color: hsl(var(--accent));
+}
+
+.pac-container .pac-item-query,
+.pac-container .pac-matched {
+  color: hsl(var(--foreground));
+}
+
+.pac-container .pac-icon {
+  display: none; /* Google's pin sprite clashes with the dark theme */
+}

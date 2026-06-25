@@ -11,6 +11,7 @@ import { NovaKnowledgeService } from './nova-knowledge.service';
 import { NovaVoiceService } from './nova-voice.service';
 import { NovaSettingsService } from './nova-settings.service';
 import { NovaRecommendationService } from './nova-recommendation.service';
+import { NovaBriefingService } from './nova-briefing.service';
 
 /**
  * Nova — the Claude-powered AI assistant. Pulls in the domain modules whose
@@ -31,6 +32,7 @@ import { NovaRecommendationService } from './nova-recommendation.service';
     NovaVoiceService,
     NovaSettingsService,
     NovaRecommendationService,
+    NovaBriefingService,
   ],
   exports: [NovaKnowledgeService, NovaRecommendationService],
 })

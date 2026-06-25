@@ -13,6 +13,7 @@ import {
 } from '@astra/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { AuthUser } from '../common/auth-user';
 import type {
   CreateTaskDto,
@@ -58,7 +59,40 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
+
+  /**
+   * Best-effort in-app notification to a task's assignee. Never throws — a
+   * notification failure must not roll back the task action that triggered it.
+   */
+  private async notifyAssignee(args: {
+    assigneeId: string | null | undefined;
+    actor: AuthUser;
+    type: string;
+    title: string;
+    body: string;
+    board: string;
+    taskId: string;
+  }) {
+    const { assigneeId, actor } = args;
+    // Don't notify yourself (e.g. self-assigned tasks).
+    if (!assigneeId || assigneeId === actor.id) return;
+    try {
+      await this.notifications.create({
+        userId: assigneeId,
+        type: args.type,
+        title: args.title,
+        body: args.body,
+        entityType: 'TaskCard',
+        entityId: args.taskId,
+        actorId: actor.id,
+        data: { board: args.board, taskId: args.taskId },
+      });
+    } catch {
+      /* best-effort — ignore notification delivery errors */
+    }
+  }
 
   // -- access -----------------------------------------------------------------
 
@@ -317,6 +351,18 @@ export class TasksService {
       entityId: task.id,
       metadata: { board: dto.board, list: list.name, title: task.title },
     });
+
+    // Notify the assignee that a task was created for them.
+    await this.notifyAssignee({
+      assigneeId: task.assigneeId,
+      actor: user,
+      type: 'TASK_ASSIGNED',
+      title: `New task: "${task.title}"`,
+      body: `${user.name} assigned you a task`,
+      board: dto.board,
+      taskId: task.id,
+    });
+
     return this.serializeCard(task);
   }
 
@@ -380,6 +426,20 @@ export class TasksService {
       },
       include: CARD_INCLUDE,
     });
+
+    // Re-assigning a task to a new person notifies the new assignee.
+    if (assigneeChanged && updated.assigneeId) {
+      await this.notifyAssignee({
+        assigneeId: updated.assigneeId,
+        actor: user,
+        type: 'TASK_ASSIGNED',
+        title: `Task assigned: "${updated.title}"`,
+        body: `${user.name} assigned you a task`,
+        board: task.list.dashboardKey,
+        taskId: updated.id,
+      });
+    }
+
     return this.serializeCard(updated);
   }
 
@@ -570,6 +630,18 @@ export class TasksService {
         assigneeId: task.assigneeId,
       },
     });
+
+    // Notify the assignee they were nudged.
+    await this.notifyAssignee({
+      assigneeId: task.assigneeId,
+      actor: user,
+      type: 'TASK_NUDGED',
+      title: `Reminder: "${task.title}"`,
+      body: `${user.name} nudged you about this task`,
+      board: list.dashboardKey,
+      taskId: task.id,
+    });
+
     return this.serializeCard(updated);
   }
 

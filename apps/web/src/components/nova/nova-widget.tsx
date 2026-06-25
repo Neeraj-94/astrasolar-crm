@@ -35,20 +35,33 @@ export function NovaWidget({
   userName,
   open,
   onClose,
+  briefing,
 }: {
   userName?: string;
   /** Controlled visibility — driven by the floating dock cluster. */
   open: boolean;
   onClose: () => void;
+  /** Nova's daily briefing text — seeded as her opening message when present. */
+  briefing?: string | null;
 }) {
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<NovaAttachment | null>(null);
   const [voiceOn, setVoiceOn] = useState(true);
-  const { messages, loading, error, send, reset } = useNovaChat();
+  const { messages, loading, error, send, reset, seed } = useNovaChat();
   const avatar = useNovaAvatar();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lastSpokenId = useRef<string | null>(null);
+  const seededBriefing = useRef<string | null>(null);
+
+  // Drop the daily briefing in as Nova's first message (once per briefing text).
+  // The auto-speak effect below then reads it aloud when the panel is open.
+  useEffect(() => {
+    if (!briefing) return;
+    if (seededBriefing.current === briefing) return;
+    seededBriefing.current = briefing;
+    seed(briefing);
+  }, [briefing, seed]);
 
   const {
     supported: micSupported,

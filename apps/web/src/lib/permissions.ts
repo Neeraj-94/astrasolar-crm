@@ -84,6 +84,13 @@ export const DASHBOARDS: DashboardDef[] = [
         isDefault: true,
       },
       {
+        key: "lead-statistics",
+        name: "Lead Statistics",
+        description:
+          "Lead-gen performance — dials, call backs, and appointments per agent and per lead, with switchable time ranges and chart types.",
+        sortOrder: 8,
+      },
+      {
         key: "leads-schedule",
         name: "Leads Schedule",
         description: "Schedule and manage consultant appointments and leads.",
@@ -119,6 +126,13 @@ export const DASHBOARDS: DashboardDef[] = [
         description:
           "Block individuals from being booked/added; auto-removes matching leads across Bloome, No Answers, and Leads Schedule.",
         sortOrder: 70,
+      },
+      {
+        key: "audit-logs",
+        name: "Audit Logs",
+        description:
+          "Read-only, append-only trail of every change to any lead — field edits, status changes, bookings, reassignments and conversions — by any lead-gen user, with filtering and search.",
+        sortOrder: 80,
       },
     ],
   },

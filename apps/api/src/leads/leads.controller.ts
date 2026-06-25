@@ -72,6 +72,32 @@ export class LeadsController {
     return this.leads.reorder(user, dto.ids);
   }
 
+  /**
+   * Team-wide, read-only audit trail for the Leads -> Audit Logs tab.
+   * Declared before :id routes so "audit" is not captured as a lead id.
+   * Gated on DASHBOARD_LEADGEN (anyone who can open the Leads dashboard) —
+   * every lead-gen user sees every lead-gen user's changes, by design.
+   */
+  @RequirePermissions(PERMISSIONS.DASHBOARD_LEADGEN)
+  @Get('audit')
+  listAudit(
+    @Query('leadId') leadId?: string,
+    @Query('userId') userId?: string,
+    @Query('action') action?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.leads.listAudit({
+      leadId,
+      userId,
+      action,
+      from,
+      to,
+      take: take ? Number(take) : undefined,
+    });
+  }
+
   @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
   @Get(':id')
   get(@CurrentUser() user: AuthUser, @Param('id') id: string) {

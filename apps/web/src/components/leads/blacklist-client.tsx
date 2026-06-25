@@ -21,6 +21,7 @@ import type {
   BlacklistSweepResult,
 } from "@astra/shared";
 import { Button } from "@/components/ui/button";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { BlacklistApi } from "@/lib/api/endpoints";
 import { PageHeader } from "./shared";
 
@@ -229,12 +230,14 @@ export function BlacklistClient({
           </div>
           <div>
             <label className={labelCls}>Address</label>
-            <input
+            <AddressAutocomplete
               className={inputCls}
               value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              placeholder="Street / suburb"
-              autoComplete="off"
+              onChange={(address) => setForm({ ...form, address })}
+              onSelect={(a) =>
+                setForm((f) => ({ ...f, address: a.formatted }))
+              }
+              placeholder="Start typing an address…"
             />
           </div>
         </div>
