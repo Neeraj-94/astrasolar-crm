@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Database,
@@ -18,6 +18,8 @@ import {
   Shuffle,
   Bookmark,
   Trash2,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -51,6 +53,10 @@ import {
   TD,
   MultiSelect,
   type MultiSelectOption,
+  useSheetGrid,
+  SheetCell,
+  useUndoStack,
+  handleUndoKey,
 } from "./shared";
 
 interface BloomeLeadRow {
@@ -100,6 +106,30 @@ interface Summary {
 const COMPANY_OPTIONS = ["Astra", "DCsolar"];
 /** Blank/unset company is treated as the default. */
 const DEFAULT_COMPANY = "Astra";
+
+/**
+ * Spreadsheet grid columns — one stable index per editable field, left to
+ * right, so copy / paste / drag-fill and arrow navigation line up.
+ */
+const GRID_COLS = {
+  firstName: 0,
+  lastName: 1,
+  code: 2,
+  mobile: 3,
+  email: 4,
+  address: 5,
+  suburb: 6,
+  postcode: 7,
+  billSpend: 8,
+  agent: 9,
+  dials: 10,
+  outcome: 11,
+  company: 12,
+  appDate: 13,
+  appTime: 14,
+  notes: 15,
+} as const;
+const GRID_COL_COUNT = 16;
 
 interface SyncStatus {
   configured: boolean;
@@ -309,6 +339,7 @@ export function BloomeLeadsTab() {
   // rows so a save is visible immediately and survives background re-polls.
   const [edits, setEdits] = useState<Record<string, EditablePatch>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const undoStack = useUndoStack();
 
   // Row currently being booked via the picker dialog (null = closed).
   const [bookingLead, setBookingLead] = useState<{
@@ -317,7 +348,13 @@ export function BloomeLeadsTab() {
   } | null>(null);
   const [bookedNote, setBookedNote] = useState<string | null>(null);
 
-  async function saveField(id: string, patch: EditablePatch) {
+  // The current merged value of each row, read at edit time to capture the
+  // "before" value for undo.
+  const rowsByIdRef = useRef<Map<string, BloomeLeadRow>>(new Map());
+
+  // The actual optimistic save + PATCH. Never records undo (so undo/redo,
+  // which call this, don't recurse).
+  async function applyField(id: string, patch: EditablePatch) {
     const prev = edits[id];
     setSaveError(null);
     setEdits((e) => ({ ...e, [id]: { ...e[id], ...patch } }));
@@ -328,6 +365,22 @@ export function BloomeLeadsTab() {
       setEdits((e) => ({ ...e, [id]: prev ?? {} }));
       setSaveError(err instanceof Error ? err.message : "Save failed");
     }
+  }
+
+  // Public edit entrypoint used by every cell — records the inverse so the
+  // change can be undone, then applies it.
+  function saveField(id: string, patch: EditablePatch) {
+    const current = rowsByIdRef.current.get(id);
+    const before: EditablePatch = {};
+    for (const key of Object.keys(patch) as (keyof EditablePatch)[]) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (before as any)[key] = current ? (current as any)[key] ?? null : null;
+    }
+    undoStack.push({
+      undo: () => applyField(id, before),
+      redo: () => applyField(id, patch),
+    });
+    applyField(id, patch);
   }
 
   async function syncNow() {
@@ -610,7 +663,15 @@ export function BloomeLeadsTab() {
     const base = leads.data?.rows ?? [];
     return base.map((r) => (edits[r.id] ? { ...r, ...edits[r.id] } : r));
   }, [leads.data, edits]);
+  rowsByIdRef.current = useMemo(
+    () => new Map(rows.map((r) => [r.id, r])),
+    [rows],
+  );
   const isEmpty = !leads.loading && !leads.error && rows.length === 0;
+
+  // Spreadsheet selection layer (single-click select, double-click edit,
+  // Ctrl+C/V, drag-fill) over the editable columns.
+  const grid = useSheetGrid(rows.length, GRID_COL_COUNT);
 
   // Distinct agent names for the inline Agent dropdown (facets cover the
   // whole region, so new assignments stay consistent with existing setters).
@@ -1030,7 +1091,42 @@ export function BloomeLeadsTab() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div
+          {...grid.containerProps}
+          onKeyDown={(e) => {
+            if (handleUndoKey(e, undoStack)) return;
+            grid.containerProps.onKeyDown(e);
+          }}
+          className="overflow-x-auto rounded-xl border bg-card outline-none"
+        >
+          <div className="flex flex-wrap items-center gap-2 border-b px-3 py-1.5">
+            <p className="text-[11px] text-muted-foreground">
+              Click a cell to select · double-click to edit · Ctrl/Cmd+C / +V to
+              copy &amp; paste · drag the corner handle to fill down.
+            </p>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={undoStack.undo}
+                disabled={!undoStack.canUndo}
+                title="Undo (Ctrl/Cmd+Z)"
+                className="inline-flex h-6 items-center gap-1 rounded-md border px-1.5 text-[11px] hover:bg-accent disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+                Undo
+              </button>
+              <button
+                type="button"
+                onClick={undoStack.redo}
+                disabled={!undoStack.canRedo}
+                title="Redo (Ctrl/Cmd+Shift+Z)"
+                className="inline-flex h-6 items-center gap-1 rounded-md border px-1.5 text-[11px] hover:bg-accent disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <Redo2 className="h-3.5 w-3.5" />
+                Redo
+              </button>
+            </div>
+          </div>
           <DataTable className="text-xs [&_th]:px-2 [&_th]:py-2 [&_th]:text-[11px] [&_td]:px-2 [&_td]:py-1.5">
             <THead>
               <tr>
@@ -1043,13 +1139,12 @@ export function BloomeLeadsTab() {
                 <TH>Outcome</TH>
                 <TH>Company</TH>
                 <TH>Appointment</TH>
-                <TH>Existing System</TH>
                 <TH>Notes</TH>
                 <TH className="text-right">Actions</TH>
               </tr>
             </THead>
             <TBody>
-              {rows.map((l) => (
+              {rows.map((l, i) => (
                 <TR
                   key={l.id}
                   className={`align-top ${outcomeRowBg(l.outcome)}`}
@@ -1058,28 +1153,40 @@ export function BloomeLeadsTab() {
                   <TD>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex gap-0.5">
-                        <TextCell
-                          value={l.firstName}
-                          placeholder="First"
+                        <SheetCell
+                          grid={grid}
+                          row={i}
+                          col={GRID_COLS.firstName}
+                          value={l.firstName ?? ""}
+                          onCommit={(v) =>
+                            saveField(l.id, { firstName: v.trim() || null })
+                          }
                           className="w-16 font-medium"
-                          onSave={(firstName) => saveField(l.id, { firstName })}
                         />
-                        <TextCell
-                          value={l.lastName}
-                          placeholder="Last"
+                        <SheetCell
+                          grid={grid}
+                          row={i}
+                          col={GRID_COLS.lastName}
+                          value={l.lastName ?? ""}
+                          onCommit={(v) =>
+                            saveField(l.id, { lastName: v.trim() || null })
+                          }
                           className="w-16 font-medium"
-                          onSave={(lastName) => saveField(l.id, { lastName })}
                         />
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                         <span className="whitespace-nowrap">
                           {fmtTimestamp(l.timestamp)}
                         </span>
-                        <TextCell
-                          value={l.code}
-                          placeholder="Code"
+                        <SheetCell
+                          grid={grid}
+                          row={i}
+                          col={GRID_COLS.code}
+                          value={l.code ?? ""}
+                          onCommit={(v) =>
+                            saveField(l.id, { code: v.trim() || null })
+                          }
                           className="w-12"
-                          onSave={(code) => saveField(l.id, { code })}
                         />
                       </div>
                     </div>
@@ -1087,115 +1194,231 @@ export function BloomeLeadsTab() {
                   {/* Contact */}
                   <TD>
                     <div className="flex flex-col gap-0.5">
-                      <TextCell
-                        value={l.mobile}
-                        placeholder="Mobile"
+                      <SheetCell
+                        grid={grid}
+                        row={i}
+                        col={GRID_COLS.mobile}
+                        value={l.mobile ?? ""}
+                        onCommit={(v) =>
+                          saveField(l.id, { mobile: v.trim() || null })
+                        }
                         className="w-28 tabular-nums"
-                        onSave={(mobile) => saveField(l.id, { mobile })}
                       />
-                      <TextCell
-                        value={l.email}
-                        placeholder="Email"
-                        className="w-32 text-[11px] text-muted-foreground"
-                        onSave={(email) => saveField(l.id, { email })}
+                      <SheetCell
+                        grid={grid}
+                        row={i}
+                        col={GRID_COLS.email}
+                        value={l.email ?? ""}
+                        onCommit={(v) =>
+                          saveField(l.id, { email: v.trim() || null })
+                        }
+                        className="w-32 text-muted-foreground"
                       />
                     </div>
                   </TD>
                   {/* Location */}
                   <TD>
                     <div className="flex flex-col gap-0.5">
-                      <AddressCell
-                        value={l.address}
+                      <SheetCell
+                        grid={grid}
+                        row={i}
+                        col={GRID_COLS.address}
+                        value={l.address ?? ""}
+                        onCommit={(v) =>
+                          saveField(l.id, { address: v.trim() || null })
+                        }
                         className="w-36"
-                        onSave={(patch) => saveField(l.id, patch)}
+                        renderEditor={({ value, commit, cancel }) => (
+                          <AddressEditor
+                            value={value}
+                            onPatch={(patch) => saveField(l.id, patch)}
+                            commit={commit}
+                            cancel={cancel}
+                          />
+                        )}
                       />
                       <div className="flex gap-0.5">
-                        <TextCell
-                          value={l.suburb}
-                          placeholder="Suburb"
-                          className="w-24 text-[11px] text-muted-foreground"
-                          onSave={(suburb) => saveField(l.id, { suburb })}
+                        <SheetCell
+                          grid={grid}
+                          row={i}
+                          col={GRID_COLS.suburb}
+                          value={l.suburb ?? ""}
+                          onCommit={(v) =>
+                            saveField(l.id, { suburb: v.trim() || null })
+                          }
+                          className="w-24 text-muted-foreground"
                         />
-                        <TextCell
-                          value={l.postcode}
-                          placeholder="Postcode"
-                          className="w-12 text-[11px] text-muted-foreground"
-                          onSave={(postcode) => saveField(l.id, { postcode })}
+                        <SheetCell
+                          grid={grid}
+                          row={i}
+                          col={GRID_COLS.postcode}
+                          value={l.postcode ?? ""}
+                          onCommit={(v) =>
+                            saveField(l.id, { postcode: v.trim() || null })
+                          }
+                          className="w-12 text-muted-foreground"
                         />
                       </div>
                     </div>
                   </TD>
                   {/* Bill */}
                   <TD>
-                    <TextCell
-                      value={l.billSpend}
-                      placeholder="Bill"
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.billSpend}
+                      value={l.billSpend ?? ""}
+                      onCommit={(v) =>
+                        saveField(l.id, { billSpend: v.trim() || null })
+                      }
                       className="w-20"
-                      onSave={(billSpend) => saveField(l.id, { billSpend })}
                     />
                   </TD>
                   {/* Agent */}
                   <TD>
-                    <AgentCell
-                      value={l.agent}
-                      options={agentNames}
-                      onSave={(agent) => saveField(l.id, { agent })}
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.agent}
+                      value={l.agent ?? ""}
+                      onCommit={(v) =>
+                        saveField(l.id, { agent: v.trim() || null })
+                      }
+                      className="w-24"
+                      display={l.agent || "Unassigned"}
+                      renderEditor={({ value, commit, cancel }) => (
+                        <SelectEditor
+                          value={value}
+                          options={agentSelectOptions(agentNames, l.agent)}
+                          placeholder="Unassigned"
+                          commit={commit}
+                          cancel={cancel}
+                          width="w-24"
+                        />
+                      )}
                     />
                   </TD>
                   {/* Dials */}
                   <TD className="text-right">
-                    <DialsCell
-                      value={l.dials}
-                      onSave={(dials) => saveField(l.id, { dials })}
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.dials}
+                      value={String(l.dials ?? 0)}
+                      onCommit={(v) => {
+                        const n = Number.parseInt(v, 10);
+                        if (Number.isFinite(n) && n >= 0)
+                          saveField(l.id, { dials: Math.min(n, 999) });
+                      }}
+                      align="right"
+                      className="w-20"
+                      display={
+                        <DialsDisplay
+                          value={l.dials ?? 0}
+                          onSave={(dials) => saveField(l.id, { dials })}
+                        />
+                      }
                     />
                   </TD>
                   {/* Outcome */}
                   <TD>
-                    <OutcomeCell
-                      value={l.outcome}
-                      onSave={(outcome) => saveField(l.id, { outcome })}
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.outcome}
+                      value={l.outcome ?? ""}
+                      onCommit={(v) =>
+                        saveField(l.id, { outcome: v.trim() || null })
+                      }
+                      className="w-28"
+                      display={
+                        l.outcome ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <StatusBadge tone={outcomeTone(l.outcome)} dot>
+                              {l.outcome}
+                            </StatusBadge>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )
+                      }
+                      renderEditor={({ value, commit, cancel }) => (
+                        <SelectEditor
+                          value={value}
+                          options={outcomeSelectOptions(l.outcome)}
+                          placeholder="No outcome"
+                          commit={commit}
+                          cancel={cancel}
+                          width="w-28"
+                        />
+                      )}
                     />
                   </TD>
                   {/* Company */}
                   <TD>
-                    <CompanyCell
-                      value={l.company}
-                      onSave={(company) => saveField(l.id, { company })}
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.company}
+                      value={l.company || DEFAULT_COMPANY}
+                      onCommit={(v) =>
+                        saveField(l.id, { company: v.trim() || null })
+                      }
+                      className="w-24"
+                      renderEditor={({ value, commit, cancel }) => (
+                        <SelectEditor
+                          value={value || DEFAULT_COMPANY}
+                          options={companySelectOptions(l.company)}
+                          commit={commit}
+                          cancel={cancel}
+                          width="w-24"
+                        />
+                      )}
                     />
                   </TD>
                   {/* Appointment — date + time editable */}
                   <TD>
                     <div className="flex flex-col gap-0.5">
-                      <TextCell
-                        value={l.appDate}
-                        placeholder="App date"
-                        className="w-20 text-[11px]"
-                        onSave={(appDate) => saveField(l.id, { appDate })}
+                      <SheetCell
+                        grid={grid}
+                        row={i}
+                        col={GRID_COLS.appDate}
+                        value={l.appDate ?? ""}
+                        onCommit={(v) =>
+                          saveField(l.id, { appDate: v.trim() || null })
+                        }
+                        className="w-20"
                       />
-                      <TextCell
-                        value={l.appTime}
-                        placeholder="App time"
-                        className="w-20 text-[11px] text-muted-foreground"
-                        onSave={(appTime) => saveField(l.id, { appTime })}
+                      <SheetCell
+                        grid={grid}
+                        row={i}
+                        col={GRID_COLS.appTime}
+                        value={l.appTime ?? ""}
+                        onCommit={(v) =>
+                          saveField(l.id, { appTime: v.trim() || null })
+                        }
+                        className="w-20 text-muted-foreground"
                       />
                     </div>
                   </TD>
-                  {/* Existing system */}
-                  <TD>
-                    <TextCell
-                      value={l.existingSystem}
-                      placeholder="—"
-                      className="w-24 text-[11px]"
-                      onSave={(existingSystem) =>
-                        saveField(l.id, { existingSystem })
-                      }
-                    />
-                  </TD>
                   {/* Notes */}
                   <TD>
-                    <NotesCell
-                      value={l.notes}
-                      onSave={(notes) => saveField(l.id, { notes })}
+                    <SheetCell
+                      grid={grid}
+                      row={i}
+                      col={GRID_COLS.notes}
+                      value={l.notes ?? ""}
+                      onCommit={(v) =>
+                        saveField(l.id, { notes: v.trim() || null })
+                      }
+                      className="max-w-[200px] truncate text-muted-foreground"
+                      renderEditor={({ value, commit, cancel }) => (
+                        <NotesEditor
+                          value={value}
+                          commit={commit}
+                          cancel={cancel}
+                        />
+                      )}
                     />
                   </TD>
                   {/* Actions — stacked vertically */}
@@ -1301,347 +1524,179 @@ function StatButton({
   );
 }
 
-/** Generic click-to-edit text cell; commits on blur / Enter, cancels on Esc. */
-function TextCell({
-  value,
-  placeholder,
-  className,
-  onSave,
-}: {
-  value: string | null;
-  placeholder?: string;
-  className?: string;
-  onSave: (v: string | null) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
+// ---------------------------------------------------------------------------
+// Grid editors — shown by SheetCell when a cell enters edit mode. Each calls
+// `commit(value)` to persist + leave edit mode, or `cancel()` to discard.
+// ---------------------------------------------------------------------------
 
-  function commit() {
-    setEditing(false);
-    const next = draft.trim() || null;
-    if (next !== (value ?? null)) onSave(next);
-  }
-
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") setEditing(false);
-        }}
-        className={`${cellInputClass} ${className ?? ""}`}
-        aria-label={placeholder ?? "Edit"}
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value ?? "");
-        setEditing(true);
-      }}
-      className={`block max-w-full truncate rounded px-1 py-0.5 text-left text-xs hover:bg-accent ${className ?? ""}`}
-      title={value ?? placeholder ?? "Edit"}
-    >
-      {value ?? (
-        <span className="italic text-muted-foreground">
-          {placeholder ?? "—"}
-        </span>
-      )}
-    </button>
-  );
+/** Agent option list — known setters plus the row's current value. */
+function agentSelectOptions(options: string[], current: string | null): string[] {
+  const set = new Set(options);
+  if (current) set.add(current);
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
 }
 
-/**
- * Click-to-edit address cell backed by Google Places autocomplete. Picking a
- * suggestion fills address + suburb + postcode in a single patch; free typing
- * still saves just the address line. Degrades to a plain input without a key.
- */
-function AddressCell({
-  value,
-  className,
-  onSave,
-}: {
-  value: string | null;
-  className?: string;
-  onSave: (patch: EditablePatch) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-
-  function commit() {
-    setEditing(false);
-    const next = draft.trim() || null;
-    if (next !== (value ?? null)) onSave({ address: next });
-  }
-
-  if (editing) {
-    return (
-      <AddressAutocomplete
-        autoFocus
-        value={draft}
-        onChange={setDraft}
-        onSelect={(a) => {
-          const address = a.addressLine1 || a.formatted || null;
-          setDraft(address ?? "");
-          setEditing(false);
-          onSave({
-            address,
-            suburb: a.suburb || null,
-            postcode: a.postcode || null,
-          });
-        }}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") setEditing(false);
-        }}
-        placeholder="Address"
-        className={`${cellInputClass} ${className ?? ""}`}
-        aria-label="Edit address"
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value ?? "");
-        setEditing(true);
-      }}
-      className={`block max-w-full truncate rounded px-1 py-0.5 text-left text-xs hover:bg-accent ${className ?? ""}`}
-      title={value ?? "Address"}
-    >
-      {value ?? <span className="italic text-muted-foreground">Address</span>}
-    </button>
-  );
+/** Outcome option list — the fixed vocabulary plus any off-list current value. */
+function outcomeSelectOptions(current: string | null): string[] {
+  return current && !OUTCOME_OPTIONS.includes(current)
+    ? [current, ...OUTCOME_OPTIONS]
+    : OUTCOME_OPTIONS;
 }
 
-function AgentCell({
+/** Company option list — the fixed vocabulary plus any off-list current value. */
+function companySelectOptions(current: string | null): string[] {
+  const eff = current || DEFAULT_COMPANY;
+  return !COMPANY_OPTIONS.includes(eff)
+    ? [eff, ...COMPANY_OPTIONS]
+    : COMPANY_OPTIONS;
+}
+
+/** Generic single-select editor. Commits on change, cancels on blur/Escape. */
+function SelectEditor({
   value,
   options,
-  onSave,
+  placeholder,
+  commit,
+  cancel,
+  width,
 }: {
-  value: string | null;
+  value: string;
   options: string[];
-  onSave: (v: string | null) => void;
+  placeholder?: string;
+  commit: (v: string) => void;
+  cancel: () => void;
+  width?: string;
 }) {
-  const opts = useMemo(() => {
-    const set = new Set(options);
-    if (value) set.add(value);
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [options, value]);
-
   return (
     <select
-      value={value ?? ""}
-      onChange={(e) => onSave(e.target.value || null)}
-      className={`${cellInputClass} w-24`}
-      aria-label="Agent"
+      autoFocus
+      value={value}
+      onChange={(e) => commit(e.target.value)}
+      onBlur={cancel}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") cancel();
+      }}
+      className={`${cellInputClass} ${width ?? "w-28"}`}
+      aria-label="Edit"
     >
-      <option value="">Unassigned</option>
-      {opts.map((a) => (
-        <option key={a} value={a}>
-          {a}
+      {placeholder !== undefined && <option value="">{placeholder}</option>}
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
         </option>
       ))}
     </select>
   );
 }
 
-/** Dial counter: +1 logs a dial; clicking the number allows a direct edit. */
-function DialsCell({
+/** Notes editor — multi-line; Cmd/Ctrl+Enter commits, Escape cancels. */
+function NotesEditor({
+  value,
+  commit,
+  cancel,
+}: {
+  value: string;
+  commit: (v: string) => void;
+  cancel: () => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  return (
+    <textarea
+      autoFocus
+      rows={3}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => commit(draft)}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") cancel();
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) commit(draft);
+      }}
+      className="w-56 rounded-md border border-input bg-background p-1.5 text-[11px]"
+      aria-label="Notes"
+    />
+  );
+}
+
+/** Address editor — autocomplete that can also fill suburb + postcode. */
+function AddressEditor({
+  value,
+  onPatch,
+  commit,
+  cancel,
+}: {
+  value: string;
+  onPatch: (patch: EditablePatch) => void;
+  commit: (v: string) => void;
+  cancel: () => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  return (
+    <AddressAutocomplete
+      autoFocus
+      value={draft}
+      onChange={setDraft}
+      onSelect={(a) => {
+        const address = a.addressLine1 || a.formatted || "";
+        onPatch({
+          address: address || null,
+          suburb: a.suburb || null,
+          postcode: a.postcode || null,
+        });
+        commit(address);
+      }}
+      onBlur={() => commit(draft)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit(draft);
+        if (e.key === "Escape") cancel();
+      }}
+      placeholder="Address"
+      className={`${cellInputClass} w-36`}
+      aria-label="Edit address"
+    />
+  );
+}
+
+/** Dials display — the number with −/＋ steppers (kept inside the grid cell). */
+function DialsDisplay({
   value,
   onSave,
 }: {
   value: number;
   onSave: (v: number) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-
-  function commit() {
-    setEditing(false);
-    const n = Number.parseInt(draft, 10);
-    if (Number.isFinite(n) && n >= 0 && n !== value) onSave(Math.min(n, 999));
-  }
-
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        type="number"
-        min={0}
-        max={999}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") setEditing(false);
-        }}
-        className={`${cellInputClass} w-16 text-right tabular-nums`}
-        aria-label="Dials"
-      />
-    );
-  }
-
+  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
   return (
     <span className="inline-flex items-center justify-end gap-1">
       <button
         type="button"
-        onClick={() => onSave(Math.max(value - 1, 0))}
+        onMouseDown={stop}
+        onClick={(e) => {
+          stop(e);
+          onSave(Math.max(value - 1, 0));
+        }}
         disabled={value <= 0}
-        className="inline-flex h-6 w-6 items-center justify-center rounded border text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+        className="inline-flex h-5 w-5 items-center justify-center rounded border text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40"
         title="Remove a dial (−1)"
         aria-label="Remove a dial"
       >
         <Minus className="h-3 w-3" />
       </button>
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(String(value));
-          setEditing(true);
-        }}
-        className="min-w-[1.25rem] rounded px-1 text-center tabular-nums hover:bg-accent"
-        title="Edit dial count"
-      >
+      <span className="min-w-[1.25rem] text-center tabular-nums">
         {value || 0}
-      </button>
+      </span>
       <button
         type="button"
-        onClick={() => onSave(Math.min(value + 1, 999))}
-        className="inline-flex h-6 w-6 items-center justify-center rounded border text-muted-foreground hover:bg-accent hover:text-foreground"
+        onMouseDown={stop}
+        onClick={(e) => {
+          stop(e);
+          onSave(Math.min(value + 1, 999));
+        }}
+        className="inline-flex h-5 w-5 items-center justify-center rounded border text-muted-foreground hover:bg-accent hover:text-foreground"
         title="Log a dial (+1)"
         aria-label="Log a dial"
       >
         <Plus className="h-3 w-3" />
       </button>
     </span>
-  );
-}
-
-function OutcomeCell({
-  value,
-  onSave,
-}: {
-  value: string | null;
-  onSave: (v: string | null) => void;
-}) {
-  // Sheet data can contain labels outside the fixed set; keep them selectable.
-  const opts =
-    value && !OUTCOME_OPTIONS.includes(value)
-      ? [value, ...OUTCOME_OPTIONS]
-      : OUTCOME_OPTIONS;
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <select
-        value={value ?? ""}
-        onChange={(e) => onSave(e.target.value || null)}
-        className={`${cellInputClass} w-28`}
-        aria-label="Outcome"
-      >
-        <option value="">No outcome</option>
-        {opts.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-      {value && (
-        <StatusBadge tone={outcomeTone(value)} dot>
-          <span className="sr-only">{value}</span>
-        </StatusBadge>
-      )}
-    </span>
-  );
-}
-
-/** Company assignment — Astra (default) | DCsolar, matching the filter facet. */
-function CompanyCell({
-  value,
-  onSave,
-}: {
-  value: string | null;
-  onSave: (v: string | null) => void;
-}) {
-  // A blank/unset value defaults to Astra (consistent with the server facet).
-  const effective = value || DEFAULT_COMPANY;
-  const opts =
-    !COMPANY_OPTIONS.includes(effective)
-      ? [effective, ...COMPANY_OPTIONS]
-      : COMPANY_OPTIONS;
-
-  return (
-    <select
-      value={effective}
-      onChange={(e) => onSave(e.target.value || null)}
-      className={`${cellInputClass} w-24`}
-      aria-label="Company"
-    >
-      {opts.map((c) => (
-        <option key={c} value={c}>
-          {c}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function NotesCell({
-  value,
-  onSave,
-}: {
-  value: string | null;
-  onSave: (v: string | null) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-
-  function commit() {
-    setEditing(false);
-    const next = draft.trim() || null;
-    if (next !== (value ?? null)) onSave(next);
-  }
-
-  if (editing) {
-    return (
-      <textarea
-        autoFocus
-        rows={3}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") setEditing(false);
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) commit();
-        }}
-        className="w-56 rounded-md border border-input bg-background p-1.5 text-[11px]"
-        aria-label="Notes"
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value ?? "");
-        setEditing(true);
-      }}
-      className="block max-w-[160px] truncate rounded px-1 py-0.5 text-left text-[11px] text-muted-foreground hover:bg-accent"
-      title={value ?? "Add a note"}
-    >
-      {value ?? <span className="italic">Add note…</span>}
-    </button>
   );
 }

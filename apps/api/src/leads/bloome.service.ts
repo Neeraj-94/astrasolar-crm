@@ -302,6 +302,11 @@ export class BloomeLeadsService {
     }
 
     const updated = await this.prisma.bloomeLead.update({ where: { id }, data });
+
+    // Keep any booked schedule snapshot in step with the edit, so a Bloome
+    // lead shows the same values on the Leads Schedule as in this tab.
+    await this.syncBookedAppointments(updated, changes);
+
     await this.audit.record({
       userId: user.id,
       action: 'BLOOME_LEAD_UPDATED',
@@ -310,6 +315,52 @@ export class BloomeLeadsService {
       metadata: { changes },
     });
     return updated;
+  }
+
+  /**
+   * Propagate a Bloome row's contact/snapshot edits to every Appointment booked
+   * from it (Appointment.bloomeLeadId === id). Only the fields the schedule
+   * renders from its snapshot are mapped; scheduling-only fields are untouched.
+   */
+  private async syncBookedAppointments(
+    updatedLead: { id: string; firstName: string | null; lastName: string | null },
+    changes: Record<string, { from: string | number | null; to: string | number | null }>,
+  ) {
+    const patch: Record<string, unknown> = {};
+    const map: Record<string, string> = {
+      mobile: 'phone',
+      email: 'email',
+      address: 'address',
+      suburb: 'suburb',
+      postcode: 'postcode',
+      billSpend: 'bills',
+      notes: 'notes',
+      company: 'company',
+    };
+    for (const [src, dest] of Object.entries(map)) {
+      if (changes[src]) patch[dest] = changes[src].to;
+    }
+    // A name change refreshes firstName/lastName and the denormalised
+    // customerName, recomputed from the lead's full (post-edit) name.
+    if (changes.firstName || changes.lastName) {
+      if (changes.firstName) patch.firstName = updatedLead.firstName;
+      if (changes.lastName) patch.lastName = updatedLead.lastName;
+      patch.customerName =
+        [updatedLead.firstName, updatedLead.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || null;
+    }
+
+    if (Object.keys(patch).length === 0) return;
+
+    await this.prisma.appointment.updateMany({
+      // `bloomeLeadId` is a new column; cast contains it until `prisma generate`.
+      where: {
+        bloomeLeadId: updatedLead.id,
+      } as unknown as Prisma.AppointmentWhereInput,
+      data: patch as Prisma.AppointmentUpdateManyMutationInput,
+    });
   }
 
   /**
@@ -360,7 +411,11 @@ export class BloomeLeadsService {
 
     const [appointment] = await this.prisma.$transaction([
       this.prisma.appointment.create({
+        // `bloomeLeadId` keeps the booked snapshot linked to its Bloome row so
+        // later inline edits propagate here. Cast contains the new column until
+        // the Prisma client is regenerated (`prisma generate`).
         data: {
+          bloomeLeadId: lead.id,
           consultantId: dto.consultantId,
           date: dbDate,
           hour: dto.hour,
@@ -369,6 +424,7 @@ export class BloomeLeadsService {
           bookedByUserId: user.id,
           bookedByName: user.name,
           source: 'Bloome',
+          company: (lead as unknown as { company?: string | null }).company,
           bills: lead.billSpend,
           notes: lead.notes,
           customerName,
@@ -380,7 +436,7 @@ export class BloomeLeadsService {
           suburb: lead.suburb,
           state: lead.region,
           postcode: lead.postcode,
-        },
+        } as unknown as Prisma.AppointmentCreateInput,
       }),
       this.prisma.bloomeLead.update({
         where: { id },

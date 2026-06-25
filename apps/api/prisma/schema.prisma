@@ -816,6 +816,7 @@ model Appointment {
   id               String    @id @default(uuid())
   leadId           String?
   lead             Lead?     @relation("LeadScheduleAppointments", fields: [leadId], references: [id], onDelete: SetNull)
+  bloomeLeadId     String?                            // source Bloome row (keeps the snapshot in sync with inline edits)
   consultantId     String
   consultant       User      @relation("ConsultantScheduleAppointments", fields: [consultantId], references: [id], onDelete: Cascade)
 
@@ -867,6 +868,7 @@ model Appointment {
   @@index([date])
   @@index([consultantId, date])
   @@index([leadId])
+  @@index([bloomeLeadId])
 }
 
 // ============================================================================

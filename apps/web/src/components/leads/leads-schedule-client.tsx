@@ -578,6 +578,28 @@ export function LeadsScheduleClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appts.reload, avail.reload, subs.reload]);
 
+  // Keep booked appointments live (e.g. a Bloome lead edited in its own tab
+  // propagates to its booked snapshot). Polls only while visible and idle, so
+  // an in-progress entry/edit/reschedule is never clobbered by a refetch.
+  const editingRef = React.useRef(false);
+  React.useEffect(() => {
+    editingRef.current =
+      !!fieldEdit ||
+      !!rescheduleApptId ||
+      Object.keys(entryDrafts).length > 0 ||
+      Object.keys(editDrafts).length > 0;
+  }, [fieldEdit, rescheduleApptId, entryDrafts, editDrafts]);
+
+  React.useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      if (editingRef.current) return;
+      appts.reload();
+    }, 45_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appts.reload]);
+
   const createLead = React.useCallback(
     async (cid: string, date: string, slotIdx: number) => {
       const key = `${cid}_${date}_${slotIdx}`;
