@@ -49,6 +49,7 @@ WORKDIR /app/apps/api
 # The app binds to process.env.PORT (Railway injects PORT=8080). The public
 # domain's target port must match that value, NOT the 4000 dev fallback.
 EXPOSE 8080
-# Apply pending migrations, then boot. If you'd rather run migrations manually,
-# remove the `prisma migrate deploy &&` prefix.
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Apply pending migrations, sync the system-role → permission matrix into the
+# DB (idempotent; keeps RBAC in step with code — no user/password changes),
+# then boot. Remove a step from the chain if you'd rather run it manually.
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run db:sync-roles && node dist/main.js"]

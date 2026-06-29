@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
+    "db:sync-roles": "ts-node --transpile-only prisma/sync-roles.ts",
     "db:import-products": "ts-node --transpile-only prisma/import-products.ts",
     "db:import-leads": "ts-node --transpile-only prisma/import-leads.ts",
     "db:import-sales": "ts-node --transpile-only prisma/import-sales.ts",
