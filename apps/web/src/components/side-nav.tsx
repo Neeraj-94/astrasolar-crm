@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SunMedium, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { SunMedium, PanelLeftClose, PanelLeftOpen, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardIcon } from "@/components/dashboard-icon";
 
@@ -16,18 +16,49 @@ interface Props {
   dashboards: NavDashboard[];
   collapsed: boolean;
   onToggle: () => void;
+  /** Show the Integrations link in the bottom corner (CEO/Super Admin/Finance). */
+  canManageIntegrations?: boolean;
+  /** Whether the mobile slide-in drawer is open (<md screens). */
+  mobileOpen?: boolean;
+  /** Called to close the mobile drawer (backdrop tap / link navigation). */
+  onMobileClose?: () => void;
 }
 
-export function SideNav({ dashboards, collapsed, onToggle }: Props) {
+export function SideNav({
+  dashboards,
+  collapsed,
+  onToggle,
+  canManageIntegrations,
+  mobileOpen = false,
+  onMobileClose,
+}: Props) {
   const pathname = usePathname();
+  const integrationsActive = pathname.startsWith("/integrations");
 
   return (
-    <aside
-      className={cn(
-        "hidden md:flex flex-col border-r bg-card transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-60",
-      )}
-    >
+    <>
+      {/* Mobile backdrop */}
+      <div
+        onClick={onMobileClose}
+        aria-hidden="true"
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity duration-200",
+          mobileOpen
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none",
+        )}
+      />
+      <aside
+        className={cn(
+          "flex flex-col border-r bg-card",
+          // Mobile: fixed slide-in drawer (always full width content).
+          "fixed inset-y-0 left-0 z-50 w-60 max-w-[80vw] transform transition-transform duration-200 ease-out",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop: static, collapsible by width.
+          "md:static md:z-auto md:translate-x-0 md:max-w-none md:transition-[width]",
+          collapsed ? "md:w-16" : "md:w-60",
+        )}
+      >
       <div
         className={cn(
           "h-16 flex items-center border-b",
@@ -87,6 +118,7 @@ export function SideNav({ dashboards, collapsed, onToggle }: Props) {
             <Link
               key={d.key}
               href={href}
+              onClick={onMobileClose}
               title={collapsed ? d.name : undefined}
               aria-label={d.name}
               className={cn(
@@ -106,11 +138,35 @@ export function SideNav({ dashboards, collapsed, onToggle }: Props) {
         })}
       </nav>
 
+      {canManageIntegrations && (
+        <div className={cn("border-t p-2", collapsed && "flex justify-center")}>
+          <Link
+            href="/integrations"
+            onClick={onMobileClose}
+            title={collapsed ? "Integrations" : undefined}
+            aria-label="Integrations"
+            className={cn(
+              "flex items-center rounded-md text-sm transition-colors",
+              collapsed
+                ? "justify-center h-10 w-10"
+                : "gap-3 px-3 py-2",
+              integrationsActive
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+            )}
+          >
+            <Plug className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="truncate">Integrations</span>}
+          </Link>
+        </div>
+      )}
+
       {!collapsed && (
         <div className="p-3 text-[11px] text-muted-foreground border-t">
           v0.1.0 — internal use only
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }

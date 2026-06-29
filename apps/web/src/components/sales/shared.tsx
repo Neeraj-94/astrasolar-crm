@@ -25,9 +25,11 @@ import {
 import { useConsultants } from "@/lib/leads/consultants";
 import {
   DISPOSITION_LABEL,
+  STAGE_LABEL,
   STATE_OPTIONS,
   type Disposition,
   type SalesLead,
+  type StageState,
 } from "@/lib/sales/leads";
 
 // ---------------------------------------------------------------------------
@@ -46,6 +48,7 @@ const DISPOSITION_TONE: Record<Disposition, BadgeTone> = {
   no_answer: "neutral",
   cancel: "danger",
   reschedule: "warning",
+  been_rescheduled: "warning",
   dnq: "neutral",
 };
 
@@ -233,6 +236,17 @@ export type LeadColumn =
   | "dateSet"
   | "age"
   | "disposition"
+  // Sales-pipeline columns (populated for sold leads via row.pipeline) —
+  // mirror the astrasolar-app "My Sales Pipeline" widget.
+  | "leadGen"
+  | "openSolarId"
+  | "product"
+  | "price"
+  | "payment"
+  | "financeStatus"
+  | "preApprovals"
+  | "meterChange"
+  | "saleStatus"
   | "actions";
 
 interface LeadsTableProps {
@@ -245,6 +259,14 @@ interface LeadsTableProps {
   sortable?: SortableConfig;
   /** Open the system-recommendation checklist for a booked lead (Actions col). */
   onOpenChecklist?: (lead: SalesLead) => void;
+  /**
+   * Open a sold lead's sale in the sale detail modal — wired to the clickable
+   * `saleStatus` ("Status") column, mirroring astrasolar-app's
+   * `openSaleDetailsModal`. Only fires for rows that carry a `pipeline` (sale).
+   */
+  onOpenSale?: (lead: SalesLead) => void;
+  /** Open the Edit Lead modal for a row (Actions col "Edit" button). */
+  onEdit?: (lead: SalesLead) => void;
   /**
    * Persist an edited note. When provided, the cbNotes / followUpNotes columns
    * render as inline-editable textareas (saved on blur) instead of read-only
@@ -283,8 +305,43 @@ const HEADER_LABEL: Record<LeadColumn, string> = {
   dateSet: "Date Set",
   age: "Age",
   disposition: "Disposition",
+  leadGen: "Lead Gen",
+  openSolarId: "Open Solar ID",
+  product: "Product",
+  price: "Price",
+  payment: "Payment",
+  financeStatus: "Finance Status",
+  preApprovals: "Pre-Approvals",
+  meterChange: "Meter Change",
+  saleStatus: "Status",
   actions: "Actions",
 };
+
+/** Sale lifecycle (SaleStatus) → display label + badge tone. */
+const SALE_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  NEGOTIATION: { label: "Negotiation", tone: "warning" },
+  CONTRACT: { label: "Contract", tone: "info" },
+  ON_HOLD: { label: "On Hold", tone: "neutral" },
+  COMPLETED: { label: "Completed", tone: "success" },
+  CANCELLED: { label: "Cancelled", tone: "danger" },
+};
+
+const STAGE_TONE: Record<StageState, BadgeTone> = {
+  PENDING: "neutral",
+  IN_PROGRESS: "warning",
+  COMPLETED: "success",
+  NOT_REQUIRED: "info",
+};
+
+function StageCell({ value }: { value?: StageState }) {
+  if (!value)
+    return <span className="text-muted-foreground/60 text-xs italic">—</span>;
+  return (
+    <StatusBadge tone={STAGE_TONE[value]} variant="soft" dot>
+      {STAGE_LABEL[value]}
+    </StatusBadge>
+  );
+}
 
 function ageDays(iso: string): string {
   const then = new Date(iso).getTime();
@@ -297,6 +354,7 @@ const COLUMN_ALIGN: Partial<Record<LeadColumn, "center" | "right">> = {
   index: "center",
   hot: "center",
   attempts: "center",
+  price: "right",
 };
 
 function alignClass(c: LeadColumn): string {
@@ -315,6 +373,8 @@ export function LeadsTable({
   dispositionOptions,
   sortable,
   onOpenChecklist,
+  onOpenSale,
+  onEdit,
   onSaveNote,
   maxHeight = DEFAULT_TABLE_HEIGHT,
 }: LeadsTableProps) {
@@ -363,6 +423,8 @@ export function LeadsTable({
                   <Cell row={r} index={i} column={c} onDispose={onDispose}
                     dispositionOptions={dispositionOptions}
                     onOpenChecklist={onOpenChecklist}
+                    onOpenSale={onOpenSale}
+                    onEdit={onEdit}
                     onSaveNote={onSaveNote} />
                 </td>
               ))}
@@ -381,6 +443,8 @@ function Cell({
   onDispose,
   dispositionOptions,
   onOpenChecklist,
+  onOpenSale,
+  onEdit,
   onSaveNote,
 }: {
   row: SalesLead;
@@ -389,6 +453,8 @@ function Cell({
   onDispose?: (lead: SalesLead, next: Disposition) => void;
   dispositionOptions?: Disposition[];
   onOpenChecklist?: (lead: SalesLead) => void;
+  onOpenSale?: (lead: SalesLead) => void;
+  onEdit?: (lead: SalesLead) => void;
   onSaveNote?: (
     lead: SalesLead,
     field: "cbNotes" | "followUpNotes",
@@ -501,6 +567,80 @@ function Cell({
       );
     case "age":
       return <span className="text-muted-foreground">{ageDays(row.dateSet)}</span>;
+    case "leadGen":
+      return row.leadGenName ? (
+        <span className="text-foreground">{row.leadGenName}</span>
+      ) : (
+        <span className="text-muted-foreground/60">—</span>
+      );
+    case "openSolarId":
+      return row.pipeline?.openSolarId ? (
+        <span className="tabular-nums text-primary">
+          {row.pipeline.openSolarId}
+        </span>
+      ) : (
+        <span className="text-muted-foreground/60">—</span>
+      );
+    case "product":
+      return row.pipeline?.product ? (
+        <span className="text-foreground text-xs">{row.pipeline.product}</span>
+      ) : (
+        <span className="text-muted-foreground/60">—</span>
+      );
+    case "price":
+      return row.pipeline?.price != null ? (
+        <span className="tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+          {new Intl.NumberFormat("en-AU", {
+            style: "currency",
+            currency: "AUD",
+            maximumFractionDigits: 0,
+          }).format(row.pipeline.price)}
+        </span>
+      ) : (
+        <span className="text-muted-foreground/60">—</span>
+      );
+    case "payment":
+      return row.pipeline ? (
+        <StatusBadge
+          tone={row.pipeline.payment === "Cash" ? "success" : "info"}
+        >
+          {row.pipeline.payment}
+        </StatusBadge>
+      ) : (
+        <span className="text-muted-foreground/60">—</span>
+      );
+    case "financeStatus":
+      return <StageCell value={row.pipeline?.financeStatus} />;
+    case "preApprovals":
+      return <StageCell value={row.pipeline?.preApprovals} />;
+    case "meterChange":
+      return <StageCell value={row.pipeline?.meterChange} />;
+    case "saleStatus": {
+      const raw = row.pipeline?.saleStatus;
+      if (!row.pipeline || !raw)
+        return (
+          <span className="text-muted-foreground/60 text-xs italic">—</span>
+        );
+      const meta = SALE_STATUS_META[raw] ?? { label: raw, tone: "neutral" as BadgeTone };
+      const badge = (
+        <StatusBadge tone={meta.tone} variant="soft" dot>
+          {meta.label}
+        </StatusBadge>
+      );
+      // Clickable → opens the sale detail modal (astrasolar-app parity).
+      return onOpenSale ? (
+        <button
+          type="button"
+          onClick={() => onOpenSale(row)}
+          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          title="Open sale details"
+        >
+          {badge}
+        </button>
+      ) : (
+        badge
+      );
+    }
     case "disposition":
       return onDispose && dispositionOptions ? (
         <select
@@ -523,13 +663,13 @@ function Cell({
       const booked = row.stage === "BOOKED" || row.stage === "CONVERTED";
       const hasChecklist = !!row.checklistStatus;
       return (
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-col items-stretch gap-1.5">
           {onOpenChecklist && booked && (
             <button
               type="button"
               onClick={() => onOpenChecklist(row)}
               className={cn(
-                "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs",
+                "inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-xs",
                 hasChecklist
                   ? "border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
                   : "hover:bg-accent",
@@ -543,7 +683,7 @@ function Cell({
           {row.phone && (
             <a
               href={`tel:${row.phone}`}
-              className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs text-primary hover:bg-primary/10"
+              className="inline-flex items-center justify-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs text-primary hover:bg-primary/10"
               title={`Call ${row.name}`}
             >
               <Phone className="h-3 w-3" />
@@ -552,7 +692,8 @@ function Cell({
           )}
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+            onClick={() => onEdit?.(row)}
+            className="inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
           >
             <Pencil className="h-3 w-3" />
             Edit

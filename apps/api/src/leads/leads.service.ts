@@ -27,6 +27,7 @@ import type {
   BookLeadSlotDto,
   CreateLeadDto,
   UpdateDispositionDto,
+  UpdateLeadDto,
   UpdateOutcomeDto,
 } from './dto';
 
@@ -402,31 +403,67 @@ export class LeadsService {
         },
       });
 
+      // Sold leads carry a Sale (1:1). Re-marking an already-sold lead reuses
+      // the existing sale rather than violating the unique leadId. The id is
+      // returned so the UI can open the Sale Details modal (legacy parity).
+      let saleId: string | null = null;
       if (isSold) {
-        const saleRef = await this.nextSaleRef(tx);
-        const sale = await tx.sale.create({
-          data: {
-            saleRef,
-            leadId: id,
-            ownerId: lead.consultantId!,
-            company: lead.company,
-            status: SaleStatus.NEGOTIATION,
-            saleDate: new Date(),
-            statusDetails: { create: {} },
-          },
+        const existing = await tx.sale.findUnique({
+          where: { leadId: id },
+          select: { id: true },
         });
-        await tx.saleStageHistory.create({
-          data: { saleId: sale.id, toStage: SaleStatus.NEGOTIATION, changedBy: user.id },
-        });
-        await this.audit.record(
-          { userId: user.id, action: 'LEAD_CONVERTED', entity: 'Sale', entityId: sale.id, metadata: { leadId: id } },
-          tx,
-        );
+        if (existing) {
+          saleId = existing.id;
+        } else {
+          const saleRef = await this.nextSaleRef(tx);
+          const sale = await tx.sale.create({
+            data: {
+              saleRef,
+              leadId: id,
+              ownerId: lead.consultantId!,
+              company: lead.company,
+              status: SaleStatus.NEGOTIATION,
+              saleDate: new Date(),
+              statusDetails: { create: {} },
+            },
+          });
+          saleId = sale.id;
+          await tx.saleStageHistory.create({
+            data: { saleId: sale.id, toStage: SaleStatus.NEGOTIATION, changedBy: user.id },
+          });
+          await this.audit.record(
+            { userId: user.id, action: 'LEAD_CONVERTED', entity: 'Sale', entityId: sale.id, metadata: { leadId: id } },
+            tx,
+          );
+        }
       }
 
       await this.history.recordFromLead(tx, updated, user.id);
       await this.audit.record(
         { userId: user.id, action: 'LEAD_DISPOSITION_CHANGED', entity: 'Lead', entityId: id, metadata: { disposition: dto.disposition } },
+        tx,
+      );
+      return { ...updated, saleId };
+    });
+  }
+
+  /** Edit a lead's contact / detail fields (the "Edit Lead" modal). */
+  async updateLead(user: AuthUser, id: string, dto: UpdateLeadDto) {
+    await this.loadForWrite(user, id); // asserts write access
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.lead.update({
+        where: { id },
+        data: { ...dto },
+      });
+      await this.history.recordFromLead(tx, updated, user.id);
+      await this.audit.record(
+        {
+          userId: user.id,
+          action: 'LEAD_UPDATED',
+          entity: 'Lead',
+          entityId: id,
+          metadata: { fields: Object.keys(dto) },
+        },
         tx,
       );
       return updated;

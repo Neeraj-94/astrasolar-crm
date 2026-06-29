@@ -25,6 +25,7 @@ export type Disposition =
   | "no_answer"
   | "cancel"
   | "reschedule"
+  | "been_rescheduled"
   | "dnq";
 
 export type LeadCompany = "astra" | "dc" | "bloome";
@@ -36,6 +37,12 @@ export interface SalesLead {
   consultantName?: string;
   /** ISO date YYYY-MM-DD — the day the appointment was set for */
   date: string;
+  /**
+   * ISO date YYYY-MM-DD of the booked appointment (from the lead's booking).
+   * Undefined when the lead has no appointment yet — used by My Leads to show
+   * only real appointments for a day (vs. the `date` fallback to creation time).
+   */
+  bookingDate?: string;
   time: string; // e.g. "10:00 am"
   name: string;
   phone: string;
@@ -57,6 +64,43 @@ export interface SalesLead {
   stage?: string;
   /** Checklist status if one exists for this lead ("DRAFT" | "COMPLETED"). */
   checklistStatus?: "DRAFT" | "COMPLETED" | null;
+  /** Lead-gen rep who booked the lead (display name). */
+  leadGenName?: string;
+  /**
+   * Sales-pipeline detail for a sold lead — merged in from GET /sales by leadId.
+   * Undefined for leads that haven't converted to a sale yet.
+   */
+  pipeline?: SalePipeline;
+}
+
+/** Stage progression shared by every pipeline status column. */
+export type StageState = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "NOT_REQUIRED";
+
+export const STAGE_LABEL: Record<StageState, string> = {
+  PENDING: "Pending",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  NOT_REQUIRED: "Not Required",
+};
+
+/**
+ * The slice of a Sale surfaced as extra columns on the My Leads table
+ * (Open Solar ID, Product, Price, Payment, and the finance/pre-approval/
+ * meter-change statuses). Mirrors the astrasolar-app "My Sales Pipeline".
+ */
+export interface SalePipeline {
+  /** Sale id (GET /sales row) — used to open the sale detail modal. */
+  saleId: string;
+  openSolarId?: string;
+  product?: string;
+  price?: number;
+  /** "Cash" or the finance lender label. */
+  payment: string;
+  financeStatus: StageState;
+  preApprovals: StageState;
+  meterChange: StageState;
+  saleStatus?: string;
+  installDate?: string;
 }
 
 export const DISPOSITION_LABEL: Record<Disposition, string> = {
@@ -71,6 +115,7 @@ export const DISPOSITION_LABEL: Record<Disposition, string> = {
   no_answer: "No Answer",
   cancel: "Cancel",
   reschedule: "Reschedule",
+  been_rescheduled: "Been Rescheduled",
   dnq: "DNQ",
 };
 
@@ -89,6 +134,7 @@ export const SHEET_DISPOSITION_OPTIONS: Disposition[] = [
   "sold",
   "no_answer",
   "reschedule",
+  "been_rescheduled",
   "not_interested",
   "dnq",
   "cancel",
@@ -113,7 +159,7 @@ const API_TO_DISPOSITION: Record<string, Disposition> = {
   PRES_PROP_CREATED: "presented",
   CALL_BACK: "callback",
   RESCHEDULE: "reschedule",
-  BEEN_RESCHEDULED: "reschedule",
+  BEEN_RESCHEDULED: "been_rescheduled",
   NO_ANSWER: "no_answer",
   NOT_INTERESTED: "not_interested",
   DNQ: "dnq",
@@ -129,6 +175,7 @@ export const DISPOSITION_TO_API: Partial<Record<Disposition, string>> = {
   still_deciding: "CALL_BACK",
   maybe_future: "CALL_BACK",
   reschedule: "RESCHEDULE",
+  been_rescheduled: "BEEN_RESCHEDULED",
   no_answer: "NO_ANSWER",
   not_interested: "NOT_INTERESTED",
   dnq: "DNQ",
@@ -186,12 +233,14 @@ function mapCompany(c?: string | null): LeadCompany {
 
 /** Map one API Lead into the flat row the sales tables render. */
 export function mapApiLead(l: ApiLead): SalesLead {
-  const date = isoDate(l.bookingDate) || isoDate(l.timestamp);
+  const bookingDate = isoDate(l.bookingDate);
+  const date = bookingDate || isoDate(l.timestamp);
   return {
     id: l.id,
     consultantId: l.consultant?.id ?? "",
     consultantName: l.consultant?.name ?? undefined,
     date,
+    bookingDate: bookingDate || undefined,
     dateSet: isoDate(l.timestamp) || date,
     time: l.bookingTime ?? "",
     name: `${l.firstName ?? ""} ${l.surName ?? ""}`.trim(),
@@ -212,7 +261,99 @@ export function mapApiLead(l: ApiLead): SalesLead {
       : "set",
     stage: l.stage ?? undefined,
     checklistStatus: l.checklist?.status ?? null,
+    leadGenName: l.leadGen?.name ?? undefined,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Sales pipeline (GET /sales) -> per-lead pipeline column data.
+// ---------------------------------------------------------------------------
+interface ApiSaleStatusDetails {
+  financeStatus?: StageState | null;
+  preapprovalStatus?: StageState | null;
+  meterChangeStatus?: StageState | null;
+}
+interface ApiSystemDetails {
+  systemSize?: string | number | null;
+  batterySize?: string | number | null;
+  batteryBrand?: string | null;
+  inverterModel?: string | null;
+  phase?: string | null;
+}
+interface ApiSaleFinance {
+  lender?: string | null;
+  amount?: string | number | null;
+}
+export interface ApiSale {
+  id: string;
+  leadId: string;
+  openSolarId?: string | null;
+  soldPrice?: string | number | null;
+  status?: string | null;
+  statusDetails?: ApiSaleStatusDetails | null;
+  systemDetails?: ApiSystemDetails | null;
+  installation?: { installDate?: string | null } | null;
+  finance?: ApiSaleFinance[] | null;
+}
+
+/** Decimal columns arrive as strings — coerce to a clean number (drops "6.60"→6.6). */
+function num(v?: string | number | null): number | undefined {
+  if (v === null || v === undefined || v === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Build a concise product string from the system-spec snapshot. */
+function buildProduct(sd?: ApiSystemDetails | null): string | undefined {
+  if (!sd) return undefined;
+  const parts: string[] = [];
+  const kw = num(sd.systemSize);
+  if (kw) parts.push(`${kw}kW Solar`);
+  const batt = num(sd.batterySize);
+  if (batt) parts.push(`${batt}kWh ${sd.batteryBrand ?? ""}`.trim());
+  if (sd.inverterModel)
+    parts.push(`${sd.inverterModel}${sd.phase ? ` ${sd.phase}` : ""}`);
+  return parts.length ? parts.join(" + ") : undefined;
+}
+
+/** "Cash" when there's no finance leg; otherwise the lender label. */
+function paymentLabel(finance?: ApiSaleFinance[] | null): string {
+  const legs = (finance ?? []).filter(
+    (f) => (f.lender && f.lender.trim()) || (num(f.amount) ?? 0) > 0,
+  );
+  if (legs.length === 0) return "Cash";
+  return legs[0].lender?.trim() || "Finance";
+}
+
+const STAGE_FALLBACK: StageState = "PENDING";
+
+export function mapSaleToPipeline(s: ApiSale): SalePipeline {
+  return {
+    saleId: s.id,
+    openSolarId: s.openSolarId ?? undefined,
+    product: buildProduct(s.systemDetails),
+    price: num(s.soldPrice),
+    payment: paymentLabel(s.finance),
+    financeStatus: s.statusDetails?.financeStatus ?? STAGE_FALLBACK,
+    preApprovals: s.statusDetails?.preapprovalStatus ?? STAGE_FALLBACK,
+    meterChange: s.statusDetails?.meterChangeStatus ?? STAGE_FALLBACK,
+    saleStatus: s.status ?? undefined,
+    installDate: s.installation?.installDate ?? undefined,
+  };
+}
+
+/**
+ * Fetch the consultant-scoped sales pipeline and index it by leadId, so the
+ * My Leads table can merge pipeline columns onto each sold lead's row.
+ */
+export function useSalesPipeline() {
+  const { data, loading, error, reload } = useApi<ApiSale[]>("/sales");
+  const byLead = React.useMemo(() => {
+    const m = new Map<string, SalePipeline>();
+    for (const s of data ?? []) m.set(s.leadId, mapSaleToPipeline(s));
+    return m;
+  }, [data]);
+  return { byLead, loading, error, reload };
 }
 
 /** Build the /leads query string for a set of view dispositions. */

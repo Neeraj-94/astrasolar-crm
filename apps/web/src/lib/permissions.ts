@@ -157,6 +157,13 @@ export const DASHBOARDS: DashboardDef[] = [
         sortOrder: 10,
       },
       {
+        key: "my-performance",
+        name: "My Performance",
+        description:
+          "Personal sales analytics — performance charts, sales review, installs, monthly activity, pipeline funnel, and consultant ranking.",
+        sortOrder: 20,
+      },
+      {
         key: "callbacks",
         name: "Call Back Sheet",
         description: "All Call Back leads across every date.",
@@ -468,6 +475,11 @@ const ENTITY_PERMISSIONS: PermissionDef[] = [
   { key: "admin.role.assign", name: "Assign roles" },
   { key: "admin.role.revoke", name: "Revoke roles" },
   { key: "admin.audit.view", name: "View audit log" },
+
+  {
+    key: "integrations.manage",
+    name: "Manage third-party integration API keys",
+  },
 ];
 
 export const PERMISSIONS: PermissionDef[] = [
@@ -576,6 +588,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     "finance.invoice.delete",
     "finance.payment.record",
     "admin.audit.view",
+    "integrations.manage",
   ],
 
   sales_manager: [

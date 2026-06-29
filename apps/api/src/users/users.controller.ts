@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@astra/shared';
@@ -44,6 +45,20 @@ export class UsersController {
   @Get('consultants')
   consultants() {
     return this.users.consultants();
+  }
+
+  /**
+   * Active staff by role (comma-separated `roles`, default consultants +
+   * lead-gens). Source for the Sales Form consultant / lead-gen pickers.
+   */
+  @RequirePermissions(PERMISSIONS.RECORDS_READ_OWN)
+  @Get('by-role')
+  byRole(@Query('roles') roles?: string) {
+    const names = (roles ?? 'sales_consultant,lead_gen')
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean);
+    return this.users.byRole(names);
   }
 
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)
