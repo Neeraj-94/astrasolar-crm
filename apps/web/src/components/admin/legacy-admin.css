@@ -145,6 +145,28 @@
 .astra-legacy .pipe-inline-edit { cursor: pointer; border-bottom: 1px dashed transparent; }
 .astra-legacy .pipe-inline-edit:hover { border-bottom-color: var(--gold-dim); }
 
+/* Expandable sale-detail row (legacy pipeToggleDetail / pipeBuildDetailRow) */
+.astra-legacy .pipe-detail-row td { padding: 0 !important; border: none !important; background: transparent !important; }
+.astra-legacy .pipe-detail-row:hover td { background: transparent !important; }
+.astra-legacy .pipe-detail-panel {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  margin: 4px 8px 10px; padding: 14px 16px; font-size: 0.66rem; color: var(--text);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px;
+}
+.astra-legacy .pipe-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.astra-legacy .pipe-detail-label { font-size: 0.52rem; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+.astra-legacy .pipe-detail-val { font-size: 0.68rem; color: var(--text); display: flex; align-items: center; gap: 4px; word-break: break-word; }
+.astra-legacy .pipe-detail-val a { color: var(--accent); text-decoration: none; }
+.astra-legacy .pipe-detail-val a:hover { text-decoration: underline; }
+.astra-legacy .pipe-detail-notes { grid-column: 1 / -1; }
+.astra-legacy .pipe-detail-section {
+  grid-column: 1 / -1; border-top: 1px solid var(--border); margin: 6px 0; padding-top: 6px;
+  font-size: 0.55rem; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+}
+.astra-legacy .pipe-detail-section.danger { border-top-color: var(--red); color: var(--red); }
+.astra-legacy .pipe-expand-caret { display: inline-block; margin-right: 4px; color: var(--text-dim); transition: transform 0.15s; font-size: 0.6rem; }
+.astra-legacy .pipe-expand-caret.open { transform: rotate(90deg); color: var(--gold); }
+
 /* ════════════════════ INSTALLATION CALENDAR ════════════════════ */
 
 .astra-legacy .install-calendar-wrap { padding: 0 28px 40px; }

@@ -457,6 +457,11 @@ model SystemDetails {
   nmi               String?                          // National Meter Identifier
   phase             String?                          // single / three phase
 
+  // Extra install attributes surfaced/edited in the Sales Pipeline detail panel.
+  backup            String?                          // Full / Partial / None / Other
+  hotWater          String?                          // Apricus / Reclaim / None / Other
+  aircon            String?                          // None / Other
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

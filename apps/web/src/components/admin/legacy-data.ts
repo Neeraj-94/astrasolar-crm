@@ -90,8 +90,8 @@ export type TimeSlot = (typeof TIME_SLOTS)[number];
 
 export const FINANCE_STATUS: Record<string, string> = {
   applied: "Applied",
-  finance_docs_submitted: "Finance Docs Submitted",
-  finance_approved: "Finance Approved",
+  finance_docs_submitted: "Docs Submitted",
+  finance_approved: "Approved",
   declined: "Declined",
   withdrawn: "Withdrawn",
   under_review: "Under Review",
@@ -103,9 +103,9 @@ export const FINANCE_STATUS: Record<string, string> = {
 export const PREAPPROVAL_STATUS: Record<string, string> = {
   needs_applying: "Needs Applying",
   submitted: "Submitted",
-  pre_approval_submitted: "Pre Approval Submitted",
-  pre_approval_approved: "Pre Approval Approved",
-  awaiting_payment_preapproval: "Awaiting Payment for PreApproval",
+  pre_approval_submitted: "Submitted",
+  pre_approval_approved: "Approved",
+  awaiting_payment_preapproval: "Awaiting Payment",
   awaiting_info: "Awaiting Info",
   incomplete_info: "Incomplete Information",
   on_hold: "On Hold",
@@ -193,6 +193,7 @@ export interface PipelineStatus {
 
 export interface PipelineSale {
   key: string;
+  leadId?: string;
   consultantId: string;
   consultantName: string;
   company: string;
@@ -226,7 +227,115 @@ export interface PipelineSale {
   roofType?: string;
   storeys?: string;
   installNotes?: string;
+  // Extra detail-panel fields (editable in the expandable row).
+  saleStatus?: string; // SaleStatus enum value
+  saleType?: string; // SaleType enum value
+  systemTypeCode?: string; // SystemType enum value
+  totalRRP?: number;
+  totalCommission?: number;
+  saleDate?: string;
+  energyProvider?: string;
+  nmi?: string;
+  referral?: string;
+  paymentNotes?: string;
+  aircon?: string;
+  tilts?: string;
   status: PipelineStatus;
+}
+
+// ── Detail-panel select option lists ──────────────────────────────────────
+export const SALE_STATUS_OPTS: Record<string, string> = {
+  NEGOTIATION: "Negotiation",
+  CONTRACT: "Contract",
+  ON_HOLD: "On Hold",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+export const SALE_TYPE_OPTS: Record<string, string> = {
+  SOLAR_ONLY: "Solar Only",
+  BATTERY_ONLY: "Battery Only",
+  SOLAR_BATTERY: "Solar + Battery",
+};
+export const SYSTEM_TYPE_OPTS: Record<string, string> = {
+  NEW: "New",
+  REPLACEMENT: "Replacement",
+  ADDITIONAL: "Additional",
+  ADDITIONAL_REPLACEMENT: "Additional + Replacement",
+};
+export const STATE_OPTS = ["ACT", "NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT"];
+export const COMPANY_OPTS: Record<string, string> = { astra: "Astra", dcnt: "DC ELEC" };
+export const ROOF_TYPE_OPTS = ["Tile", "Tin", "Kliplock", "Terracotta", "Other"];
+export const STOREYS_OPTS = ["1", "2", "3+"];
+export const PHASE_OPTS = ["1 Phase", "2 Phase", "3 Phase"];
+export const SWITCHBOARD_OPTS = ["Yes Full", "Yes Minor", "No"];
+export const BACKUP_OPTS = ["Full", "Partial", "None", "Other"];
+export const HOTWATER_OPTS = ["Apricus", "Reclaim", "None", "Other"];
+export const AIRCON_OPTS = ["None", "Other"];
+export const PAYMENT_OPTS: Record<string, string> = { cash: "Cash", finance: "Finance", hesp: "HESP" };
+
+// ── Extras catalogues (verbatim from astrasolar-app) ──────────────────────
+export interface ExtraItem {
+  id: string;
+  name: string;
+  price: number;
+  perUnit: string;
+  note?: string;
+}
+
+export const EXTRAS_CATALOGUE: ExtraItem[] = [
+  { id: "tilt", name: "Tilt Panel", price: 40, perUnit: "Per Panel", note: "+$200 for extra labour & material" },
+  { id: "cliplock", name: "Clip Lock Roof", price: 22, perUnit: "Per Panel" },
+  { id: "split", name: "Split Array", price: 150, perUnit: "Per Split", note: "No free split" },
+  { id: "optimiser", name: "Optimiser", price: 95, perUnit: "Per Panel" },
+  { id: "removal", name: "System Removal", price: 80, perUnit: "Per Panel" },
+  { id: "hwremoval", name: "Hot Water / Pool System Removal", price: 500, perUnit: "Per System" },
+  { id: "terracotta", name: "Terracotta Tiles", price: 250, perUnit: "Per Job" },
+  { id: "doublestory", name: "Double Story", price: 350, perUnit: "Per Unit" },
+  { id: "mainswitch", name: "Main Switch", price: 200, perUnit: "Per Unit" },
+  { id: "steeproof", name: "Steep Roof", price: 1000, perUnit: "Per Job", note: "Unless advised otherwise" },
+  { id: "sbmajor", name: "Switchboard Upgrade (Major)", price: 2000, perUnit: "Per Meter", note: "Unless advised otherwise" },
+  { id: "sbminor", name: "Switchboard Upgrade (Minor)", price: 1000, perUnit: "Per Meter", note: "Unless advised otherwise" },
+  { id: "extrainv", name: "Goodwe 5kW Extra Inverter (1ph)", price: 1000, perUnit: "Per System" },
+  { id: "invcanopy", name: "Inverter Canopy", price: 200, perUnit: "Per Unit", note: "If no shed available" },
+  { id: "bdcert", name: "Technical Assessment / BD Certificate", price: 1350, perUnit: "Per Install" },
+  { id: "smartmeter", name: "Smart Meter / Export Limiter (1ph)", price: 350, perUnit: "Per Unit" },
+  { id: "ctmeter2ph", name: "CT Meter (2 Phase)", price: 220, perUnit: "Per Unit" },
+  { id: "ctmeter3ph", name: "CT Meter (3 Phase)", price: 340, perUnit: "Per Unit" },
+  { id: "landscape", name: "Landscape Panel", price: 20, perUnit: "Per Panel" },
+  { id: "scissorlift", name: "Scissor Lift", price: 700, perUnit: "Per Day", note: "Plus travel — quote per job" },
+  { id: "travelkm", name: "Travel (per km)", price: 1.5, perUnit: "Per KM", note: "ACT: after 70km from CBD. TAS: all km. Both ways." },
+  { id: "3phase", name: "3 Phase Extra", price: 1000, perUnit: "Per Install" },
+  { id: "3stringinv", name: "3 String 5kW Inverter Add", price: 200, perUnit: "Per Unit" },
+  { id: "sungrow5", name: "Sungrow 1ph Upgrade — 5kW", price: 671, perUnit: "Per Unit" },
+  { id: "sungrow8", name: "Sungrow 1ph Upgrade — 8kW", price: 431, perUnit: "Per Unit" },
+  { id: "sungrow10", name: "Sungrow 1ph Upgrade — 10kW", price: 550, perUnit: "Per Unit" },
+];
+
+export const EXTRAS_COUNTRY: ExtraItem[] = [
+  { id: "country_small", name: "Country Job ≤ 6.6kW", price: 80, perUnit: "Per kW", note: "$80/kW extra" },
+  { id: "country_mid", name: "Country Job 7–11kW", price: 80, perUnit: "Per kW", note: "$80/kW + $250 accommodation" },
+  { id: "country_large", name: "Country Job > 11kW", price: 80, perUnit: "Per kW", note: "$80/kW + $500 accommodation" },
+  { id: "accommodation", name: "Accommodation", price: 500, perUnit: "Per Day" },
+];
+
+export const BATTERY_EXTRAS_CATALOGUE: ExtraItem[] = [
+  { id: "batt_cable_10_20", name: "Battery Cabling 10–20m", price: 380, perUnit: "Per Install" },
+  { id: "batt_cable_20_30", name: "Battery Cabling 20–30m", price: 480, perUnit: "Per Install" },
+  { id: "batt_fireproof", name: "Supply & Install Fireproofing", price: 475, perUnit: "Per Install" },
+  { id: "batt_smoke_alarm", name: "Supply & Install Smoke Alarm", price: 300, perUnit: "Per Install" },
+  { id: "batt_bollard", name: "Supply & Install Bollard", price: 150, perUnit: "Per Install" },
+  { id: "batt_paver", name: "Supply & Install Paver", price: 150, perUnit: "Per Install" },
+  { id: "batt_existing_hybrid", name: "Existing Hybrid Inverter On-site", price: 250, perUnit: "Per Install" },
+  { id: "batt_covers", name: "Battery Covers", price: 1000, perUnit: "Per Install" },
+  { id: "batt_junction_box", name: "Junction Box (Hybrid Swap)", price: 250, perUnit: "Per Install", note: "Required when swapping inverter for hybrid" },
+  { id: "batt_country_150", name: "Battery Country Surcharge (150km+)", price: 600, perUnit: "Per Install" },
+];
+
+/** Oversell/undersell adjustment, ported from astrasolar-app calcCommissionAdjustment. */
+export function commissionAdjustment(effectiveRRP: number, soldPrice: number): { type: "oversell" | "undersell" | "even"; amount: number } {
+  if (soldPrice > effectiveRRP) return { type: "oversell", amount: 0.25 * (soldPrice - effectiveRRP) };
+  if (soldPrice < effectiveRRP) return { type: "undersell", amount: -0.6 * (effectiveRRP - soldPrice) };
+  return { type: "even", amount: 0 };
 }
 
 export interface Booking {

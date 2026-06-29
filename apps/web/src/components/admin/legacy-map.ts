@@ -10,6 +10,81 @@
  */
 import type { PipelineSale, PipelineStatus } from "./legacy-data";
 
+/**
+ * Reverse of the display mapping: turns a pipeline grid status edit (rich
+ * legacy vocabulary) into the v2 `SaleStatusDetails` field + 4-value
+ * `StageState` so it can be persisted via PATCH /sales/:id/status-details.
+ * Returns null for fields that don't map onto a StageState column.
+ */
+export function gridStatusToStage(
+  field: string,
+  value: string,
+): { apiField: string; stage: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "NOT_REQUIRED" } | null {
+  const v = value || "";
+  switch (field) {
+    case "financeStatus":
+      return {
+        apiField: "financeStatus",
+        stage:
+          v === "finance_approved"
+            ? "COMPLETED"
+            : v === "not_applied" || v === "declined" || v === "withdrawn"
+              ? "NOT_REQUIRED"
+              : v
+                ? "IN_PROGRESS"
+                : "PENDING",
+      };
+    case "adminStatus":
+      return {
+        apiField: "preapprovalStatus",
+        stage:
+          v === "pre_approval_approved"
+            ? "COMPLETED"
+            : v === "cancelled"
+              ? "NOT_REQUIRED"
+              : v === "needs_applying" || !v
+                ? "PENDING"
+                : "IN_PROGRESS",
+      };
+    case "meterChange":
+      return {
+        apiField: "meterChangeStatus",
+        stage:
+          v === "completed"
+            ? "COMPLETED"
+            : v === "not_required"
+              ? "NOT_REQUIRED"
+              : v === "in_progress"
+                ? "IN_PROGRESS"
+                : "PENDING",
+      };
+    case "installStatus":
+      return {
+        apiField: "installStatus",
+        stage:
+          v === "installation_complete"
+            ? "COMPLETED"
+            : v === "installation_started"
+              ? "IN_PROGRESS"
+              : "PENDING",
+      };
+    case "finalisations":
+      return { apiField: "cesStatus", stage: v === "cec_uploaded" ? "COMPLETED" : "PENDING" };
+    case "paymentStatus":
+      return {
+        apiField: "paymentStatus",
+        stage:
+          v === "full_payment_received"
+            ? "COMPLETED"
+            : v === "part_payment_received"
+              ? "IN_PROGRESS"
+              : "PENDING",
+      };
+    default:
+      return null; // installation / installAdminStatus / installDate → no StageState column
+  }
+}
+
 type Stage = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "NOT_REQUIRED" | null | undefined;
 
 /** Shape of one Sale from `GET /sales` (only the fields the pipeline needs). */
@@ -20,9 +95,17 @@ export interface ApiSale {
   company?: string | null; // 'ASTRA' | 'DC'
   status?: string | null; // SaleStatus
   soldPrice?: string | number | null;
+  totalRRP?: string | number | null;
+  totalCommission?: string | number | null;
+  saleType?: string | null;
+  systemType?: string | null;
+  energyProvider?: string | null;
+  referral?: string | null;
+  installNotes?: string | null;
   saleDate?: string | null;
   owner?: { id: string; name: string } | null;
   lead?: {
+    id?: string | null;
     firstName?: string | null;
     surName?: string | null;
     phone?: string | null;
@@ -45,7 +128,9 @@ export interface ApiSale {
     systemSize?: string | number | null;
     numPanels?: number | null;
     panelModel?: string | null;
+    panelWatt?: number | null;
     inverterModel?: string | null;
+    inverterType?: string | null;
     batteryBrand?: string | null;
     batteryModel?: string | null;
     batterySize?: string | number | null;
@@ -53,6 +138,7 @@ export interface ApiSale {
     roofType?: string | null;
     storeys?: number | null;
     switchboard?: string | null;
+    nmi?: string | null;
   } | null;
   installation?: {
     status?: string | null; // InstallationStatus
@@ -148,6 +234,7 @@ export function mapApiSaleToPipeline(s: ApiSale): PipelineSale {
 
   return {
     key: s.id,
+    leadId: lead.id || undefined,
     consultantId: s.owner?.id || "",
     consultantName: s.owner?.name || "—",
     company: isDC ? "DC ELEC" : "Astra",
@@ -177,6 +264,17 @@ export function mapApiSaleToPipeline(s: ApiSale): PipelineSale {
     switchboard: sd.switchboard || undefined,
     roofType: sd.roofType || undefined,
     storeys: sd.storeys != null ? String(sd.storeys) : undefined,
+    // Extra detail-panel fields
+    saleStatus: s.status || undefined,
+    saleType: s.saleType || undefined,
+    systemTypeCode: s.systemType || undefined,
+    totalRRP: s.totalRRP != null ? Number(s.totalRRP) : undefined,
+    totalCommission: s.totalCommission != null ? Number(s.totalCommission) : undefined,
+    saleDate: toYmd(s.saleDate),
+    energyProvider: s.energyProvider || undefined,
+    nmi: sd.nmi || undefined,
+    referral: s.referral || undefined,
+    installNotes: s.installNotes || undefined,
     status: mapStatus(s),
   };
 }

@@ -317,8 +317,14 @@ export class SalesService {
   /** Owner-only: edit core sale fields (records SaleLog). */
   async updateCore(user: AuthUser, id: string, dto: UpdateSaleCoreDto) {
     const sale = await this.getOwned(user, id);
+    // saleDate arrives as a yyyy-mm-dd string — coerce to a Date for the @db.Date column.
+    const { saleDate, ...coreRest } = dto;
+    const data: Record<string, unknown> = { ...coreRest };
+    if (saleDate !== undefined) {
+      data.saleDate = saleDate ? new Date(saleDate) : null;
+    }
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.sale.update({ where: { id }, data: dto });
+      const updated = await tx.sale.update({ where: { id }, data });
       const changes = Object.keys(dto).map((field) => ({
         section: 'core',
         field,

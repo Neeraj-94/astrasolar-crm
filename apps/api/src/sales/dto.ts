@@ -6,7 +6,13 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { SaleStatus, SaleType, StageState, SystemType } from '@astra/shared';
+import {
+  Company,
+  SaleStatus,
+  SaleType,
+  StageState,
+  SystemType,
+} from '@astra/shared';
 
 export class UpdateSaleStatusDto {
   @IsEnum(SaleStatus)
@@ -16,6 +22,9 @@ export class UpdateSaleStatusDto {
 export class UpdateSaleCoreDto {
   @IsOptional() @IsEnum(SaleType) saleType?: SaleType;
   @IsOptional() @IsEnum(SystemType) systemType?: SystemType;
+  @IsOptional() @IsEnum(Company) company?: Company;
+  @IsOptional() @IsString() openSolarId?: string;
+  @IsOptional() @IsString() saleDate?: string; // ISO yyyy-mm-dd
   @IsOptional() @IsString() energyProvider?: string;
   @IsOptional() @IsString() referral?: string;
   @IsOptional() @IsNumber() soldPrice?: number;
@@ -36,6 +45,14 @@ export class UpdateSystemDetailsDto {
   @IsOptional() @IsString() switchboard?: string;
   @IsOptional() @IsString() nmi?: string;
   @IsOptional() @IsString() phase?: string;
+  // Free-text spec overrides (persisted straight onto the SystemDetails snapshot).
+  @IsOptional() @IsString() panelModel?: string;
+  @IsOptional() @IsString() inverterModel?: string;
+  @IsOptional() @IsString() batteryModel?: string;
+  @IsOptional() @IsString() batteryBrand?: string;
+  @IsOptional() @IsString() backup?: string;
+  @IsOptional() @IsString() hotWater?: string;
+  @IsOptional() @IsString() aircon?: string;
 }
 
 export class UpdatePaymentDetailsDto {
