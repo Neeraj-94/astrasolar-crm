@@ -7,6 +7,7 @@ import {
   Company,
   LeadSource,
   LeadStage,
+  PERMISSIONS,
   SalesDisposition,
   SaleStatus,
   SaleType,
@@ -530,7 +531,11 @@ export class SalesService {
   private async getOwned(user: AuthUser, id: string) {
     const sale = await this.prisma.sale.findUnique({ where: { id } });
     if (!sale) throw new NotFoundException('Sale not found');
-    assertOwnership(user, sale.ownerId); // owner-only (break-glass: super admin)
+    // Owner-only, with break-glass for super admins and org-wide sale managers
+    // (Admin Officer / CEO / Finance / Operations) editing the Admin Pipeline.
+    assertOwnership(user, sale.ownerId, {
+      bypassPermissions: [PERMISSIONS.SALES_MANAGE_ALL],
+    });
     return sale;
   }
 }

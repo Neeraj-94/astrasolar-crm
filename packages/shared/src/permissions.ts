@@ -57,6 +57,7 @@ export const PERMISSIONS = {
   // Sales actions
   SALES_READ_TEAM: 'sales:read:team',
   SALES_MANAGE_OWN: 'sales:manage:own',
+  SALES_MANAGE_ALL: 'sales:manage:all',
 
   // Installs
   INSTALLS_READ_OWN: 'installs:read:own',
@@ -100,6 +101,7 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   'messaging:send': 'Send SMS (ClickSend) and place calls (Aircall) to leads',
   'sales:read:team': "View sales within one's team/branch",
   'sales:manage:own': "Mark a consultation SOLD; edit one's own sale",
+  'sales:manage:all': 'Edit any sale org-wide (back-office Admin Pipeline)',
   'installs:read:own': 'View installations assigned to oneself',
   'installs:write:own': 'Update installations assigned to oneself',
   'customer:read:self': 'A customer reads only their own record',
@@ -215,6 +217,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.MESSAGING_SEND,
       P.SALES_READ_TEAM,
       P.SALES_MANAGE_OWN, // break-glass (see matrix note)
+      P.SALES_MANAGE_ALL,
       P.INSTALLS_READ_OWN,
       P.INSTALLS_WRITE_OWN,
     ],
@@ -234,7 +237,9 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.RECORDS_READ_OWN,
       P.FINANCE_READ_ALL,
       P.LEADS_CONTACTS_MANAGE,
+      P.LEADS_WRITE_TEAM,
       P.SALES_READ_TEAM,
+      P.SALES_MANAGE_ALL,
     ],
   },
   {
@@ -249,7 +254,9 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.RECORDS_READ_TEAM,
       P.RECORDS_READ_OWN,
       P.FINANCE_READ_ALL,
+      P.LEADS_WRITE_TEAM,
       P.SALES_READ_TEAM,
+      P.SALES_MANAGE_ALL,
     ],
   },
   {
@@ -273,6 +280,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.BOOKING_CREATE,
       P.MESSAGING_SEND,
       P.SALES_READ_TEAM,
+      P.SALES_MANAGE_ALL,
       P.INSTALLS_READ_OWN,
       P.INSTALLS_WRITE_OWN,
     ],
@@ -329,12 +337,19 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   {
     key: ROLES.ADMIN_OFFICER,
     name: 'Admin Officer',
-    description: 'Back-office lead administration.',
+    description: 'Back-office administration — org-wide records for the Admin dashboard.',
     permissions: [
       P.NOVA_USE,
       P.DASHBOARD_ADMIN_OFFICER,
+      // Admin dashboard (Sales Pipeline, Installation Calendar, Audit Log) is an
+      // org-wide back-office view, so the Admin Officer reads every record.
+      P.RECORDS_READ_ALL,
+      P.RECORDS_READ_TEAM,
       P.RECORDS_READ_OWN,
+      P.SALES_READ_TEAM,
+      P.SALES_MANAGE_ALL,
       P.LEADS_CREATE,
+      P.LEADS_WRITE_TEAM,
       P.LEADS_WRITE_OWN,
       P.BOOKING_CREATE,
       P.LEADS_CONTACTS_MANAGE,

@@ -13,14 +13,16 @@ import type { AuthUser } from './auth-user';
 export function assertOwnership(
   user: AuthUser,
   ownerId: string,
-  opts: { allowSuperAdmin?: boolean } = { allowSuperAdmin: true },
+  opts: { allowSuperAdmin?: boolean; bypassPermissions?: string[] } = {},
 ): void {
   if (user.id === ownerId) return;
-  if (
-    opts.allowSuperAdmin &&
-    user.permissions.has(PERMISSIONS.SYSTEM_ADMIN)
-  ) {
+  if ((opts.allowSuperAdmin ?? true) && user.permissions.has(PERMISSIONS.SYSTEM_ADMIN)) {
     return; // break-glass
+  }
+  // Roles with an org-wide manage grant (e.g. sales:manage:all) may edit any
+  // record — used by the back-office Admin Pipeline.
+  if (opts.bypassPermissions?.some((p) => user.permissions.has(p))) {
+    return;
   }
   throw new ForbiddenException('You do not own this record');
 }
