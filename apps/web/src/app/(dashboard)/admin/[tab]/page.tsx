@@ -28,7 +28,11 @@ interface Props {
  * Anything not listed here falls through to the placeholder so the routing
  * and permission plumbing still works.
  */
-const TAB_COMPONENTS: Record<string, () => JSX.Element> = {
+// Tab components may be sync (placeholder modules) or async server components
+// (modules that fetch data, like Inbound Leads → Leads Schedule).
+type TabComponent = () => JSX.Element | Promise<JSX.Element>;
+
+const TAB_COMPONENTS: Record<string, TabComponent> = {
   "task-overview": () => <TaskBoardTab board="admin" />,
   overview: AdminOverviewTab,
   "installation-calendar": InstallationCalendarTab,

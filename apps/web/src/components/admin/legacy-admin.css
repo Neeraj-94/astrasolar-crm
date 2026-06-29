@@ -1,0 +1,469 @@
+/*
+ * Legacy astrasolar-app parity styles for the Admin dashboard's
+ * Sales Pipeline and Installation Calendar tabs.
+ *
+ * The class names and rules below are ported verbatim from astrasolar-app's
+ * index.html so the v2 React port renders pixel-for-pixel with the original.
+ * Everything is scoped under `.astra-legacy`, which also re-aliases the
+ * legacy CSS custom properties (--gold, --surface, --text, …) onto v2's
+ * HSL design tokens so the brand theme (and light mode) carries through.
+ */
+
+.astra-legacy {
+  --bg: hsl(var(--background));
+  --surface: hsl(var(--card));
+  --surface2: hsl(var(--secondary));
+  --border: hsl(var(--border));
+  --text: hsl(var(--foreground));
+  --text-dim: hsl(var(--muted-foreground));
+  --text-faint: hsl(var(--muted-foreground) / 0.45);
+  --gold: hsl(var(--primary));
+  --accent: hsl(var(--primary));
+  --gold-dim: hsl(var(--primary) / 0.35);
+  --gold-soft: hsl(var(--primary) / 0.1);
+  --green: hsl(var(--success));
+  --green-dim: hsl(var(--success) / 0.22);
+  --red: hsl(var(--destructive));
+  --red-dim: hsl(var(--destructive) / 0.22);
+  --blue: hsl(var(--info));
+  --radius: var(--radius, 14px);
+  font-family: "DM Sans", sans-serif;
+  color: var(--text);
+}
+
+/* ════════════════════════ SALES PIPELINE ════════════════════════ */
+
+.astra-legacy .pipeline-filter-btn {
+  padding: 4px 12px; font-size: 0.58rem; letter-spacing: 0.06em;
+  text-transform: uppercase; font-family: "DM Sans", sans-serif;
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 4px; cursor: pointer; transition: all 0.2s;
+}
+.astra-legacy .pipeline-filter-btn.active { background: var(--gold); color: hsl(var(--primary-foreground)); border-color: var(--gold); font-weight: 600; }
+.astra-legacy .pipeline-filter-btn:hover:not(.active) { color: var(--text); border-color: var(--gold-dim); }
+.astra-legacy .pipeline-search {
+  padding: 5px 10px; font-size: 0.68rem; font-family: "DM Sans", sans-serif;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); outline: none; min-width: 160px; transition: border-color 0.2s;
+}
+.astra-legacy .pipeline-search:focus { border-color: var(--gold-dim); }
+.astra-legacy .pipeline-search::placeholder { color: var(--text-faint); }
+.astra-legacy .pipeline-count { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.06em; }
+
+.astra-legacy .admin-pipeline-wrap { padding: 0 28px 30px; }
+.astra-legacy .pipeline-table-wrap {
+  overflow-x: auto; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); max-height: 820px;
+}
+.astra-legacy .pipeline-table { width: 100%; border-collapse: collapse; min-width: 920px; }
+.astra-legacy .pipeline-table th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface2); padding: 6px 8px;
+  font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim); text-align: left; border-bottom: 1px solid var(--border);
+  white-space: nowrap; font-weight: 600;
+}
+.astra-legacy .pipeline-table td {
+  padding: 5px 8px; font-size: 0.68rem; color: var(--text);
+  border-bottom: 1px solid hsl(var(--border) / 0.6); vertical-align: middle; line-height: 1.3;
+}
+.astra-legacy .pipeline-table tbody tr:nth-child(odd) td { background: hsl(var(--foreground) / 0.015); }
+.astra-legacy .pipeline-table tbody tr:nth-child(even) td { background: hsl(var(--foreground) / 0.04); }
+.astra-legacy .pipeline-table tr:last-child td { border-bottom: none; }
+.astra-legacy .pipeline-table tr:hover td { background: var(--gold-soft); }
+
+.astra-legacy .pipe-col-hidden { display: none !important; }
+.astra-legacy .pipe-col-visible { display: table-cell !important; }
+
+.astra-legacy .pipe-select {
+  padding: 3px 6px; font-size: 0.62rem; font-family: "DM Sans", sans-serif;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); cursor: pointer; outline: none; min-width: 110px; transition: border-color 0.2s;
+}
+.astra-legacy .pipe-select:focus { border-color: var(--gold-dim); }
+.astra-legacy .pipe-select:disabled { opacity: 0.4; cursor: not-allowed; }
+.astra-legacy .pipe-date-input {
+  padding: 3px 6px; font-size: 0.62rem; font-family: "DM Sans", sans-serif;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); outline: none; cursor: pointer;
+}
+.astra-legacy .pipe-date-input:focus { border-color: var(--gold-dim); }
+
+.astra-legacy .pipe-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 12px;
+  font-size: 0.55rem; letter-spacing: 0.04em; font-weight: 600;
+  text-transform: uppercase; white-space: nowrap;
+}
+.astra-legacy .pipe-badge.cash { background: var(--green-dim); color: var(--green); }
+.astra-legacy .pipe-badge.finance { background: hsl(var(--info) / 0.15); color: var(--blue); }
+.astra-legacy .pipe-badge.hesp { background: rgba(160, 100, 255, 0.15); color: #a064ff; }
+.astra-legacy .pipe-badge.complete { background: var(--green-dim); color: var(--green); }
+.astra-legacy .pipe-badge.pending { background: var(--gold-soft); color: var(--gold); }
+.astra-legacy .pipe-badge.due { background: var(--red-dim); color: var(--red); }
+
+.astra-legacy .pipeline-table tr.pipe-row-complete td { opacity: 0.6; }
+.astra-legacy .pipeline-table tr.pipe-row-cancelled { background: var(--red-dim) !important; border-left: 3px solid var(--red); }
+.astra-legacy .pipeline-table tr.pipe-row-cancelled td { color: var(--red); opacity: 0.85; }
+
+.astra-legacy .pipe-filter-row th {
+  padding: 4px 4px 6px; background: var(--surface2); border-bottom: 2px solid var(--border);
+  position: sticky; top: 28px; z-index: 2;
+}
+.astra-legacy .pipe-filter-select {
+  width: 100%; padding: 3px 4px; font-size: 0.52rem; font-family: "DM Sans", sans-serif;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); cursor: pointer; outline: none; appearance: auto;
+}
+.astra-legacy .pipe-filter-select:focus { border-color: var(--gold-dim); }
+.astra-legacy .pipe-filter-clear {
+  display: inline-block; font-size: 0.48rem; color: var(--accent); cursor: pointer;
+  margin-left: 2px; vertical-align: middle; opacity: 0.7;
+}
+.astra-legacy .pipe-filter-clear:hover { opacity: 1; text-decoration: underline; }
+
+.astra-legacy .pipe-consultant { font-size: 0.62rem; color: var(--gold); font-weight: 500; white-space: nowrap; }
+.astra-legacy .pipe-client {
+  font-weight: 500; white-space: nowrap; font-size: 0.66rem; max-width: 100px;
+  overflow: hidden; text-overflow: ellipsis; display: inline-block;
+}
+.astra-legacy .pipe-product {
+  font-size: 0.62rem; color: var(--text-dim); max-width: 140px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.astra-legacy .pipe-price { font-weight: 600; color: var(--green); white-space: nowrap; font-size: 0.66rem; }
+.astra-legacy .pipe-copy {
+  display: inline-block; cursor: pointer; font-size: 0.5rem; color: var(--accent);
+  opacity: 0.5; margin-left: 3px; vertical-align: middle; transition: opacity 0.15s;
+  background: none; border: none; padding: 0 2px; font-family: "DM Sans", sans-serif;
+}
+.astra-legacy .pipe-copy:hover { opacity: 1; }
+.astra-legacy .pipe-copy.copied { color: var(--green); opacity: 1; }
+.astra-legacy .pipe-leadgen { font-size: 0.58rem; color: var(--gold); white-space: nowrap; }
+.astra-legacy .pipe-missing { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; flex-shrink: 0; background: var(--red); }
+.astra-legacy .pipe-company-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.52rem; font-weight: 700; letter-spacing: 0.04em; }
+.astra-legacy .pipe-inline-edit { cursor: pointer; border-bottom: 1px dashed transparent; }
+.astra-legacy .pipe-inline-edit:hover { border-bottom-color: var(--gold-dim); }
+
+/* ════════════════════ INSTALLATION CALENDAR ════════════════════ */
+
+.astra-legacy .install-calendar-wrap { padding: 0 28px 40px; }
+.astra-legacy .install-state-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.astra-legacy .install-state-tab {
+  padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+  background: transparent; color: var(--text-dim); font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  transition: all 0.2s; font-family: "DM Sans", sans-serif; white-space: nowrap;
+}
+.astra-legacy .install-state-tab:hover { border-color: var(--gold-dim); color: var(--gold); }
+.astra-legacy .install-state-tab.active { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
+
+.astra-legacy .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 0 16px; }
+.astra-legacy .calendar-month { font-family: "Cormorant Garamond", serif; font-size: 1.3rem; color: var(--text); }
+.astra-legacy .calendar-arrows { display: flex; gap: 8px; }
+.astra-legacy .calendar-arrow-btn {
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-dim); cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.astra-legacy .calendar-arrow-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+.astra-legacy .calendar-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
+  background: var(--border); padding: 1px; border-radius: 8px;
+  overflow: hidden; border: 1px solid var(--border);
+}
+.astra-legacy .calendar-day-header {
+  background: var(--surface2); padding: 10px 8px; text-align: center;
+  font-size: 0.65rem; letter-spacing: 0.1em; color: var(--text-dim);
+  text-transform: uppercase; font-weight: 600;
+}
+.astra-legacy .calendar-day-cell {
+  background: var(--surface); padding: 8px; min-height: 120px; cursor: pointer;
+  transition: all 0.15s; position: relative; display: flex; flex-direction: column;
+}
+.astra-legacy .calendar-day-cell:hover { background: var(--surface2); }
+.astra-legacy .calendar-day-cell.other-month { opacity: 0.4; }
+.astra-legacy .calendar-day-num { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.astra-legacy .calendar-installer-lanes { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.astra-legacy .calendar-installer-lane {
+  display: flex; align-items: center; gap: 4px; font-size: 0.65rem;
+  padding: 3px 6px; background: hsl(var(--foreground) / 0.02); border-radius: 4px;
+  border: 1px solid transparent; transition: all 0.15s;
+}
+.astra-legacy .calendar-installer-lane:hover { border-color: var(--gold-dim); background: var(--gold-soft); }
+.astra-legacy .calendar-installer-name {
+  flex: 0 0 auto; color: var(--text-dim); min-width: 50px;
+  font-size: 0.62rem; letter-spacing: 0.04em; cursor: pointer; transition: color 0.15s;
+}
+.astra-legacy .calendar-installer-name:hover { color: var(--gold); }
+.astra-legacy .installer-slots { display: flex; gap: 3px; flex: 1; align-items: center; }
+.astra-legacy .installer-time-slot {
+  display: flex; align-items: center; gap: 3px; padding: 1px 4px;
+  border-radius: 3px; cursor: pointer; transition: all 0.15s; font-size: 0.55rem;
+}
+.astra-legacy .installer-time-slot:hover { background: hsl(var(--primary) / 0.12); }
+.astra-legacy .installer-time-slot .slot-label {
+  color: var(--text-dim); font-weight: 600; letter-spacing: 0.04em;
+  font-size: 0.5rem; text-transform: uppercase; min-width: 16px;
+}
+.astra-legacy .installer-time-slot .slot-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.astra-legacy .installer-time-slot .slot-dot.available { background: var(--green); }
+.astra-legacy .installer-time-slot .slot-dot.booked { background: var(--red); }
+.astra-legacy .installer-time-slot .slot-dot.needs-booking { background: var(--gold); }
+.astra-legacy .installer-time-slot .slot-dot.confirmed { background: var(--green); }
+.astra-legacy .installer-time-slot .slot-client {
+  font-size: 0.5rem; color: var(--gold); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 60px;
+}
+.astra-legacy .calendar-installer-lane.unavailable { opacity: 0.35; pointer-events: none; position: relative; }
+.astra-legacy .calendar-installer-lane.unavailable::after {
+  content: "OFF"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  font-size: 0.4rem; color: var(--red); font-weight: 700; letter-spacing: 0.08em;
+}
+.astra-legacy .calendar-installer-lane.fully-booked { border-left: 3px solid var(--gold); }
+.astra-legacy .cal-region-subhead {
+  grid-column: 1 / -1; padding: 6px 10px; font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold);
+  background: var(--surface2);
+}
+
+/* ── Crew availability bar ── */
+.astra-legacy .avail-mgr-bar {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px; padding: 10px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+}
+.astra-legacy .avail-mgr-label {
+  font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim); font-weight: 600; margin-right: 4px;
+}
+.astra-legacy .avail-crew-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 6px; font-size: 0.65rem;
+  cursor: pointer; transition: all 0.2s; border: 1px solid var(--border);
+  background: transparent; color: var(--text-dim); font-family: "DM Sans", sans-serif; letter-spacing: 0.03em;
+}
+.astra-legacy .avail-crew-chip.on { background: var(--green-dim); border-color: hsl(var(--success) / 0.3); color: var(--green); }
+.astra-legacy .avail-crew-chip.off { background: var(--red-dim); border-color: hsl(var(--destructive) / 0.2); color: var(--red); opacity: 0.7; }
+.astra-legacy .avail-crew-chip:hover { border-color: var(--gold-dim); }
+.astra-legacy .avail-crew-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.astra-legacy .avail-crew-chip.on .avail-crew-dot { background: var(--green); }
+.astra-legacy .avail-crew-chip.off .avail-crew-dot { background: var(--red); }
+.astra-legacy .avail-mgr-btn {
+  padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-size: 0.6rem; font-family: "DM Sans", sans-serif; transition: all 0.2s; letter-spacing: 0.04em;
+}
+.astra-legacy .avail-mgr-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.astra-legacy .avail-mgr-btn.active { background: var(--gold-soft); border-color: var(--gold); color: var(--gold); }
+
+/* ── View toggle ── */
+.astra-legacy .cal-view-toggle {
+  display: inline-flex; gap: 3px; border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px; background: var(--surface); margin-left: 12px;
+}
+.astra-legacy .cal-view-toggle button {
+  border: none; background: transparent; color: var(--text-dim);
+  padding: 6px 14px; border-radius: 5px; cursor: pointer;
+  font-size: 0.62rem; font-weight: 600; font-family: "DM Sans", sans-serif;
+  letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.15s;
+}
+.astra-legacy .cal-view-toggle button.active { background: var(--gold); color: hsl(var(--primary-foreground)); }
+.astra-legacy .cal-view-toggle button:not(.active):hover { background: var(--bg); color: var(--text); }
+.astra-legacy .cal-today-btn {
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text-dim); font-size: 0.62rem; cursor: pointer;
+  font-family: "DM Sans", sans-serif; font-weight: 600; letter-spacing: 0.04em;
+}
+.astra-legacy .cal-today-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.astra-legacy .calendar-search-input {
+  flex: 1; max-width: 320px; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text); font-size: 0.72rem;
+  font-family: "DM Sans", sans-serif; outline: none;
+}
+.astra-legacy .calendar-search-input:focus { border-color: var(--gold-dim); }
+.astra-legacy .calendar-search-clear {
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text-dim); font-size: 0.68rem; cursor: pointer; font-family: "DM Sans", sans-serif;
+}
+
+/* ── Day view ── */
+.astra-legacy .cal-day-view-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; padding: 8px 0; }
+.astra-legacy .cal-day-installer-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  display: flex; flex-direction: row; align-items: stretch; gap: 16px; flex-wrap: wrap;
+}
+.astra-legacy .cal-day-installer-card.fully-booked { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim); }
+.astra-legacy .cal-day-installer-card.unavailable { opacity: 0.5; background: var(--red-dim); border-color: hsl(var(--destructive) / 0.25); }
+.astra-legacy .cal-day-installer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex: 1 1 220px; min-width: 200px; padding-right: 14px; border-right: 1px solid var(--border);
+}
+.astra-legacy .cal-day-slots { display: flex; gap: 12px; align-items: stretch; margin-left: auto; flex: 0 0 auto; }
+.astra-legacy .cal-day-slots > .cal-day-slot { min-width: 220px; }
+.astra-legacy .cal-day-installer-name { font-size: 0.82rem; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
+.astra-legacy .cal-day-region-tag {
+  font-size: 0.5rem; padding: 2px 7px; border-radius: 3px;
+  background: var(--gold-soft); color: var(--gold); font-weight: 700; letter-spacing: 0.08em;
+}
+.astra-legacy .cal-day-slot {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 7px;
+  padding: 10px 12px; cursor: pointer; transition: all 0.15s;
+}
+.astra-legacy .cal-day-slot:hover { border-color: var(--gold-dim); background: var(--gold-soft); }
+.astra-legacy .cal-day-slot.booked { border-color: hsl(var(--success) / 0.4); background: hsl(var(--success) / 0.05); }
+.astra-legacy .cal-day-slot.booked:hover { border-color: var(--green); background: hsl(var(--success) / 0.08); }
+.astra-legacy .cal-day-slot .slot-time { font-size: 0.5rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; }
+.astra-legacy .cal-day-slot .slot-cust { font-size: 0.75rem; font-weight: 600; color: var(--text); margin-top: 4px; }
+.astra-legacy .cal-day-slot .slot-addr { font-size: 0.55rem; color: var(--text-dim); margin-top: 2px; }
+.astra-legacy .cal-day-slot .slot-meta-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+.astra-legacy .cal-day-slot .slot-company-tag { font-size: 0.48rem; padding: 1px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 0.04em; }
+.astra-legacy .cal-day-slot .slot-company-tag.astra { background: rgba(212, 175, 55, 0.2); color: #d4af37; }
+.astra-legacy .cal-day-slot .slot-company-tag.dcnt { background: hsl(var(--info) / 0.2); color: var(--blue); }
+.astra-legacy .cal-day-slot.empty { background: transparent; border-style: dashed; color: var(--text-faint); text-align: center; font-size: 0.62rem; padding: 16px 12px; }
+.astra-legacy .cal-day-empty-state {
+  grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);
+  font-size: 0.75rem; background: var(--surface); border: 1px dashed var(--border); border-radius: 10px;
+}
+@media (max-width: 640px) {
+  .astra-legacy .cal-day-installer-card { flex-direction: column; }
+  .astra-legacy .cal-day-installer-header { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .astra-legacy .cal-day-slots { margin-left: 0; flex-direction: column; width: 100%; }
+  .astra-legacy .cal-day-slots > .cal-day-slot { min-width: 0; width: 100%; }
+}
+
+/* ── Week view ── */
+.astra-legacy .cal-week-view-wrap { display: block; padding: 6px 0; overflow: hidden; }
+.astra-legacy .cal-week-grid-table {
+  display: flex; flex-direction: column; border: 1px solid var(--border);
+  border-radius: 8px; overflow: auto; background: var(--surface); max-height: 80vh;
+}
+.astra-legacy .cal-week-grid-row { display: grid; grid-template-columns: 64px repeat(7, minmax(360px, 1fr)); border-bottom: 1px solid var(--border); }
+.astra-legacy .cal-week-grid-row:last-child { border-bottom: none; }
+.astra-legacy .cal-week-grid-header-row { position: sticky; top: 0; z-index: 20; background: var(--surface); }
+.astra-legacy .cal-week-grid-corner { background: var(--surface); border-right: 1px solid var(--border); position: sticky; left: 0; z-index: 21; }
+.astra-legacy .cal-week-grid-day-header { background: var(--surface); color: var(--text); text-align: center; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; }
+.astra-legacy .cal-week-grid-day-header:last-child { border-right: none; }
+.astra-legacy .cal-week-grid-day-name { font-size: 0.65rem; font-weight: 700; padding: 10px 6px 4px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; }
+.astra-legacy .cal-week-grid-day-date { font-size: 0.78rem; font-weight: 700; padding: 0 4px 10px; color: var(--text); }
+.astra-legacy .cal-week-grid-day-header.is-today .cal-week-grid-day-name,
+.astra-legacy .cal-week-grid-day-header.is-today .cal-week-grid-day-date { color: var(--gold); }
+.astra-legacy .cal-week-grid-installer-cell {
+  background: var(--surface); color: var(--text); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; border-right: 1px solid var(--border);
+  padding: 10px 4px; position: sticky; left: 0; z-index: 5; text-align: center;
+}
+.astra-legacy .cal-week-grid-installer-name { display: flex; flex-direction: column; align-items: center; font-size: 0.72rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.04em; color: var(--gold); }
+.astra-legacy .cal-week-grid-installer-region { margin-top: 8px; font-size: 0.5rem; font-weight: 700; color: var(--text-faint); letter-spacing: 0.08em; writing-mode: vertical-rl; transform: rotate(180deg); }
+.astra-legacy .cal-week-grid-day-cell { border-right: 1px solid var(--border); padding: 6px; display: flex; flex-direction: column; gap: 6px; min-height: 340px; background: var(--bg); }
+.astra-legacy .cal-week-grid-day-cell:last-child { border-right: none; }
+.astra-legacy .cal-week-grid-day-cell.weekend { background: hsl(var(--foreground) / 0.015); }
+.astra-legacy .cal-week-grid-day-cell.today { box-shadow: inset 0 0 0 1px var(--gold-dim); }
+.astra-legacy .cal-week-bk-block {
+  position: relative; padding: 18px 10px 10px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer;
+  transition: border-color 0.12s, background 0.12s; min-height: 150px;
+}
+.astra-legacy .cal-week-bk-block:hover { border-color: var(--gold-dim); background: var(--gold-soft); }
+.astra-legacy .cal-week-bk-empty { background: transparent; border-style: dashed; color: var(--text-faint); }
+.astra-legacy .cal-week-bk-booked { background: hsl(var(--success) / 0.05); border-color: hsl(var(--success) / 0.3); }
+.astra-legacy .cal-week-bk-booked:hover { border-color: var(--green); background: hsl(var(--success) / 0.08); }
+.astra-legacy .cal-week-bk-unavail { background: repeating-linear-gradient(45deg, hsl(var(--destructive) / 0.06) 0 8px, transparent 8px 16px); border-color: hsl(var(--destructive) / 0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; }
+.astra-legacy .cal-week-bk-unavail-msg { font-size: 0.7rem; font-weight: 700; color: var(--red); letter-spacing: 0.04em; }
+.astra-legacy .cal-week-bk-slot-tag { position: absolute; top: 4px; right: 8px; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--text-faint); pointer-events: none; }
+.astra-legacy .cal-week-bk-booked .cal-week-bk-slot-tag { color: var(--green); }
+.astra-legacy .cal-week-bk-grid { display: grid; grid-template-columns: max-content 1fr max-content 1fr; column-gap: 8px; row-gap: 2px; align-items: center; margin-top: 4px; font-size: 0.6rem; line-height: 1.35; }
+.astra-legacy .cal-week-bk-cell { padding: 1px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.astra-legacy .cal-week-bk-label { font-weight: 700; color: var(--text-dim); letter-spacing: 0.02em; }
+.astra-legacy .cal-week-bk-value { font-weight: 500; color: var(--text); }
+.astra-legacy .cal-week-bk-empty .cal-week-bk-label,
+.astra-legacy .cal-week-bk-empty .cal-week-bk-value { color: var(--text-faint); }
+.astra-legacy .cal-week-grid-empty { padding: 30px; text-align: center; color: var(--text-dim); font-size: 0.7rem; font-style: italic; }
+
+/* ── Weekly stock ── */
+.astra-legacy .weekly-stock-section { margin-top: 20px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.astra-legacy .weekly-stock-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.astra-legacy .weekly-stock-title { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
+.astra-legacy .weekly-stock-sub { font-size: 0.62rem; color: var(--text-dim); margin-top: 2px; }
+.astra-legacy .weekly-stock-controls { display: flex; align-items: center; gap: 8px; }
+.astra-legacy .weekly-stock-label { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+.astra-legacy .weekly-stock-controls select { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.65rem; font-family: "DM Sans", sans-serif; }
+.astra-legacy .weekly-stock-date-input { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 0.62rem; font-family: "DM Sans", sans-serif; }
+.astra-legacy .weekly-stock-refresh { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); font-size: 0.65rem; cursor: pointer; }
+.astra-legacy .weekly-stock-refresh:hover { color: var(--gold); border-color: var(--gold-dim); }
+.astra-legacy .weekly-stock-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.astra-legacy .weekly-stock-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.astra-legacy .weekly-stock-card h4 { margin: 0 0 8px 0; font-size: 0.7rem; font-weight: 700; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
+.astra-legacy .weekly-stock-card h4 .weekly-stock-total { font-size: 0.6rem; color: var(--text); padding: 2px 8px; border-radius: 10px; background: var(--gold-soft); }
+.astra-legacy .weekly-stock-card table { width: 100%; border-collapse: collapse; font-size: 0.66rem; }
+.astra-legacy .weekly-stock-card th { text-align: left; color: var(--text-dim); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.55rem; }
+.astra-legacy .weekly-stock-card td { padding: 5px 6px; border-bottom: 1px solid hsl(var(--foreground) / 0.04); color: var(--text); }
+.astra-legacy .weekly-stock-card td.qty { text-align: right; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.astra-legacy .weekly-stock-card--batteries { grid-column: span 2; min-width: 0; }
+.astra-legacy .weekly-stock-card--batteries table { table-layout: fixed; }
+@media (max-width: 900px) { .astra-legacy .weekly-stock-card--batteries { grid-column: 1 / -1; } }
+.astra-legacy .weekly-stock-region-tag { display: inline-block; font-size: 0.5rem; color: var(--text-dim); padding: 1px 6px; border-radius: 3px; background: var(--surface2); margin-left: 6px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700; }
+.astra-legacy .weekly-stock-empty { grid-column: 1 / -1; text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.7rem; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; }
+
+/* ── Booking modal ── */
+.astra-legacy .booking-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.astra-legacy .booking-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3); }
+.astra-legacy .booking-modal-header { padding: 18px 24px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.astra-legacy .booking-modal-header h3 { font-family: "Cormorant Garamond", serif; font-size: 1.1rem; color: var(--text); font-weight: 500; margin: 0; }
+.astra-legacy .booking-modal-close { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+.astra-legacy .booking-modal-close:hover { border-color: var(--gold-dim); color: var(--gold); }
+.astra-legacy .booking-modal-body { padding: 20px 24px; }
+.astra-legacy .booking-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.astra-legacy .booking-form-row.full { grid-template-columns: 1fr; }
+.astra-legacy .booking-form-group { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.astra-legacy .booking-form-group label { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+.astra-legacy .booking-form-group input,
+.astra-legacy .booking-form-group select,
+.astra-legacy .booking-form-group textarea {
+  padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 0.78rem;
+  font-family: "DM Sans", sans-serif; transition: border-color 0.2s;
+}
+.astra-legacy .booking-form-group input:focus,
+.astra-legacy .booking-form-group select:focus,
+.astra-legacy .booking-form-group textarea:focus { outline: none; border-color: var(--gold); }
+.astra-legacy .booking-form-group select { cursor: pointer; }
+.astra-legacy .booking-section-header { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin: 14px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.astra-legacy .booking-modal-footer { padding: 14px 24px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+.astra-legacy .booking-btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-family: "DM Sans", sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; transition: all 0.2s; }
+.astra-legacy .booking-btn.primary { background: var(--gold); color: hsl(var(--primary-foreground)); }
+.astra-legacy .booking-btn.primary:hover { filter: brightness(1.1); }
+.astra-legacy .booking-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+.astra-legacy .booking-btn.secondary:hover { border-color: var(--gold-dim); color: var(--gold); }
+.astra-legacy .booking-btn.danger { background: var(--red); color: #fff; }
+.astra-legacy .booking-btn.danger:hover { filter: brightness(1.1); }
+.astra-legacy .booking-slot-info { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 16px; align-items: center; }
+.astra-legacy .booking-slot-info .slot-meta { font-size: 0.68rem; color: var(--text-dim); line-height: 1.6; }
+.astra-legacy .booking-slot-info .slot-meta strong { color: var(--text); }
+.astra-legacy .booking-search-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 220px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+.astra-legacy .booking-search-result { padding: 8px 12px; cursor: pointer; font-size: 0.7rem; border-bottom: 1px solid var(--border); }
+.astra-legacy .booking-search-result:hover { background: var(--gold-soft); }
+.astra-legacy .booking-search-result .bsr-name { color: var(--text); font-weight: 600; }
+.astra-legacy .booking-search-result .bsr-meta { color: var(--text-dim); font-size: 0.6rem; margin-top: 2px; }
+.astra-legacy .booking-customer-empty { font-size: 0.55rem; color: var(--text-faint); margin-top: 4px; font-style: italic; }
+
+/* ── Reschedule ── */
+.astra-legacy .reschedule-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.astra-legacy .reschedule-reason { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.72rem; font-family: "DM Sans", sans-serif; }
+.astra-legacy .reschedule-slots { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+.astra-legacy .reschedule-slot-pick { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.15s; font-size: 0.68rem; }
+.astra-legacy .reschedule-slot-pick:hover { border-color: var(--gold-dim); background: var(--gold-soft); }
+.astra-legacy .reschedule-slot-pick.selected { border-color: var(--gold); background: var(--gold-soft); }
+.astra-legacy .reschedule-slot-date { font-weight: 600; color: var(--text); min-width: 90px; }
+.astra-legacy .reschedule-slot-crew { color: var(--text-dim); font-size: 0.6rem; }
+.astra-legacy .reschedule-slot-time { color: var(--gold); font-weight: 600; font-size: 0.62rem; margin-left: auto; }
+
+/* Drive-time banner */
+.astra-legacy .booking-drive-time { background: hsl(var(--info) / 0.08); border: 1px solid hsl(var(--info) / 0.25); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.65rem; color: var(--blue); line-height: 1.5; }
+
+.astra-legacy .cal-fade-dim { opacity: 0.25; transition: opacity 0.15s; }
+.astra-legacy .cal-search-hit { outline: 1px solid var(--gold); outline-offset: 1px; border-radius: 6px; }
