@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { accessibleDashboards, getCurrentUser } from "@/lib/rbac";
+import {
+  accessibleDashboards,
+  getCurrentUser,
+  hasPermission,
+} from "@/lib/rbac";
 import { ROLES } from "@/lib/permissions";
 import { DashboardChrome } from "@/components/dashboard-chrome";
 
@@ -38,6 +42,8 @@ export default async function DashboardLayout({
   // (everyone except customer/installer self-service).
   const canUsePriceCalc = user.roleKeys.some((r) => !NOVA_EXCLUDED.has(r));
 
+  const canManageIntegrations = hasPermission(user, "integrations.manage");
+
   return (
     <DashboardChrome
       showSideNav={showSideNav}
@@ -54,6 +60,7 @@ export default async function DashboardLayout({
       roleLabels={roleLabels}
       canUseNova={canUseNova}
       canUsePriceCalc={canUsePriceCalc}
+      canManageIntegrations={canManageIntegrations}
     >
       {children}
     </DashboardChrome>

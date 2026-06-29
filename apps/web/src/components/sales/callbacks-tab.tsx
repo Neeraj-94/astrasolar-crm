@@ -19,6 +19,9 @@ import {
 import { apiPatch } from "@/lib/api/client";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import { LeadsTable, SalesFilterBar, applyFilters, type SalesFilters } from "./shared";
+import { useReschedule } from "./use-reschedule";
+import { useSaleDetail } from "./use-sale-detail";
+import { useLeadEdit } from "./use-lead-edit";
 
 const OUTCOME_OPTIONS = [
   { value: "callback", label: "Call Back" },
@@ -46,6 +49,9 @@ export function CallbacksTab() {
   const { leads, loading, error, reload } = useSalesLeads(CALLBACK_DISPOSITIONS);
   // Optimistic inline-disposition overrides keyed by lead id.
   const [overrides, setOverrides] = React.useState<Record<string, Disposition>>({});
+  const reschedule = useReschedule(reload);
+  const saleDetail = useSaleDetail(reload);
+  const leadEdit = useLeadEdit(reload);
 
   const withOverrides = React.useMemo(
     () =>
@@ -69,11 +75,20 @@ export function CallbacksTab() {
 
   // Inline disposition change — revive / move a call back to another sheet.
   function dispose(lead: SalesLead, next: Disposition) {
+    if (next === "been_rescheduled") {
+      reschedule.open(lead); // opens the Bloome-style booking modal
+      return;
+    }
     setOverrides((prev) => ({ ...prev, [lead.id]: next })); // optimistic
     const apiValue = DISPOSITION_TO_API[next];
     if (!apiValue) return;
-    apiPatch(`/leads/${lead.id}/disposition`, { disposition: apiValue })
-      .then(() => reload())
+    apiPatch<{ saleId?: string | null }>(`/leads/${lead.id}/disposition`, {
+      disposition: apiValue,
+    })
+      .then((res) => {
+        reload();
+        if (next === "sold" && res?.saleId) saleDetail.open(res.saleId);
+      })
       .catch(() => {
         setOverrides((prev) => {
           const { [lead.id]: _drop, ...rest } = prev;
@@ -154,6 +169,7 @@ export function CallbacksTab() {
           emptyLabel={loading ? "Loading call backs…" : "No call backs found."}
           onDispose={dispose}
           dispositionOptions={SHEET_DISPOSITION_OPTIONS}
+          onEdit={leadEdit.open}
           onSaveNote={saveNote}
           sortable={{
             ids: rows.map((r) => r.id),
@@ -161,6 +177,9 @@ export function CallbacksTab() {
           }}
         />
       </Section>
+      {reschedule.dialog}
+      {saleDetail.dialog}
+      {leadEdit.dialog}
     </div>
   );
 }

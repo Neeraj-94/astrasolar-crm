@@ -58,13 +58,76 @@ export const ProductsApi = {
     apiGet<ProductListItem[]>(`/products${category ? `?category=${category}` : ''}`, o),
 };
 
+/** Lead funnel response — grouped counts by stage / disposition / outcome. */
+export interface LeadFunnelResponse {
+  byStage: Record<string, number>;
+  byDisposition: Record<string, number>;
+  byOutcome: Record<string, number>;
+}
+
 export const DashboardsApi = {
   summary: (q: { userId?: string; from?: string; to?: string } = {}, o?: ApiOptions) => {
     const p = new URLSearchParams(q as Record<string, string>).toString();
     return apiGet<AnalyticsSummary>(`/dashboards/summary${p ? `?${p}` : ''}`, o);
   },
+  leadFunnel: (q: { userId?: string; from?: string; to?: string } = {}, o?: ApiOptions) => {
+    const p = new URLSearchParams(
+      Object.entries(q).filter(([, v]) => v != null) as [string, string][],
+    ).toString();
+    return apiGet<LeadFunnelResponse>(`/dashboards/lead-funnel${p ? `?${p}` : ''}`, o);
+  },
+  /** Per-consultant sales totals (requires sales:read:team — managers/CEO/finance). */
+  salesPerformance: (userId?: string, o?: ApiOptions) =>
+    apiGet<SalesPerformanceResponse>(
+      `/dashboards/sales-performance${userId ? `?userId=${userId}` : ''}`,
+      o,
+    ),
   selectableUsers: (o?: ApiOptions) =>
     apiGet<SelectableUser[]>('/users/selectable', o),
+};
+
+/** Per-consultant performance rows from /dashboards/sales-performance. */
+export interface SalesPerformanceResponse {
+  rows: {
+    ownerId: string;
+    ownerName: string;
+    sales: number;
+    completed: number;
+    totalSold: number;
+    totalCommission: number;
+    avgSaleValue: number;
+    completionRate: number;
+  }[];
+  totals: { sales: number; totalSold: number; totalCommission: number };
+  consultants: number;
+}
+
+/** An installation row (shape mirrors the API include in installations.service). */
+export interface InstallationListItem {
+  id: string;
+  status: string;
+  scheduledAt: string | null;
+  completedAt?: string | null;
+  sortOrder: number | null;
+  installer: { id: string; name: string } | null;
+  sale: {
+    id: string;
+    saleRef: string | null;
+    ownerId: string;
+    soldPrice: string | number | null;
+    saleDate: string | null;
+    lead: { firstName: string; surName: string } | null;
+    systemDetails: Record<string, unknown> | null;
+  } | null;
+}
+
+export const InstallationsApi = {
+  /** Installer's own (or scoped) installs. Requires installs:read:own. */
+  list: (userId?: string, o?: ApiOptions) =>
+    apiGet<InstallationListItem[]>(
+      `/installations${userId ? `?userId=${userId}` : ''}`,
+      o,
+    ),
 };
 
 export const TasksApi = {

@@ -8,16 +8,18 @@ import { ROLES } from "@/lib/permissions";
 import { DashboardChrome } from "@/components/dashboard-chrome";
 
 /**
- * Profile pages live outside the (dashboard) route group but reuse the same
- * chrome so users see the header / user menu while editing their profile.
+ * Integrations pages live outside the (dashboard) route group but reuse the same
+ * chrome. Access is restricted to users with `integrations.manage`
+ * (CEO / Super Admin / Finance).
  */
-export default async function ProfileLayout({
+export default async function IntegrationsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (!hasPermission(user, "integrations.manage")) redirect("/no-access");
 
   const dashboards = accessibleDashboards(user);
   const showSideNav = dashboards.length > 1;
@@ -40,7 +42,7 @@ export default async function ProfileLayout({
         avatarUrl: user.avatarUrl,
       }}
       roleLabels={roleLabels}
-      canManageIntegrations={hasPermission(user, "integrations.manage")}
+      canManageIntegrations
     >
       {children}
     </DashboardChrome>

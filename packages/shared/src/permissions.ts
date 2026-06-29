@@ -14,6 +14,9 @@ export const PERMISSIONS = {
   SYSTEM_ADMIN: 'system:admin',
   USERS_MANAGE: 'users:manage',
   ROLES_MANAGE: 'roles:manage',
+  // Manage third-party integration credentials (ClickSend, Aircall, Google
+  // Sheets, Anthropic) from the Integrations panel.
+  INTEGRATIONS_MANAGE: 'integrations:manage',
 
   // Nova — the in-house AI assistant
   NOVA_USE: 'nova:use', // open Nova and chat
@@ -69,6 +72,8 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   'system:admin': 'Access the Super Admin console (system settings, RBAC controls)',
   'users:manage': 'Create/deactivate staff accounts, assign roles',
   'roles:manage': 'Create/edit roles and their permissions',
+  'integrations:manage':
+    'View and edit third-party integration API keys (ClickSend, Aircall, Google Sheets, Anthropic)',
   'nova:use': 'Open Nova (the AI assistant) and chat with her',
   'nova:manage': "Manage Nova's knowledge base and learned memory (Knowledge Brain)",
   'dashboard:superadmin': 'Open the Super Admin dashboard',
@@ -191,6 +196,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.SYSTEM_ADMIN,
       P.USERS_MANAGE,
       P.ROLES_MANAGE,
+      P.INTEGRATIONS_MANAGE,
       P.NOVA_USE,
       P.NOVA_MANAGE,
       P.DASHBOARD_SUPERADMIN,
@@ -218,6 +224,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'CEO',
     description: 'Executive — sees everything, no system administration.',
     permissions: [
+      P.INTEGRATIONS_MANAGE,
       P.NOVA_USE,
       P.NOVA_MANAGE,
       P.DASHBOARD_CEO,
@@ -235,6 +242,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: 'Finance',
     description: 'Org-wide financial visibility; all dashboards except CEO.',
     permissions: [
+      P.INTEGRATIONS_MANAGE,
       P.NOVA_USE,
       ...ALL_STAFF_DASHBOARDS_BELOW_CEO,
       P.RECORDS_READ_ALL,

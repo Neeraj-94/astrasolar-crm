@@ -19,6 +19,9 @@ import {
 import { apiPatch } from "@/lib/api/client";
 import { applyRowOrder } from "@/components/leads/shared/data-table";
 import { LeadsTable, SalesFilterBar, applyFilters, type SalesFilters } from "./shared";
+import { useReschedule } from "./use-reschedule";
+import { useSaleDetail } from "./use-sale-detail";
+import { useLeadEdit } from "./use-lead-edit";
 
 /**
  * Not Interested — the archive of leads dispositioned Not Interested, DNQ or
@@ -35,6 +38,9 @@ export function NotInterestedTab() {
   const { leads, loading, error, reload } = useSalesLeads(ARCHIVED_DISPOSITIONS);
   // Optimistic inline-disposition overrides keyed by lead id.
   const [overrides, setOverrides] = React.useState<Record<string, Disposition>>({});
+  const reschedule = useReschedule(reload);
+  const saleDetail = useSaleDetail(reload);
+  const leadEdit = useLeadEdit(reload);
 
   const withOverrides = React.useMemo(
     () =>
@@ -57,11 +63,20 @@ export function NotInterestedTab() {
 
   // Inline disposition change — revive an archived lead back into play.
   function dispose(lead: SalesLead, next: Disposition) {
+    if (next === "been_rescheduled") {
+      reschedule.open(lead);
+      return;
+    }
     setOverrides((prev) => ({ ...prev, [lead.id]: next })); // optimistic
     const apiValue = DISPOSITION_TO_API[next];
     if (!apiValue) return;
-    apiPatch(`/leads/${lead.id}/disposition`, { disposition: apiValue })
-      .then(() => reload())
+    apiPatch<{ saleId?: string | null }>(`/leads/${lead.id}/disposition`, {
+      disposition: apiValue,
+    })
+      .then((res) => {
+        reload();
+        if (next === "sold" && res?.saleId) saleDetail.open(res.saleId);
+      })
       .catch(() => {
         setOverrides((prev) => {
           const { [lead.id]: _drop, ...rest } = prev;
@@ -124,12 +139,16 @@ export function NotInterestedTab() {
           emptyLabel={loading ? "Loading archive…" : "No archived leads found."}
           onDispose={dispose}
           dispositionOptions={SHEET_DISPOSITION_OPTIONS}
+          onEdit={leadEdit.open}
           sortable={{
             ids: rows.map((r) => r.id),
             onReorder: setRowOrder,
           }}
         />
       </Section>
+      {reschedule.dialog}
+      {saleDetail.dialog}
+      {leadEdit.dialog}
     </div>
   );
 }

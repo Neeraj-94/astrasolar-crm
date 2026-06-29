@@ -337,6 +337,7 @@ model Booking {
 model Sale {
   id            String   @id @default(uuid())
   saleRef       String?  @unique                    // human-facing "saleID" (e.g. S-2026-0001)
+  openSolarId   String?                              // OpenSolar project ID (external CRM ref)
 
   leadId        String   @unique                     // 1 lead -> at most 1 sale; customer data read via lead
   lead          Lead     @relation(fields: [leadId], references: [id])
@@ -1583,6 +1584,18 @@ model NovaUsageLog {
 // Anthropic key is intentionally NOT stored here — it stays env-only.
 model NovaSetting {
   key       String   @id              // e.g. elevenlabs_api_key, did_agent_id, did_client_key
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+// Runtime-editable third-party integration credentials, managed from the
+// Integrations panel by CEO / Super Admin / Finance. A small key/value store
+// (mirrors NovaSetting): a stored value overrides the matching env var, so env
+// stays a fallback/default. Secrets are never returned to the client — the
+// status endpoint exposes only booleans for secret fields.
+model IntegrationSetting {
+  key       String   @id              // e.g. clicksend_api_key, aircall_api_token, anthropic_api_key
   value     String
   updatedBy String?
   updatedAt DateTime @updatedAt

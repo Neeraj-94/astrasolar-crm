@@ -302,6 +302,27 @@ export class UsersService {
     return users;
   }
 
+  /**
+   * Active staff filtered to one or more role names — a directory source for
+   * pickers (e.g. the Sales Form's consultant + lead-gen dropdowns) that must
+   * list everyone regardless of the viewer's own data scope.
+   */
+  async byRole(roleNames: string[]) {
+    const users = await this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        roles: { some: { role: { name: { in: roleNames } } } },
+      },
+      include: { roles: { include: { role: true } } },
+      orderBy: { name: 'asc' },
+    });
+    return users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      roleKeys: u.roles.map((r) => r.role.name),
+    }));
+  }
+
   /** Users the viewer may select in a dashboard scope-selector. */
   async selectable(visibleIds: string[] | 'all') {
     const where = visibleIds === 'all' ? {} : { id: { in: visibleIds } };

@@ -11,6 +11,7 @@ import Anthropic from '@anthropic-ai/sdk';
 export class NovaAnthropicService {
   private readonly logger = new Logger(NovaAnthropicService.name);
   private client: Anthropic | null = null;
+  private clientKey: string | null = null;
 
   get configured(): boolean {
     return !!process.env.ANTHROPIC_API_KEY;
@@ -62,11 +63,16 @@ export class NovaAnthropicService {
   }
 
   private getClient(): Anthropic {
-    if (!this.client) {
-      if (!process.env.ANTHROPIC_API_KEY) {
-        throw new Error('ANTHROPIC_API_KEY is not configured');
-      }
-      this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    // The Anthropic key may be managed at runtime from the Integrations panel;
+    // IntegrationSettingsService mirrors the stored value into
+    // process.env.ANTHROPIC_API_KEY. Rebuild the client if the key changed.
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
+    }
+    if (!this.client || this.clientKey !== key) {
+      this.client = new Anthropic({ apiKey: key });
+      this.clientKey = key;
     }
     return this.client;
   }

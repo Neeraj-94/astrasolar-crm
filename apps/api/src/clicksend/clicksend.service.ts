@@ -9,6 +9,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
 import type { AuthUser } from '../common/auth-user';
 import { SendSmsDto } from './dto';
+import {
+  INTEGRATION_SETTING_KEYS,
+  IntegrationSettingsService,
+} from '../integrations/integration-settings.service';
 
 /**
  * ClickSend SMS integration (outbound send + delivery-receipt webhook).
@@ -57,6 +61,7 @@ export class ClickSendService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly integrations: IntegrationSettingsService,
   ) {}
 
   private get sms(): SmsMessageDelegate {
@@ -245,8 +250,13 @@ export class ClickSendService {
     messageId?: string;
     messagePrice?: string;
   }> {
-    const username = this.config.get<string>('CLICKSEND_USERNAME');
-    const apiKey = this.config.get<string>('CLICKSEND_API_KEY');
+    // Stored credentials (Integrations panel) override env; env is the fallback.
+    const username = await this.integrations.resolve(
+      INTEGRATION_SETTING_KEYS.CLICKSEND_USERNAME,
+    );
+    const apiKey = await this.integrations.resolve(
+      INTEGRATION_SETTING_KEYS.CLICKSEND_API_KEY,
+    );
     if (!username || !apiKey) {
       throw new ServiceUnavailableException(
         'ClickSend is not configured (set CLICKSEND_USERNAME / CLICKSEND_API_KEY).',

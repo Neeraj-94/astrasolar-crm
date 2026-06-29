@@ -227,3 +227,18 @@ export class RedistributeBloomeDto extends BloomeFilterDto {
   @Max(500)
   count!: number;
 }
+
+/** Edit a lead's contact / detail fields — the "Edit Lead" modal. */
+export class UpdateLeadDto {
+  @IsOptional() @IsString() firstName?: string;
+  @IsOptional() @IsString() surName?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() email?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() postCode?: string;
+  @IsOptional() @IsString() state?: string;
+  @IsOptional() @IsString() billSpend?: string;
+  @IsOptional() @IsEnum(Company) company?: Company;
+  @IsOptional() @IsEnum(LeadSource) source?: LeadSource;
+  @IsOptional() @IsString() leadGenNotes?: string;
+}

@@ -9,6 +9,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
 import type { AuthUser } from '../common/auth-user';
 import { ClickToDialDto } from './dto';
+import {
+  INTEGRATION_SETTING_KEYS,
+  IntegrationSettingsService,
+} from '../integrations/integration-settings.service';
 
 /**
  * Aircall integration (inbound webhook ingestion + outbound click-to-dial).
@@ -60,6 +64,7 @@ export class AircallService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly integrations: IntegrationSettingsService,
   ) {}
 
   private get calls(): CallLogDelegate {
@@ -254,8 +259,13 @@ export class AircallService {
     path: string,
     init: { method: string; body?: string },
   ): Promise<unknown> {
-    const apiId = this.config.get<string>('AIRCALL_API_ID');
-    const apiToken = this.config.get<string>('AIRCALL_API_TOKEN');
+    // Stored credentials (Integrations panel) override env; env is the fallback.
+    const apiId = await this.integrations.resolve(
+      INTEGRATION_SETTING_KEYS.AIRCALL_API_ID,
+    );
+    const apiToken = await this.integrations.resolve(
+      INTEGRATION_SETTING_KEYS.AIRCALL_API_TOKEN,
+    );
     if (!apiId || !apiToken) {
       throw new ServiceUnavailableException(
         'Aircall is not configured (set AIRCALL_API_ID / AIRCALL_API_TOKEN).',

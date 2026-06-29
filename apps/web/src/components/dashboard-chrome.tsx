@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { SideNav } from "@/components/side-nav";
 import { UserMenu } from "@/components/user-menu";
@@ -28,6 +29,8 @@ interface Props {
   canUseNova?: boolean;
   /** Whether to show the floating System Price Calculator (internal staff). */
   canUsePriceCalc?: boolean;
+  /** Whether the user may manage integrations (shows the side-nav link). */
+  canManageIntegrations?: boolean;
   children: React.ReactNode;
 }
 
@@ -45,11 +48,19 @@ export function DashboardChrome({
   roleLabels,
   canUseNova,
   canUsePriceCalc,
+  canManageIntegrations,
   children,
 }: Props) {
   // Start collapsed=false so the server-rendered HTML and the first client
   // render match. We hydrate the persisted value in an effect below.
   const [collapsed, setCollapsed] = useState(false);
+  // Mobile (<md) slide-in drawer open state. Separate from `collapsed`, which
+  // only controls the desktop sidebar width.
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Whether we're on a mobile viewport. On mobile the drawer always shows the
+  // full (expanded) nav, regardless of the persisted desktop collapse state.
+  const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     try {
@@ -59,6 +70,20 @@ export function DashboardChrome({
       // localStorage may be unavailable (private mode, etc.) — ignore.
     }
   }, []);
+
+  // Track viewport so the mobile drawer renders expanded content. md = 768px.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   function toggle() {
     setCollapsed((prev) => {
@@ -72,14 +97,20 @@ export function DashboardChrome({
     });
   }
 
+  // On mobile the drawer is always expanded; collapse only applies to desktop.
+  const effectiveCollapsed = isMobile ? false : collapsed;
+
   return (
     <NotificationsProvider>
     <div className="min-h-screen flex">
       {showSideNav && (
         <SideNav
           dashboards={dashboards}
-          collapsed={collapsed}
+          collapsed={effectiveCollapsed}
           onToggle={toggle}
+          canManageIntegrations={canManageIntegrations}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
         />
       )}
 
@@ -89,8 +120,9 @@ export function DashboardChrome({
             {showSideNav && (
               <button
                 type="button"
-                onClick={toggle}
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open navigation menu"
+                aria-expanded={mobileOpen}
                 className="md:hidden h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <Menu className="h-4 w-4" />

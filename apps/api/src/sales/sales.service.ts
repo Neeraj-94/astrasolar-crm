@@ -3,7 +3,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SaleStatus } from '@astra/shared';
+import {
+  Company,
+  LeadSource,
+  LeadStage,
+  SalesDisposition,
+  SaleStatus,
+  SaleType,
+  StageState,
+  SystemType,
+} from '@astra/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScopeService } from '../common/scope.service';
 import { AuditService } from '../common/audit.service';
@@ -12,11 +21,83 @@ import { assertOwnership } from '../common/ownership';
 import type { AuthUser } from '../common/auth-user';
 import type {
   AddExtraDto,
+  CreateSaleFormDto,
+  UpdatePaymentDetailsDto,
   UpdateSaleCoreDto,
   UpdateSaleStatusDto,
   UpdateStatusDetailsDto,
   UpdateSystemDetailsDto,
 } from './dto';
+
+// ---------------------------------------------------------------------------
+// Sales Form (astrasolar-app port) — map raw form strings to v2 enums/records.
+// ---------------------------------------------------------------------------
+function mapCompany(v?: string): Company {
+  return (v ?? '').toUpperCase().includes('DC') ? Company.DC : Company.ASTRA;
+}
+
+function mapLeadSource(v?: string): LeadSource {
+  if (v && (Object.values(LeadSource) as string[]).includes(v)) {
+    return v as LeadSource;
+  }
+  switch ((v ?? '').toLowerCase()) {
+    case 'bloom astra':
+      return LeadSource.BLOOM_ASTRA;
+    case 'brighte':
+      return LeadSource.BRIGHTE;
+    case 'referral':
+      return LeadSource.REFERRAL;
+    case 'astra web':
+      return LeadSource.WEBSITE;
+    case 'inbound':
+      return LeadSource.INBOUND;
+    default:
+      return LeadSource.INBOUND;
+  }
+}
+
+function mapSaleType(v?: string): SaleType | undefined {
+  if (!v) return undefined;
+  if ((Object.values(SaleType) as string[]).includes(v)) return v as SaleType;
+  const s = v.toLowerCase();
+  const solar = s.includes('solar');
+  const battery = s.includes('battery');
+  if (solar && battery) return SaleType.SOLAR_BATTERY;
+  if (battery) return SaleType.BATTERY_ONLY;
+  if (solar) return SaleType.SOLAR_ONLY;
+  return undefined;
+}
+
+function mapSystemType(v?: string): SystemType | undefined {
+  if (!v) return undefined;
+  if ((Object.values(SystemType) as string[]).includes(v)) {
+    return v as SystemType;
+  }
+  switch (v.toLowerCase()) {
+    case 'new':
+      return SystemType.NEW;
+    case 'replacement':
+      return SystemType.REPLACEMENT;
+    case 'additional':
+      return SystemType.ADDITIONAL;
+    case 'additional + replacement':
+      return SystemType.ADDITIONAL_REPLACEMENT;
+    default:
+      return undefined;
+  }
+}
+
+function parseStoreys(v?: string): number | undefined {
+  if (!v) return undefined;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function parseKwh(label?: string): number | undefined {
+  if (!label) return undefined;
+  const m = label.match(/([\d.]+)\s*kwh/i);
+  return m ? Number(m[1]) : undefined;
+}
 
 @Injectable()
 export class SalesService {
@@ -37,10 +118,136 @@ export class SalesService {
       ],
       take: 200,
       include: {
-        lead: true,
+        lead: { include: { leadGen: { select: { id: true, name: true } } } },
         owner: { select: { id: true, name: true } },
         statusDetails: true,
+        systemDetails: true,
+        installation: true,
+        paymentDetails: true,
+        finance: true,
       },
+    });
+  }
+
+  /**
+   * Create a Sale from the "Generate Sales Form" wizard. Because a Sale is 1:1
+   * with a Lead in v2, this also creates the backing Lead (CONVERTED / SOLD,
+   * owned by the submitting consultant) and the system / finance / payment
+   * detail records, all in one transaction.
+   */
+  async createFromForm(user: AuthUser, dto: CreateSaleFormDto) {
+    const company = mapCompany(dto.company);
+    const consultantId = dto.consultantId || user.id;
+    const leadGenId = dto.leadGenId || user.id;
+    const saleDate = dto.saleDate ? new Date(dto.saleDate) : new Date();
+    const address =
+      [dto.address, dto.suburb].filter(Boolean).join(', ') || undefined;
+    const financeLegs = (dto.financeOptions ?? [])
+      .filter((f) => f && f.toLowerCase() !== 'cash')
+      .map((lender) => ({ lender, status: StageState.PENDING }));
+
+    // Resolve selected catalogue extras → SaleExtra rows (price snapshot).
+    const extraProducts = dto.extraIds?.length
+      ? await this.prisma.extraProduct.findMany({
+          where: { id: { in: dto.extraIds } },
+        })
+      : [];
+    const extrasCreate = extraProducts.map((e) => ({
+      itemName: e.itemName,
+      itemRef: e.id,
+      itemPrice: e.unitPrice ?? 0,
+      profit: undefined,
+    }));
+
+    return this.prisma.$transaction(async (tx) => {
+      const lead = await tx.lead.create({
+        data: {
+          firstName: dto.firstName,
+          surName: dto.surName,
+          phone: dto.phone || null,
+          email: dto.email || null,
+          address: address ?? null,
+          postCode: dto.postcode || null,
+          state: dto.state || null,
+          company,
+          source: mapLeadSource(dto.leadSource),
+          leadGenId,
+          consultantId,
+          stage: LeadStage.CONVERTED,
+          disposition: SalesDisposition.SOLD,
+          convertedAt: new Date(),
+        },
+      });
+
+      const year = new Date().getFullYear();
+      const count = await tx.sale.count();
+      const saleRef = `S-${year}-${String(count + 1).padStart(4, '0')}`;
+      const sale = await tx.sale.create({
+        data: {
+          saleRef,
+          leadId: lead.id,
+          ownerId: consultantId,
+          company,
+          status: SaleStatus.NEGOTIATION,
+          saleType: mapSaleType(dto.saleType),
+          systemType: mapSystemType(dto.systemType),
+          energyProvider: dto.energyProvider || undefined,
+          referral: dto.referral || undefined,
+          soldPrice: dto.soldPrice ?? undefined,
+          saleDate,
+          installNotes: dto.installNotes || undefined,
+          statusDetails: { create: {} },
+          systemDetails: {
+            create: {
+              panelModel: dto.panelModel || undefined,
+              numPanels: dto.numPanels ?? undefined,
+              systemSize: dto.systemSize ?? undefined,
+              solarSTC: dto.solarStc ?? undefined,
+              batterySTC: dto.batteryStc ?? undefined,
+              tilts: dto.tilts ?? undefined,
+              optimisers:
+                dto.optimisers != null ? dto.optimisers > 0 : undefined,
+              roofType: dto.roofType || undefined,
+              storeys: parseStoreys(dto.storeys),
+              switchboard: dto.switchboard || undefined,
+              nmi: dto.nmi || undefined,
+              phase: dto.phase || undefined,
+              inverterModel: dto.inverter || undefined,
+              batteryModel: dto.batteryBrand || undefined,
+              batterySize: parseKwh(dto.batteryBrand) ?? undefined,
+            },
+          },
+          paymentDetails: {
+            create: {
+              paymentNotes: financeLegs.length
+                ? `Finance: ${financeLegs.map((f) => f.lender).join(', ')}`
+                : 'Cash',
+            },
+          },
+          ...(financeLegs.length ? { finance: { create: financeLegs } } : {}),
+          ...(extrasCreate.length ? { extras: { create: extrasCreate } } : {}),
+        },
+        include: { lead: true },
+      });
+
+      await tx.saleStageHistory.create({
+        data: {
+          saleId: sale.id,
+          toStage: SaleStatus.NEGOTIATION,
+          changedBy: user.id,
+        },
+      });
+      await this.audit.record(
+        {
+          userId: user.id,
+          action: 'SALE_CREATED',
+          entity: 'Sale',
+          entityId: sale.id,
+          metadata: { via: 'sales-form', leadId: lead.id },
+        },
+        tx,
+      );
+      return sale;
     });
   }
 
@@ -234,6 +441,38 @@ export class SalesService {
   }
 
   /** Owner-only: the 7 independent stage statuses. */
+  /** Owner-only: payment date + finance notes (Sale Details modal). */
+  async updatePaymentDetails(
+    user: AuthUser,
+    id: string,
+    dto: UpdatePaymentDetailsDto,
+  ) {
+    await this.getOwned(user, id);
+    const data: { paymentNotes?: string; paymentDate?: Date | null } = {};
+    if (dto.paymentNotes !== undefined) data.paymentNotes = dto.paymentNotes;
+    if (dto.paymentDate !== undefined) {
+      data.paymentDate = dto.paymentDate ? new Date(dto.paymentDate) : null;
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.paymentDetails.upsert({
+        where: { saleId: id },
+        create: { saleId: id, ...data },
+        update: data,
+      });
+      await this.history.recordFieldChanges(
+        tx,
+        id,
+        Object.keys(data).map((field) => ({
+          section: 'paymentDetails',
+          field,
+          newValue: stringify((data as any)[field]),
+        })),
+        user.id,
+      );
+      return updated;
+    });
+  }
+
   async updateStatusDetails(user: AuthUser, id: string, dto: UpdateStatusDetailsDto) {
     await this.getOwned(user, id);
     return this.prisma.$transaction(async (tx) => {

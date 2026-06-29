@@ -24,6 +24,7 @@ import {
   CreateLeadDto,
   ReassignDto,
   UpdateDispositionDto,
+  UpdateLeadDto,
   UpdateOutcomeDto,
 } from './dto';
 import { ReorderDto } from '../common/reorder.dto';
@@ -149,6 +150,17 @@ export class LeadsController {
     @Body() dto: UpdateDispositionDto,
   ) {
     return this.leads.updateDisposition(user, id, dto);
+  }
+
+  /** Edit a lead's contact / detail fields (the "Edit Lead" modal). */
+  @RequirePermissions(PERMISSIONS.LEADS_WRITE_OWN)
+  @Patch(':id')
+  updateLead(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateLeadDto,
+  ) {
+    return this.leads.updateLead(user, id, dto);
   }
 
   @RequirePermissions(PERMISSIONS.LEADS_REASSIGN)
