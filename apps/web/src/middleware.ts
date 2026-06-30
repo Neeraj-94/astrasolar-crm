@@ -11,6 +11,12 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PUBLIC_PATHS = ["/login", "/api/v1", "/api/health"];
 
+// Static assets served from /public (logo, icons, manifest, etc.). Any request
+// whose final path segment has one of these extensions is a static file and
+// must never be redirected to /login — otherwise the <img>/next-image fetch on
+// the unauthenticated login page resolves to login HTML and the asset breaks.
+const STATIC_FILE = /\.(png|jpe?g|gif|svg|webp|ico|webmanifest|json|txt|xml|woff2?|ttf)$/i;
+
 function isPublic(pathname: string) {
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return true;
@@ -19,7 +25,7 @@ function isPublic(pathname: string) {
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/assets/") ||
-    pathname === "/manifest.json"
+    STATIC_FILE.test(pathname)
   );
 }
 

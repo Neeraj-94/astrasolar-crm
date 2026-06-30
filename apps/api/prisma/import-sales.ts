@@ -220,7 +220,9 @@ const STAGE = (v: unknown) => str(v) ?? 'PENDING';
 function statusDetailsData(s: any) {
   if (!s) return null;
   return {
-    financeStatus: STAGE(s.financeStatus), preapprovalStatus: STAGE(s.preapprovalStatus),
+    // financeStatus + preapprovalStatus use their own enums and are nullable —
+    // pass through as-is (null when unknown), don't coerce to a StageState default.
+    financeStatus: str(s.financeStatus), preapprovalStatus: str(s.preapprovalStatus),
     meterChangeStatus: STAGE(s.meterChangeStatus), installStatus: STAGE(s.installStatus),
     paymentStatus: STAGE(s.paymentStatus), commissioningStatus: STAGE(s.commissioningStatus),
     cesStatus: STAGE(s.cesStatus),
@@ -246,7 +248,13 @@ const enumTally = {
 const bump = (m: Record<string, number>, k: unknown) => { const s = String(k); m[s] = (m[s] || 0) + 1; };
 
 async function main() {
-  const file = path.join(__dirname, 'data', 'sales-import.json');
+  // Default to the curated sales-import.json; override with --file=<name> to load
+  // a different data file (e.g. --file=sales-from-sold-leads.json). A bare name
+  // resolves under prisma/data; an absolute path is used as-is.
+  const fileArg = process.argv.find((x) => x.startsWith('--file='))?.split('=')[1];
+  const file = fileArg
+    ? (path.isAbsolute(fileArg) ? fileArg : path.join(__dirname, 'data', fileArg))
+    : path.join(__dirname, 'data', 'sales-import.json');
   const all = JSON.parse(fs.readFileSync(file, 'utf8')).sales as any[];
   const sales = all.slice(0, LIMIT);
   console.log(
@@ -294,6 +302,8 @@ async function main() {
       soldPrice: num(sale.soldPrice),
       totalRRP: num(sale.totalRRP),
       totalCommission: num(sale.totalCommission),
+      difference: num(sale.difference),
+      totalProfit: num(sale.totalProfit),
       saleDate: dDate(sale.saleDate),
       closedAt: dTime(sale.closedAt),
       installNotes: str(sale.installNotes),

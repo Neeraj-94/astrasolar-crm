@@ -13,6 +13,7 @@ import {
   DragTH,
 } from "@/components/leads/shared/data-table";
 import { SaleDetailPanel } from "./sale-detail-panel";
+import { titleCase } from "@/lib/utils";
 
 interface SaleRow {
   id: string;
@@ -20,7 +21,10 @@ interface SaleRow {
   company: string;
   status: string;
   soldPrice: string | number | null;
+  totalRRP: string | number | null;
   totalCommission: string | number | null;
+  difference: string | number | null;
+  totalProfit: string | number | null;
   saleDate: string | null;
   lead: { firstName: string; surName: string } | null;
   owner: { id: string; name: string } | null;
@@ -75,7 +79,10 @@ export function SalesListTab() {
               <TH>Status</TH>
               <TH>Owner</TH>
               <TH align="right">Sold price</TH>
+              <TH align="right">RRP</TH>
+              <TH align="right">Difference</TH>
               <TH align="right">Commission</TH>
+              <TH align="right">Profit</TH>
               <TH>Sale date</TH>
             </tr>
           </THead>
@@ -94,12 +101,26 @@ export function SalesListTab() {
                 <TD>{s.company}</TD>
                 <TD>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] ${STATUS_COLORS[s.status] ?? "bg-muted"}`}>
-                    {s.status}
+                    {titleCase(s.status)}
                   </span>
                 </TD>
                 <TD>{s.owner?.name ?? "—"}</TD>
                 <TD align="right" className="tabular-nums">{money(s.soldPrice)}</TD>
+                <TD align="right" className="tabular-nums">{money(s.totalRRP)}</TD>
+                <TD
+                  align="right"
+                  className={`tabular-nums ${
+                    s.difference == null
+                      ? ""
+                      : Number(s.difference) < 0
+                        ? "text-destructive"
+                        : "text-emerald-600"
+                  }`}
+                >
+                  {money(s.difference)}
+                </TD>
                 <TD align="right" className="tabular-nums">{money(s.totalCommission)}</TD>
+                <TD align="right" className="tabular-nums">{money(s.totalProfit)}</TD>
                 <TD className="whitespace-nowrap text-muted-foreground">
                   {s.saleDate ? new Date(s.saleDate).toLocaleDateString() : "—"}
                 </TD>

@@ -4,6 +4,7 @@ import * as React from "react";
 import { Wallet, Clock } from "lucide-react";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/use-api";
+import { titleCase } from "@/lib/utils";
 import { Section, Kpi, KpiRow } from "@/components/leads/shared";
 import { money0, shortDate } from "@/components/dashboards/financials/format";
 
@@ -95,7 +96,7 @@ export function PaymentsTab() {
                         <span
                           className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_BADGE[r.paymentStatus] ?? ""}`}
                         >
-                          {r.paymentStatus.replace(/_/g, " ")}
+                          {titleCase(r.paymentStatus)}
                         </span>
                       </td>
                       <td className="px-5 py-2.5 text-muted-foreground">

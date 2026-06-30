@@ -83,11 +83,5 @@ export function dispositionBadge(d: string | null): string {
   }
 }
 
-export function titleCase(v: string | null | undefined): string {
-  if (!v) return "—";
-  return v
-    .toLowerCase()
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
+// Canonical implementation now lives in lib/utils; re-export for back-compat.
+export { titleCase } from "@/lib/utils";

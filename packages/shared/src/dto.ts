@@ -121,7 +121,10 @@ export interface SaleListItem {
   ownerId: string;
   ownerName: string | null;
   soldPrice: number | null;
+  totalRRP: number | null;
   totalCommission: number | null;
+  difference: number | null;
+  totalProfit: number | null;
   saleDate: string | null;
 }
 

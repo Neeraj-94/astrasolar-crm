@@ -240,6 +240,7 @@ export interface PipelineSale {
   paymentNotes?: string;
   aircon?: string;
   tilts?: string;
+  financeLenders?: string[]; // lender names from the sale's finance legs
   status: PipelineStatus;
 }
 

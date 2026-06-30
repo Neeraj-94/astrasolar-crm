@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SunMedium } from "lucide-react";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 
 type Mode = "signin" | "forgot";
 
@@ -25,6 +26,7 @@ function LoginForm() {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
@@ -72,9 +74,14 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-sm rounded-xl border bg-card text-card-foreground shadow-sm p-8 space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <SunMedium className="h-6 w-6" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="AstraSolar"
+            width={56}
+            height={56}
+            priority
+            className="h-14 w-14"
+          />
           <h1 className="text-xl font-semibold">AstraSolar CRM</h1>
           <p className="text-sm text-muted-foreground">
             {mode === "signin"
@@ -108,14 +115,31 @@ function LoginForm() {
                   Forgot password?
                 </button>
               </div>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-r-md"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (

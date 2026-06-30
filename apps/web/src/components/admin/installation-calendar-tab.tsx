@@ -221,40 +221,44 @@ export function InstallationCalendarTab() {
         )}
 
         {/* Calendar nav */}
-        <div className="calendar-nav">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <div className="calendar-month">{monthLabel}</div>
-            <div className="cal-view-toggle" role="tablist" aria-label="Calendar view">
-              {(["day", "week", "month"] as CalView[]).map((v) => (
-                <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>
-                  {v}
-                </button>
-              ))}
+        <div className="cal-board">
+          <div className="calendar-nav">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div className="calendar-month">{monthLabel}</div>
+              <div className="cal-view-toggle" role="tablist" aria-label="Calendar view">
+                {(["day", "week", "month"] as CalView[]).map((v) => (
+                  <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <button className="cal-today-btn" onClick={goToday}>
+                Today
+              </button>
             </div>
-            <button className="cal-today-btn" onClick={goToday}>
-              Today
-            </button>
+            <div className="calendar-arrows">
+              <button className="calendar-arrow-btn" onClick={() => shift(-1)} aria-label="Previous">
+                ←
+              </button>
+              <button className="calendar-arrow-btn" onClick={() => shift(1)} aria-label="Next">
+                →
+              </button>
+            </div>
           </div>
-          <div className="calendar-arrows">
-            <button className="calendar-arrow-btn" onClick={() => shift(-1)} aria-label="Previous">
-              ←
-            </button>
-            <button className="calendar-arrow-btn" onClick={() => shift(1)} aria-label="Next">
-              →
-            </button>
+
+          {/* Views */}
+          <div className="cal-board-body">
+            {view === "day" && (
+              <DayView region={region} day={day} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} />
+            )}
+            {view === "week" && (
+              <WeekView region={region} weekStart={weekStart} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} />
+            )}
+            {view === "month" && (
+              <MonthView region={region} month={month} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} search={search} />
+            )}
           </div>
         </div>
-
-        {/* Views */}
-        {view === "day" && (
-          <DayView region={region} day={day} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} />
-        )}
-        {view === "week" && (
-          <WeekView region={region} weekStart={weekStart} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} />
-        )}
-        {view === "month" && (
-          <MonthView region={region} month={month} bookings={bookings} isAvailable={isAvailable} onSlot={openSlot} search={search} />
-        )}
 
         {/* Weekly stock */}
         <WeeklyStock

@@ -3,6 +3,7 @@
 import { useApi } from "@/lib/api/use-api";
 import { apiPatch } from "@/lib/api/client";
 import { useRowReorder } from "@/lib/api/use-reorder";
+import { titleCase } from "@/lib/utils";
 import {
   DataTable,
   THead,
@@ -98,7 +99,7 @@ export function InstallerJobsTab() {
                 </TD>
                 <TD>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] ${COLORS[j.status] ?? "bg-muted"}`}>
-                    {j.status}
+                    {titleCase(j.status)}
                   </span>
                 </TD>
                 <TD>
@@ -109,7 +110,7 @@ export function InstallerJobsTab() {
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {titleCase(s)}
                       </option>
                     ))}
                   </select>

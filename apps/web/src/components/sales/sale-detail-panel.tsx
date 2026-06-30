@@ -6,6 +6,7 @@ import { apiPatch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { titleCase } from "@/lib/utils";
 
 const SALE_STATUS = ["NEGOTIATION", "CONTRACT", "ON_HOLD", "COMPLETED", "CANCELLED"];
 const SALE_TYPE = ["SOLAR_ONLY", "BATTERY_ONLY", "SOLAR_BATTERY"];
@@ -147,21 +148,21 @@ export function SaleDetailPanel({
           <Field label="Status">
             <select className="sel" value={core.status}
               onChange={(e) => setCore({ ...core, status: e.target.value })}>
-              {SALE_STATUS.map((x) => <option key={x}>{x}</option>)}
+              {SALE_STATUS.map((x) => <option key={x} value={x}>{titleCase(x)}</option>)}
             </select>
           </Field>
           <Field label="Sale type">
             <select className="sel" value={core.saleType}
               onChange={(e) => setCore({ ...core, saleType: e.target.value })}>
               <option value="">—</option>
-              {SALE_TYPE.map((x) => <option key={x}>{x}</option>)}
+              {SALE_TYPE.map((x) => <option key={x} value={x}>{titleCase(x)}</option>)}
             </select>
           </Field>
           <Field label="System type">
             <select className="sel" value={core.systemType}
               onChange={(e) => setCore({ ...core, systemType: e.target.value })}>
               <option value="">—</option>
-              {SYSTEM_TYPE.map((x) => <option key={x}>{x}</option>)}
+              {SYSTEM_TYPE.map((x) => <option key={x} value={x}>{titleCase(x)}</option>)}
             </select>
           </Field>
           <Field label="Energy provider">
@@ -263,7 +264,7 @@ export function SaleDetailPanel({
             <Field key={f.key} label={f.label}>
               <select className="sel" value={status[f.key] ?? "PENDING"}
                 onChange={(e) => setStatus({ ...status, [f.key]: e.target.value })}>
-                {STAGE_STATE.map((x) => <option key={x}>{x}</option>)}
+                {STAGE_STATE.map((x) => <option key={x} value={x}>{titleCase(x)}</option>)}
               </select>
             </Field>
           ))}

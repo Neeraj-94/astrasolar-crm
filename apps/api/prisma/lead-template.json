@@ -1,0 +1,23 @@
+{
+  "firstName": "",
+  "surName": "",
+  "phone": "",
+  "email": "",
+  "address": "",
+  "postCode": "",
+  "state": "",
+  "billSpend": "",
+  "code": "",
+  "leadGenId": "",
+  "consultantId": null,
+  "source": "BLOOM_ASTRA",
+  "outcome": null,
+  "disposition": null,
+  "dials": 0,
+  "leadGenNotes": "",
+  "consultantNotes": "",
+  "company": "ASTRA",
+  "bookingDate": null,
+  "bookingTime": null,
+  "stage": "INTAKE"
+}

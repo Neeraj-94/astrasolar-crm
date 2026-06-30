@@ -241,6 +241,8 @@ export class AnalyticsService {
         soldPrice: true,
         totalCommission: true,
         totalRRP: true,
+        difference: true,
+        totalProfit: true,
         company: true,
         status: true,
         saleDate: true,
@@ -255,6 +257,8 @@ export class AnalyticsService {
     let totalRevenue = 0;
     let totalCommission = 0;
     let totalRrp = 0;
+    let totalProfit = 0;
+    let totalDifference = 0;
 
     for (const s of sales) {
       const revenue = Number(s.soldPrice ?? 0);
@@ -262,6 +266,8 @@ export class AnalyticsService {
       totalRevenue += revenue;
       totalCommission += commission;
       totalRrp += Number(s.totalRRP ?? 0);
+      totalProfit += Number(s.totalProfit ?? 0);
+      totalDifference += Number(s.difference ?? 0);
 
       const key = s.saleDate ? this.monthKey(s.saleDate) : 'unknown';
       const m = months.get(key) ?? { revenue: 0, commission: 0, sales: 0 };
@@ -285,6 +291,8 @@ export class AnalyticsService {
       totalRevenue,
       totalCommission,
       totalRrp,
+      totalProfit,
+      totalDifference,
       totalSales: sales.length,
       avgSaleValue: sales.length ? totalRevenue / sales.length : 0,
       grossMargin: totalRevenue > 0 ? (totalRevenue - totalCommission) / totalRevenue : 0,

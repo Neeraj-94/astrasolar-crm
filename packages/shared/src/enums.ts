@@ -87,6 +87,35 @@ export const StageState = {
 } as const;
 export type StageState = (typeof StageState)[keyof typeof StageState];
 
+// Pre-approval lifecycle — dedicated enum (distinct from StageState).
+export const PreapprovalStatus = {
+  APPROVED: 'APPROVED',
+  NEEDS_APPLYING: 'NEEDS_APPLYING',
+  SUBMITTED: 'SUBMITTED',
+  AWAITING_PAYMENT: 'AWAITING_PAYMENT',
+  AWAITING_INFO: 'AWAITING_INFO',
+  INCOMPLETE_INFORMATION: 'INCOMPLETE_INFORMATION',
+  ON_HOLD: 'ON_HOLD',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type PreapprovalStatus =
+  (typeof PreapprovalStatus)[keyof typeof PreapprovalStatus];
+
+// Finance lifecycle — dedicated enum (distinct from StageState).
+export const FinanceStatus = {
+  APPLIED: 'APPLIED',
+  DOCS_SUBMITTED: 'DOCS_SUBMITTED',
+  APPROVED: 'APPROVED',
+  DECLINED: 'DECLINED',
+  WITHDRAWN: 'WITHDRAWN',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  PENDING_ACCEPTANCE: 'PENDING_ACCEPTANCE',
+  NOT_APPLIED: 'NOT_APPLIED',
+  AWAITING_DOCS: 'AWAITING_DOCS',
+} as const;
+export type FinanceStatus =
+  (typeof FinanceStatus)[keyof typeof FinanceStatus];
+
 export const ProductCategory = {
   BATTERIES: 'BATTERIES',
   INVERTER: 'INVERTER',

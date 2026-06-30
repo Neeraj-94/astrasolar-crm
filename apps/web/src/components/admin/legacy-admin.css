@@ -101,6 +101,7 @@
 .astra-legacy .pipe-badge.complete { background: var(--green-dim); color: var(--green); }
 .astra-legacy .pipe-badge.pending { background: var(--gold-soft); color: var(--gold); }
 .astra-legacy .pipe-badge.due { background: var(--red-dim); color: var(--red); }
+.astra-legacy .pipe-finance-lenders { display: flex; flex-wrap: wrap; gap: 3px; }
 
 .astra-legacy .pipeline-table tr.pipe-row-complete td { opacity: 0.6; }
 .astra-legacy .pipeline-table tr.pipe-row-cancelled { background: var(--red-dim) !important; border-left: 3px solid var(--red); }
@@ -180,7 +181,19 @@
 .astra-legacy .install-state-tab:hover { border-color: var(--gold-dim); color: var(--gold); }
 .astra-legacy .install-state-tab.active { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
 
-.astra-legacy .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 0 16px; }
+/* Bordered calendar board — frames the nav + active view so it reads as a
+   panel in both light and dark mode (border tracks the themed --border token). */
+.astra-legacy .cal-board {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px 16px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.04);
+}
+.astra-legacy .cal-board-body { border-top: 1px solid var(--border); padding-top: 14px; }
+
+.astra-legacy .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 0 2px; }
 .astra-legacy .calendar-month { font-family: "Cormorant Garamond", serif; font-size: 1.3rem; color: var(--text); }
 .astra-legacy .calendar-arrows { display: flex; gap: 8px; }
 .astra-legacy .calendar-arrow-btn {

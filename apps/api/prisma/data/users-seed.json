@@ -1,0 +1,153 @@
+[
+  {
+    "email": "ben@astrasolar.com.au",
+    "name": "Burhan A",
+    "role": "SALES_CONSULTANT",
+    "slug": "burhan",
+    "aliases": [
+      "Burhan A",
+      "burhan",
+      "burhan a"
+    ]
+  },
+  {
+    "email": "chris@astrasolar.com.au",
+    "name": "Chris D",
+    "role": "CEO",
+    "slug": "chris",
+    "aliases": [
+      "Chris D",
+      "chris",
+      "chris d"
+    ]
+  },
+  {
+    "email": "daniel.lulham@astrasolar.com.au",
+    "name": "Daniel L",
+    "role": "LEAD_GEN",
+    "slug": "daniel",
+    "aliases": [
+      "Daniel L",
+      "daniel",
+      "daniel l"
+    ]
+  },
+  {
+    "email": "ernest@astrasolar.com.au",
+    "name": "Ernest L",
+    "role": "SALES_CONSULTANT",
+    "slug": "ernest",
+    "aliases": [
+      "Ernest L",
+      "ernest",
+      "ernest l"
+    ]
+  },
+  {
+    "email": "finance@astrasolar.com.au",
+    "name": "Finance",
+    "role": "FINANCE",
+    "slug": "finance",
+    "aliases": [
+      "Finance",
+      "finance"
+    ]
+  },
+  {
+    "email": "jody@astrasolar.com.au",
+    "name": "Jody",
+    "role": "ADMIN_OFFICER",
+    "slug": "jody",
+    "aliases": [
+      "Jody",
+      "jody"
+    ]
+  },
+  {
+    "email": "justin.parle@astrasolar.com.au",
+    "name": "Justin P",
+    "role": "SALES_MANAGER",
+    "slug": "justin",
+    "aliases": [
+      "Justin P",
+      "justin",
+      "justin p"
+    ]
+  },
+  {
+    "email": "justin.prestage@astrasolar.com.au",
+    "name": "Justin Prestage",
+    "role": "SALES_CONSULTANT",
+    "slug": "justinpr",
+    "aliases": [
+      "Justin Prestage",
+      "justin",
+      "justin prestage",
+      "justinpr"
+    ]
+  },
+  {
+    "email": "lachlan@astrasolar.com.au",
+    "name": "Lachlan M",
+    "role": "SALES_CONSULTANT",
+    "slug": "lachlan",
+    "aliases": [
+      "Lachlan M",
+      "lachlan",
+      "lachlan m"
+    ]
+  },
+  {
+    "email": "remy@astrasolar.com.au",
+    "name": "Remy",
+    "role": "LEAD_GEN",
+    "slug": "remy",
+    "aliases": [
+      "Remy",
+      "remy"
+    ]
+  },
+  {
+    "email": "stephen@astrasolar.com.au",
+    "name": "Stephen N",
+    "role": "SALES_CONSULTANT",
+    "slug": "stephen",
+    "aliases": [
+      "Stephen N",
+      "stephen",
+      "stephen n"
+    ]
+  },
+  {
+    "email": "support@astrasolar.com.au",
+    "name": "Mattie H",
+    "role": "ADMIN_OFFICER",
+    "slug": "mattie",
+    "aliases": [
+      "Mattie H",
+      "mattie",
+      "mattie h"
+    ]
+  },
+  {
+    "email": "wilson@astrasolar.com.au",
+    "name": "Wilson",
+    "role": "LEAD_GEN",
+    "slug": "wilson",
+    "aliases": [
+      "Wilson",
+      "wilson"
+    ]
+  },
+  {
+    "email": "zane@astrasolar.com.au",
+    "name": "Zane A",
+    "role": "SALES_CONSULTANT",
+    "slug": "zane",
+    "aliases": [
+      "Zane A",
+      "zane",
+      "zane a"
+    ]
+  }
+]

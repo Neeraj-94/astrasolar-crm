@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { titleCase } from "@/lib/utils";
 
 interface LeadRow {
   id: string;
@@ -207,11 +208,11 @@ export function LeadsListTab() {
                     <TD>{l.company}</TD>
                     <TD>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${STAGE_COLORS[l.stage] ?? "bg-muted"}`}>
-                        {l.stage}
+                        {titleCase(l.stage)}
                       </span>
                     </TD>
                     <TD>{l.consultant?.name ?? "—"}</TD>
-                    <TD className="text-muted-foreground">{l.disposition ?? "—"}</TD>
+                    <TD className="text-muted-foreground">{titleCase(l.disposition)}</TD>
                     <TD>
                       {/* INTAKE -> book */}
                       {l.stage === "INTAKE" &&

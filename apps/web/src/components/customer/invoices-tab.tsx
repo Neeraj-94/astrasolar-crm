@@ -4,6 +4,7 @@ import { Receipt } from "lucide-react";
 import { useApi } from "@/lib/api/use-api";
 import { Section, Kpi, KpiRow } from "@/components/leads/shared";
 import { money0, shortDate } from "@/components/dashboards/financials/format";
+import { titleCase } from "@/lib/utils";
 
 interface InvoiceResponse {
   hasSale: boolean;
@@ -55,7 +56,7 @@ export function CustomerInvoicesTab() {
         />
         <Kpi
           label="Status"
-          value={inv.invoiceState}
+          value={titleCase(inv.invoiceState)}
           tone={inv.invoiceState === "PAID" ? "success" : "warning"}
         />
         <Kpi
@@ -76,7 +77,7 @@ export function CustomerInvoicesTab() {
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[inv.invoiceState]}`}
               >
-                {inv.invoiceState}
+                {titleCase(inv.invoiceState)}
               </span>
             }
           />

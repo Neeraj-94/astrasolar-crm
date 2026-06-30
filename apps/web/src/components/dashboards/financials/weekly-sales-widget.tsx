@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useApi } from "@/lib/api/use-api";
 import { Section } from "@/components/leads/shared";
+import { titleCase } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { money0, shortDate } from "./format";
@@ -165,7 +166,7 @@ export function WeeklySalesWidget() {
                               STATUS_VARIANT[r.financeStatus] ?? "secondary"
                             }
                           >
-                            {r.financeStatus.replace("_", " ").toLowerCase()}
+                            {titleCase(r.financeStatus)}
                           </Badge>
                         )}
                       </td>

@@ -10,6 +10,52 @@
  */
 import type { PipelineSale, PipelineStatus } from "./legacy-data";
 
+// financeStatus / preapprovalStatus now use dedicated DB enums (not StageState).
+// These tables convert between the DB enum and the legacy pipeline grid vocab.
+const FINANCE_DB_TO_GRID: Record<string, string> = {
+  APPLIED: "applied",
+  DOCS_SUBMITTED: "finance_docs_submitted",
+  APPROVED: "finance_approved",
+  DECLINED: "declined",
+  WITHDRAWN: "withdrawn",
+  UNDER_REVIEW: "under_review",
+  PENDING_ACCEPTANCE: "pending_acceptance",
+  NOT_APPLIED: "not_applied",
+  AWAITING_DOCS: "awaiting_docs",
+};
+const FINANCE_GRID_TO_DB: Record<string, string> = {
+  applied: "APPLIED",
+  finance_docs_submitted: "DOCS_SUBMITTED",
+  finance_approved: "APPROVED",
+  declined: "DECLINED",
+  withdrawn: "WITHDRAWN",
+  under_review: "UNDER_REVIEW",
+  pending_acceptance: "PENDING_ACCEPTANCE",
+  not_applied: "NOT_APPLIED",
+  awaiting_docs: "AWAITING_DOCS",
+};
+const PREAPPROVAL_DB_TO_GRID: Record<string, string> = {
+  APPROVED: "pre_approval_approved",
+  NEEDS_APPLYING: "needs_applying",
+  SUBMITTED: "submitted",
+  AWAITING_PAYMENT: "awaiting_payment_preapproval",
+  AWAITING_INFO: "awaiting_info",
+  INCOMPLETE_INFORMATION: "incomplete_info",
+  ON_HOLD: "on_hold",
+  CANCELLED: "cancelled",
+};
+const PREAPPROVAL_GRID_TO_DB: Record<string, string> = {
+  needs_applying: "NEEDS_APPLYING",
+  submitted: "SUBMITTED",
+  pre_approval_submitted: "SUBMITTED",
+  pre_approval_approved: "APPROVED",
+  awaiting_payment_preapproval: "AWAITING_PAYMENT",
+  awaiting_info: "AWAITING_INFO",
+  incomplete_info: "INCOMPLETE_INFORMATION",
+  on_hold: "ON_HOLD",
+  cancelled: "CANCELLED",
+};
+
 /**
  * Reverse of the display mapping: turns a pipeline grid status edit (rich
  * legacy vocabulary) into the v2 `SaleStatusDetails` field + 4-value
@@ -19,33 +65,15 @@ import type { PipelineSale, PipelineStatus } from "./legacy-data";
 export function gridStatusToStage(
   field: string,
   value: string,
-): { apiField: string; stage: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "NOT_REQUIRED" } | null {
+): { apiField: string; stage: string | null } | null {
   const v = value || "";
   switch (field) {
     case "financeStatus":
-      return {
-        apiField: "financeStatus",
-        stage:
-          v === "finance_approved"
-            ? "COMPLETED"
-            : v === "not_applied" || v === "declined" || v === "withdrawn"
-              ? "NOT_REQUIRED"
-              : v
-                ? "IN_PROGRESS"
-                : "PENDING",
-      };
+      // financeStatus has its own DB enum — persist the enum value directly.
+      return { apiField: "financeStatus", stage: v ? (FINANCE_GRID_TO_DB[v] ?? null) : null };
     case "adminStatus":
-      return {
-        apiField: "preapprovalStatus",
-        stage:
-          v === "pre_approval_approved"
-            ? "COMPLETED"
-            : v === "cancelled"
-              ? "NOT_REQUIRED"
-              : v === "needs_applying" || !v
-                ? "PENDING"
-                : "IN_PROGRESS",
-      };
+      // preapprovalStatus has its own DB enum — persist the enum value directly.
+      return { apiField: "preapprovalStatus", stage: v ? (PREAPPROVAL_GRID_TO_DB[v] ?? null) : null };
     case "meterChange":
       return {
         apiField: "meterChangeStatus",
@@ -116,8 +144,8 @@ export interface ApiSale {
     leadGen?: { id: string; name: string } | null;
   } | null;
   statusDetails?: {
-    financeStatus?: Stage;
-    preapprovalStatus?: Stage;
+    financeStatus?: string | null; // FinanceStatus enum
+    preapprovalStatus?: string | null; // PreapprovalStatus enum
     meterChangeStatus?: Stage;
     installStatus?: Stage;
     paymentStatus?: Stage;
@@ -146,7 +174,7 @@ export interface ApiSale {
     scheduledAt?: string | null;
   } | null;
   paymentDetails?: { paymentDate?: string | null } | null;
-  finance?: Array<{ id: string }> | null;
+  finance?: Array<{ id: string; lender?: string | null }> | null;
 }
 
 function toYmd(v?: string | null): string | undefined {
@@ -171,18 +199,12 @@ function mapStatus(s: ApiSale): PipelineStatus {
 
   if (s.openSolarId) status.openSolarId = s.openSolarId;
 
-  const finance = pick(sd.financeStatus, {
-    COMPLETED: "finance_approved",
-    IN_PROGRESS: "applied",
-    NOT_REQUIRED: "not_applied",
-  });
+  // financeStatus / preapprovalStatus carry their own DB enums → map straight
+  // onto the legacy grid vocabulary.
+  const finance = sd.financeStatus ? FINANCE_DB_TO_GRID[sd.financeStatus] : undefined;
   if (finance) status.financeStatus = finance;
 
-  const admin = pick(sd.preapprovalStatus, {
-    COMPLETED: "pre_approval_approved",
-    IN_PROGRESS: "submitted",
-    PENDING: "needs_applying",
-  });
+  const admin = sd.preapprovalStatus ? PREAPPROVAL_DB_TO_GRID[sd.preapprovalStatus] : undefined;
   if (admin) status.adminStatus = admin;
 
   const meter = pick(sd.meterChangeStatus, {
@@ -197,7 +219,7 @@ function mapStatus(s: ApiSale): PipelineStatus {
   if (inst && inst.status && ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "ON_HOLD"].includes(inst.status)) {
     status.installation = "installation_booked";
     status.installAdminStatus = inst.status === "ON_HOLD" ? "on_hold" : "install_details_checked";
-  } else if (sd.preapprovalStatus === "COMPLETED") {
+  } else if (sd.preapprovalStatus === "APPROVED") {
     status.installation = "ready_to_book";
   }
 
@@ -230,7 +252,10 @@ export function mapApiSaleToPipeline(s: ApiSale): PipelineSale {
   const isDC = (s.company || "").toUpperCase() === "DC";
   const sizeKw = sd.systemSize != null && sd.systemSize !== "" ? `${Number(sd.systemSize)}kW` : "";
   const battery = sd.batteryModel || sd.batteryBrand || "";
-  const hasFinance = (s.finance?.length || 0) > 0;
+  const financeLenders = (s.finance ?? [])
+    .map((f) => (f.lender || "").trim())
+    .filter(Boolean);
+  const hasFinance = financeLenders.length > 0;
 
   return {
     key: s.id,
@@ -272,6 +297,7 @@ export function mapApiSaleToPipeline(s: ApiSale): PipelineSale {
     totalCommission: s.totalCommission != null ? Number(s.totalCommission) : undefined,
     saleDate: toYmd(s.saleDate),
     energyProvider: s.energyProvider || undefined,
+    financeLenders,
     nmi: sd.nmi || undefined,
     referral: s.referral || undefined,
     installNotes: s.installNotes || undefined,

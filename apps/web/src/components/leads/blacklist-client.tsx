@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { BlacklistApi } from "@/lib/api/endpoints";
 import { PageHeader } from "./shared";
+import { titleCase } from "@/lib/utils";
 
 type Banner = { kind: "success" | "error" | "info"; text: string } | null;
 
@@ -382,7 +383,7 @@ export function BlacklistClient({
                       </td>
                       <td className={tdCls + " whitespace-nowrap"}>
                         <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[0.6rem] font-semibold text-destructive">
-                          {r.source}
+                          {titleCase(r.source)}
                         </span>
                       </td>
                       <td className={tdCls}>{name}</td>

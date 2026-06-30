@@ -8,6 +8,8 @@ import {
 } from 'class-validator';
 import {
   Company,
+  FinanceStatus,
+  PreapprovalStatus,
   SaleStatus,
   SaleType,
   StageState,
@@ -61,8 +63,8 @@ export class UpdatePaymentDetailsDto {
 }
 
 export class UpdateStatusDetailsDto {
-  @IsOptional() @IsEnum(StageState) financeStatus?: StageState;
-  @IsOptional() @IsEnum(StageState) preapprovalStatus?: StageState;
+  @IsOptional() @IsEnum(FinanceStatus) financeStatus?: FinanceStatus;
+  @IsOptional() @IsEnum(PreapprovalStatus) preapprovalStatus?: PreapprovalStatus;
   @IsOptional() @IsEnum(StageState) meterChangeStatus?: StageState;
   @IsOptional() @IsEnum(StageState) installStatus?: StageState;
   @IsOptional() @IsEnum(StageState) paymentStatus?: StageState;

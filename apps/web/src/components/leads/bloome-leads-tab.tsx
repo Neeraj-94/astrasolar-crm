@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { titleCase } from "@/lib/utils";
 import {
   Database,
   PhoneCall,
@@ -1335,7 +1336,7 @@ export function BloomeLeadsTab() {
                         l.outcome ? (
                           <span className="inline-flex items-center gap-1.5">
                             <StatusBadge tone={outcomeTone(l.outcome)} dot>
-                              {l.outcome}
+                              {titleCase(l.outcome)}
                             </StatusBadge>
                           </span>
                         ) : (

@@ -3,6 +3,7 @@
 import { useApi } from "@/lib/api/use-api";
 import { Section, Kpi, KpiRow } from "@/components/leads/shared";
 import { ProgressRow } from "@/components/dashboards/charts";
+import { titleCase } from "@/lib/utils";
 
 interface OperationsResponse {
   saleStatus: Record<string, number>;
@@ -68,7 +69,7 @@ export function OperationsTab() {
               {Object.entries(d.saleStatus).map(([k, v]) => (
                 <ProgressRow
                   key={k}
-                  label={k.replace(/_/g, " ")}
+                  label={titleCase(k)}
                   value={v}
                   total={totalSales}
                   tone={k === "COMPLETED" ? "success" : k === "CANCELLED" ? "danger" : "primary"}
@@ -88,7 +89,7 @@ export function OperationsTab() {
               {Object.entries(d.installStatus).map(([k, v]) => (
                 <ProgressRow
                   key={k}
-                  label={k.replace(/_/g, " ")}
+                  label={titleCase(k)}
                   value={v}
                   total={totalInstalls}
                   tone={k === "COMPLETED" ? "success" : "info"}

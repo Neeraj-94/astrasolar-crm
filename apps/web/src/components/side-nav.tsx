@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { SunMedium, PanelLeftClose, PanelLeftOpen, Plug } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardIcon } from "@/components/dashboard-icon";
 
@@ -71,9 +72,13 @@ export function SideNav({
             collapsed && "justify-center",
           )}
         >
-          <div className="h-8 w-8 shrink-0 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-            <SunMedium className="h-4 w-4" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="AstraSolar"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0"
+          />
           {!collapsed && (
             <span className="font-semibold tracking-tight truncate">
               AstraSolar

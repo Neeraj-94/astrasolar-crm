@@ -360,6 +360,8 @@ model Sale {
   soldPrice     Decimal? @db.Decimal(12, 2)
   totalRRP      Decimal? @db.Decimal(12, 2)
   totalCommission Decimal? @db.Decimal(12, 2)
+  difference    Decimal? @db.Decimal(12, 2)          // soldPrice - totalRRP (oversell/undersell)
+  totalProfit   Decimal? @db.Decimal(12, 2)          // sum of solar + battery + extras profit
 
   // Dates
   saleDate      DateTime? @db.Date
@@ -472,8 +474,8 @@ model SaleStatusDetails {
   saleId              String     @unique
   sale                Sale       @relation(fields: [saleId], references: [id])
 
-  financeStatus       StageState @default(PENDING)
-  preapprovalStatus   StageState @default(PENDING)
+  financeStatus       FinanceStatus?                  // dedicated finance lifecycle (nullable until known)
+  preapprovalStatus   PreapprovalStatus?              // dedicated pre-approval lifecycle (nullable until known)
   meterChangeStatus   StageState @default(PENDING)
   installStatus       StageState @default(PENDING)
   paymentStatus       StageState @default(PENDING)
@@ -488,6 +490,33 @@ enum StageState {
   IN_PROGRESS
   COMPLETED
   NOT_REQUIRED
+}
+
+// Pre-approval lifecycle (distinct from the generic StageState used by the other
+// status-detail fields). Sourced from the legacy salesPipeline `adminStatus`.
+enum PreapprovalStatus {
+  APPROVED
+  NEEDS_APPLYING
+  SUBMITTED
+  AWAITING_PAYMENT
+  AWAITING_INFO
+  INCOMPLETE_INFORMATION
+  ON_HOLD
+  CANCELLED
+}
+
+// Finance lifecycle (distinct from StageState). Sourced from the legacy
+// salesPipeline `financeStatus`.
+enum FinanceStatus {
+  APPLIED
+  DOCS_SUBMITTED
+  APPROVED
+  DECLINED
+  WITHDRAWN
+  UNDER_REVIEW
+  PENDING_ACCEPTANCE
+  NOT_APPLIED
+  AWAITING_DOCS
 }
 
 // ----- Repeating line items -------------------------------------------------

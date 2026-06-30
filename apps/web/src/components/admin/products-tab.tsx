@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { titleCase } from "@/lib/utils";
 
 const AU_STATES = ["ACT", "NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT"];
 
@@ -567,7 +568,7 @@ function CatalogueSection({ config }: { config: CatalogueConfig }) {
                               : "bg-zinc-100 text-zinc-600"
                           }`}
                         >
-                          {p.status}
+                          {titleCase(p.status)}
                         </span>
                       </TD>
                     )}

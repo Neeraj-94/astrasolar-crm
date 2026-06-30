@@ -21,7 +21,11 @@ function currentTheme(): "light" | "dark" {
 function applyTheme(theme: "light" | "dark") {
   const root = document.documentElement;
   root.classList.add("theme-transition");
-  root.classList.toggle("dark", theme === "dark");
+  // Manage BOTH classes: the light palette lives under `.light` and the dark
+  // palette under `:root`/`.dark`. Toggling only `.dark` would leave light mode
+  // with no theme class, falling back to the dark `:root` values.
+  root.classList.remove("light", "dark");
+  root.classList.add(theme);
   try {
     window.localStorage.setItem(STORAGE_KEY, theme);
   } catch {

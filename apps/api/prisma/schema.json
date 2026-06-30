@@ -1,0 +1,5689 @@
+{
+  "source": "apps/api/prisma/schema.prisma",
+  "counts": {
+    "models": 60,
+    "enums": 22
+  },
+  "enums": [
+    {
+      "name": "LeadSource",
+      "values": [
+        "BLOOM_ASTRA",
+        "REFERRAL",
+        "INBOUND",
+        "WEBSITE",
+        "BRIGHTE"
+      ]
+    },
+    {
+      "name": "Company",
+      "values": [
+        "ASTRA",
+        "DC"
+      ]
+    },
+    {
+      "name": "LeadStage",
+      "values": [
+        "INTAKE",
+        "BOOKED",
+        "CONVERTED",
+        "CLOSED"
+      ]
+    },
+    {
+      "name": "LeadOutcome",
+      "values": [
+        "APPOINTMENT",
+        "HOT_CALL_BACK",
+        "NO_ANSWER",
+        "NOT_INTERESTED",
+        "DNQ",
+        "ALREADY_HAS_SOLAR",
+        "WRONG_NUMBER",
+        "RESCHEDULE"
+      ]
+    },
+    {
+      "name": "SalesDisposition",
+      "values": [
+        "SOLD",
+        "PRES_PROP_CREATED",
+        "CALL_BACK",
+        "RESCHEDULE",
+        "BEEN_RESCHEDULED",
+        "NO_ANSWER",
+        "NOT_INTERESTED",
+        "DNQ",
+        "CANCELLED"
+      ]
+    },
+    {
+      "name": "SaleStatus",
+      "values": [
+        "NEGOTIATION",
+        "CONTRACT",
+        "ON_HOLD",
+        "COMPLETED",
+        "CANCELLED"
+      ]
+    },
+    {
+      "name": "SaleType",
+      "values": [
+        "SOLAR_ONLY",
+        "BATTERY_ONLY",
+        "SOLAR_BATTERY"
+      ]
+    },
+    {
+      "name": "SystemType",
+      "values": [
+        "NEW",
+        "REPLACEMENT",
+        "ADDITIONAL",
+        "ADDITIONAL_REPLACEMENT"
+      ]
+    },
+    {
+      "name": "StageState",
+      "values": [
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "NOT_REQUIRED"
+      ]
+    },
+    {
+      "name": "InstallationStatus",
+      "values": [
+        "SCHEDULED",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "ON_HOLD",
+        "CANCELLED"
+      ]
+    },
+    {
+      "name": "AvailabilityStatus",
+      "values": [
+        "AVAILABLE",
+        "UNAVAILABLE",
+        "HOLIDAY"
+      ]
+    },
+    {
+      "name": "TaskPriority",
+      "values": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "name": "RrpRequestStatus",
+      "values": [
+        "PENDING",
+        "COMPLETED",
+        "DISMISSED"
+      ]
+    },
+    {
+      "name": "SolarProductStatus",
+      "values": [
+        "ACTIVE",
+        "DISCONTINUED",
+        "ARCHIVED"
+      ]
+    },
+    {
+      "name": "InverterStatus",
+      "values": [
+        "ACTIVE",
+        "DISCONTINUED",
+        "ARCHIVED"
+      ]
+    },
+    {
+      "name": "BatteryStatus",
+      "values": [
+        "ACTIVE",
+        "DISCONTINUED",
+        "ARCHIVED"
+      ]
+    },
+    {
+      "name": "BatteryPriceContext",
+      "values": [
+        "BATTERY_ONLY",
+        "SOLAR_BATTERY"
+      ]
+    },
+    {
+      "name": "ChecklistStatus",
+      "values": [
+        "DRAFT",
+        "COMPLETED"
+      ]
+    },
+    {
+      "name": "SmsDirection",
+      "values": [
+        "OUTBOUND",
+        "INBOUND"
+      ]
+    },
+    {
+      "name": "SmsStatus",
+      "values": [
+        "QUEUED",
+        "SENT",
+        "DELIVERED",
+        "FAILED",
+        "RECEIVED"
+      ]
+    },
+    {
+      "name": "CallDirection",
+      "values": [
+        "INBOUND",
+        "OUTBOUND"
+      ]
+    },
+    {
+      "name": "CallStatus",
+      "values": [
+        "INITIAL",
+        "RINGING",
+        "ANSWERED",
+        "ENDED",
+        "MISSED",
+        "VOICEMAIL",
+        "FAILED"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "name": "User",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "password",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "isActive",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(true)"
+        },
+        {
+          "name": "region",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "aliases",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "avatarUrl",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phones",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "teamId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "team",
+          "type": "Team",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TeamMembers\", fields: [teamId], references: [id])"
+        },
+        {
+          "name": "managedTeam",
+          "type": "Team",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TeamManager\")"
+        },
+        {
+          "name": "refreshToken",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "welcomePassword",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "welcomeEmailSentAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "roles",
+          "type": "UserRole",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "leadGenLeads",
+          "type": "Lead",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"LeadGen\")"
+        },
+        {
+          "name": "consultantLeads",
+          "type": "Lead",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"LeadConsultant\")"
+        },
+        {
+          "name": "consultations",
+          "type": "Booking",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"Consultant\")"
+        },
+        {
+          "name": "bookingsMade",
+          "type": "Booking",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"BookedBy\")"
+        },
+        {
+          "name": "ownedSales",
+          "type": "Sale",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"SaleOwner\")"
+        },
+        {
+          "name": "customer",
+          "type": "Customer",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "handledIssues",
+          "type": "PostInstallIssue",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"IssueHandler\")"
+        },
+        {
+          "name": "activities",
+          "type": "Activity",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "installs",
+          "type": "Installation",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"Installer\")"
+        },
+        {
+          "name": "availabilitySlots",
+          "type": "AvailabilitySlot",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"ConsultantAvailability\")"
+        },
+        {
+          "name": "availabilitySubmissions",
+          "type": "AvailabilitySubmission",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"ConsultantAvailabilitySubmissions\")"
+        },
+        {
+          "name": "scheduleAppointments",
+          "type": "Appointment",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"ConsultantScheduleAppointments\")"
+        },
+        {
+          "name": "taskAssignments",
+          "type": "TaskCard",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TaskAssignee\")"
+        },
+        {
+          "name": "tasksCreated",
+          "type": "TaskCard",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TaskCreator\")"
+        },
+        {
+          "name": "taskNudgesSent",
+          "type": "TaskCard",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TaskNudger\")"
+        },
+        {
+          "name": "taskComments",
+          "type": "TaskComment",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TaskCommentAuthor\")"
+        },
+        {
+          "name": "notifications",
+          "type": "Notification",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"UserNotifications\")"
+        },
+        {
+          "name": "checklistsCreated",
+          "type": "LeadChecklist",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"ChecklistCreatedBy\")"
+        },
+        {
+          "name": "consultantContact",
+          "type": "ConsultantContact",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"ConsultantContact\")"
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([teamId])"
+      ]
+    },
+    {
+      "name": "ConsultantContact",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"ConsultantContact\", fields: [consultantId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "contactPhoneAstra",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "senderIdAstra",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "contactPhoneDc",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "senderIdDc",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedByName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([consultantId])"
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "managerId",
+          "type": "String",
+          "optional": true,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "manager",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TeamManager\", fields: [managerId], references: [id])"
+        },
+        {
+          "name": "members",
+          "type": "User",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TeamMembers\")"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ]
+    },
+    {
+      "name": "Role",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "isSystem",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "users",
+          "type": "UserRole",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "permissions",
+          "type": "RolePermission",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "Permission",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "key",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "roles",
+          "type": "RolePermission",
+          "optional": false,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "UserRole",
+      "fields": [
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "user",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [userId], references: [id])"
+        },
+        {
+          "name": "roleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "role",
+          "type": "Role",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [roleId], references: [id])"
+        },
+        {
+          "name": "assignedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@id([userId, roleId])",
+        "@@index([roleId])"
+      ]
+    },
+    {
+      "name": "RolePermission",
+      "fields": [
+        {
+          "name": "roleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "role",
+          "type": "Role",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [roleId], references: [id])"
+        },
+        {
+          "name": "permissionId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "permission",
+          "type": "Permission",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [permissionId], references: [id])"
+        }
+      ],
+      "blockAttributes": [
+        "@@id([roleId, permissionId])",
+        "@@index([permissionId])"
+      ]
+    },
+    {
+      "name": "Lead",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "timestamp",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "surName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "phone",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "address",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "postCode",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "billSpend",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "code",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "leadGenId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "leadGen",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"LeadGen\", fields: [leadGenId], references: [id])"
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"LeadConsultant\", fields: [consultantId], references: [id])"
+        },
+        {
+          "name": "source",
+          "type": "LeadSource",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(BLOOM_ASTRA)"
+        },
+        {
+          "name": "outcome",
+          "type": "LeadOutcome",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "disposition",
+          "type": "SalesDisposition",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "dials",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "leadGenNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "consultantNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "company",
+          "type": "Company",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(ASTRA)"
+        },
+        {
+          "name": "bookingDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "bookingTime",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "stage",
+          "type": "LeadStage",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(INTAKE)"
+        },
+        {
+          "name": "booking",
+          "type": "Booking",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "convertedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "checklist",
+          "type": "LeadChecklist",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "stateLog",
+          "type": "LeadStateLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "activities",
+          "type": "Activity",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "scheduleAppointments",
+          "type": "Appointment",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"LeadScheduleAppointments\")"
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        },
+        {
+          "name": "blacklisted",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "blacklistedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "blacklistEntryId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        }
+      ],
+      "blockAttributes": [
+        "@@index([stage])",
+        "@@index([leadGenId])",
+        "@@index([consultantId])",
+        "@@index([outcome])",
+        "@@index([disposition])",
+        "@@index([source])",
+        "@@index([company])",
+        "@@index([phone])",
+        "@@index([surName])"
+      ]
+    },
+    {
+      "name": "Booking",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [leadId], references: [id])"
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"Consultant\", fields: [consultantId], references: [id])"
+        },
+        {
+          "name": "bookedById",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "bookedBy",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"BookedBy\", fields: [bookedById], references: [id])"
+        },
+        {
+          "name": "scheduledAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "rescheduledFrom",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([consultantId])",
+        "@@index([scheduledAt])"
+      ]
+    },
+    {
+      "name": "Sale",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleRef",
+          "type": "String",
+          "optional": true,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "openSolarId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [leadId], references: [id])"
+        },
+        {
+          "name": "ownerId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "owner",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"SaleOwner\", fields: [ownerId], references: [id])"
+        },
+        {
+          "name": "customer",
+          "type": "Customer",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "company",
+          "type": "Company",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "SaleStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(NEGOTIATION)"
+        },
+        {
+          "name": "saleType",
+          "type": "SaleType",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "systemType",
+          "type": "SystemType",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "energyProvider",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "referral",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "soldPrice",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "totalRRP",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "totalCommission",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "saleDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "closedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "installNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "systemDetails",
+          "type": "SystemDetails",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "statusDetails",
+          "type": "SaleStatusDetails",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "installation",
+          "type": "Installation",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "paymentDetails",
+          "type": "PaymentDetails",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "commissioningDetails",
+          "type": "CommissioningDetails",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "extras",
+          "type": "SaleExtra",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "finance",
+          "type": "SaleFinance",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "postInstall",
+          "type": "PostInstallIssue",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "stageHistory",
+          "type": "SaleStageHistory",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "salesLog",
+          "type": "SaleLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "rrpRequests",
+          "type": "RrpRequest",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([ownerId])",
+        "@@index([saleDate])",
+        "@@index([company])"
+      ]
+    },
+    {
+      "name": "SystemDetails",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "batteryBrand",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batteryModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batterySTC",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batteryModules",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batterySize",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 2)"
+        },
+        {
+          "name": "batteryRRP",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "batteryCommission",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "panelModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "panelWatt",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "numPanels",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "systemSize",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 2)"
+        },
+        {
+          "name": "solarRRP",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "solarSTC",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "solarCommission",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "solarProfit",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "batteryProfit",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "inverterModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "inverterType",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "optimisers",
+          "type": "Boolean",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "tilts",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "roofType",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "storeys",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "switchboard",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "nmi",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phase",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "backup",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "hotWater",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "aircon",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "SaleStatusDetails",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "financeStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "preapprovalStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "meterChangeStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "installStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "paymentStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "commissioningStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "cesStatus",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "SaleExtra",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "itemName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "itemRef",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "itemPrice",
+          "type": "Decimal",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "profit",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([saleId])"
+      ]
+    },
+    {
+      "name": "SaleFinance",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "lender",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "amount",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "termMonths",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "StageState",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([saleId])"
+      ]
+    },
+    {
+      "name": "PaymentDetails",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "paymentNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "paymentDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "CommissioningDetails",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "commissioningNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "commissionDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "PostInstallIssue",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "issueLogDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "issueNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "solution",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "handledById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "handledBy",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"IssueHandler\", fields: [handledById], references: [id])"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([saleId])"
+      ]
+    },
+    {
+      "name": "SaleLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "section",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([saleId])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "SaleStageHistory",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "fromStage",
+          "type": "SaleStatus",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "toStage",
+          "type": "SaleStatus",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([saleId])"
+      ]
+    },
+    {
+      "name": "Installation",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "installerId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "installer",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"Installer\", fields: [installerId], references: [id])"
+        },
+        {
+          "name": "status",
+          "type": "InstallationStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(SCHEDULED)"
+        },
+        {
+          "name": "installDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "scheduledAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "completedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "postInstallNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([installerId])",
+        "@@index([status])"
+      ]
+    },
+    {
+      "name": "Customer",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "user",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [userId], references: [id])"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ]
+    },
+    {
+      "name": "Activity",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "user",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [userId], references: [id])"
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(fields: [leadId], references: [id])"
+        },
+        {
+          "name": "content",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([leadId])",
+        "@@index([userId])"
+      ]
+    },
+    {
+      "name": "LeadStateLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [leadId], references: [id])"
+        },
+        {
+          "name": "stage",
+          "type": "LeadStage",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "leadGenId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "outcome",
+          "type": "LeadOutcome",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "disposition",
+          "type": "SalesDisposition",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([leadId])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "AuditLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "action",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "entity",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "source",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(\"app\")"
+        },
+        {
+          "name": "metadata",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([entity, entityId])",
+        "@@index([userId])",
+        "@@index([createdAt])"
+      ]
+    },
+    {
+      "name": "Document",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "entity",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "key",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "fileName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "contentType",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sizeBytes",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "uploadedById",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([entity, entityId])",
+        "@@index([uploadedById])"
+      ]
+    },
+    {
+      "name": "BloomeLead",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "region",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sourceTab",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "rowNum",
+          "type": "Int",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "wc",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "timestamp",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lastName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "mobile",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "address",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "postcode",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "suburb",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "billSpend",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "code",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "agent",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "dials",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "outcome",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "company",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lastCalled",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "appDate",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "appTime",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "existingSystem",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "blacklisted",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "blacklistedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "blacklistEntryId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([sourceTab, rowNum])",
+        "@@index([region])",
+        "@@index([outcome])",
+        "@@index([agent])",
+        "@@index([company])",
+        "@@index([mobile])",
+        "@@index([timestamp])"
+      ]
+    },
+    {
+      "name": "AvailabilitySlot",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"ConsultantAvailability\", fields: [consultantId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "date",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "hour",
+          "type": "Int",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "AvailabilityStatus",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([consultantId, date, hour])",
+        "@@index([date])",
+        "@@index([consultantId, date])"
+      ]
+    },
+    {
+      "name": "AvailabilitySubmission",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"ConsultantAvailabilitySubmissions\", fields: [consultantId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "consultantName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "weekStart",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "weekEnd",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "holidayDays",
+          "type": "String",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "slotsCount",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "submitted",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(true)"
+        },
+        {
+          "name": "submittedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        },
+        {
+          "name": "updatedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedByName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([consultantId, weekStart])",
+        "@@index([weekStart])",
+        "@@index([consultantId])"
+      ]
+    },
+    {
+      "name": "Appointment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"LeadScheduleAppointments\", fields: [leadId], references: [id], onDelete: SetNull)"
+        },
+        {
+          "name": "bloomeLeadId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "consultantId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "consultant",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"ConsultantScheduleAppointments\", fields: [consultantId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "date",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "hour",
+          "type": "Int",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "minute",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "durationMinutes",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(60)"
+        },
+        {
+          "name": "disposition",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "bookedByUserId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "bookedByName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "source",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "company",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "bills",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "customerName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lastName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phone",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "address",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "suburb",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "postcode",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "originalDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "originalHour",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "originalMinute",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "rescheduleReason",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "rescheduledAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "isAdditional",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "cancelPending",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "cancelPendingAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "blacklisted",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "blacklistedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "blacklistEntryId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([date])",
+        "@@index([consultantId, date])",
+        "@@index([leadId])",
+        "@@index([bloomeLeadId])"
+      ]
+    },
+    {
+      "name": "BlacklistEntry",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "lastName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phone",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "address",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "addedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "addedByName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        },
+        {
+          "name": "removals",
+          "type": "BlacklistRemovalLog",
+          "optional": false,
+          "list": true
+        }
+      ],
+      "blockAttributes": [
+        "@@index([phone])",
+        "@@index([email])"
+      ]
+    },
+    {
+      "name": "BlacklistRemovalLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "detectedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "removedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "source",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "matchedFirstName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "matchedLastName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "matchedPhone",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "matchedEmail",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "matchedAddress",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "matchedOn",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "entryId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "entry",
+          "type": "BlacklistEntry",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(fields: [entryId], references: [id], onDelete: SetNull)"
+        },
+        {
+          "name": "removedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "removedByName",
+          "type": "String",
+          "optional": true,
+          "list": false
+        }
+      ],
+      "blockAttributes": [
+        "@@index([detectedAt])",
+        "@@index([entryId])"
+      ]
+    },
+    {
+      "name": "TaskList",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "dashboardKey",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "position",
+          "type": "Int",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "tasks",
+          "type": "TaskCard",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([dashboardKey, position])"
+      ]
+    },
+    {
+      "name": "TaskCard",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "listId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "list",
+          "type": "TaskList",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [listId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "priority",
+          "type": "TaskPriority",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(MEDIUM)"
+        },
+        {
+          "name": "dueDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "position",
+          "type": "Int",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "completed",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "completedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "deadline",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "location",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "labels",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "reminders",
+          "type": "DateTime",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "parentId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "parent",
+          "type": "TaskCard",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TaskSubtasks\", fields: [parentId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "children",
+          "type": "TaskCard",
+          "optional": false,
+          "list": true,
+          "attributes": "@relation(\"TaskSubtasks\")"
+        },
+        {
+          "name": "comments",
+          "type": "TaskComment",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "assigneeId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "assignee",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TaskAssignee\", fields: [assigneeId], references: [id])"
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"TaskCreator\", fields: [createdById], references: [id])"
+        },
+        {
+          "name": "nudgedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "nudgedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "nudgedBy",
+          "type": "User",
+          "optional": true,
+          "list": false,
+          "attributes": "@relation(\"TaskNudger\", fields: [nudgedById], references: [id])"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([listId, position])",
+        "@@index([assigneeId])",
+        "@@index([completed])",
+        "@@index([parentId])"
+      ]
+    },
+    {
+      "name": "TaskComment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "cardId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "card",
+          "type": "TaskCard",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [cardId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "authorId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "author",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"TaskCommentAuthor\", fields: [authorId], references: [id])"
+        },
+        {
+          "name": "body",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([cardId])"
+      ]
+    },
+    {
+      "name": "OperatingCost",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "weekStart",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "amount",
+          "type": "Decimal",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([weekStart])"
+      ]
+    },
+    {
+      "name": "RrpRequest",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "saleId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "sale",
+          "type": "Sale",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [saleId], references: [id])"
+        },
+        {
+          "name": "status",
+          "type": "RrpRequestStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(PENDING)"
+        },
+        {
+          "name": "items",
+          "type": "Json",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "requestedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "completedById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "completedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([saleId])"
+      ]
+    },
+    {
+      "name": "Notification",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "user",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"UserNotifications\", fields: [userId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "body",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "entityType",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "data",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "actorId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "readAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([userId, readAt])",
+        "@@index([userId, createdAt])"
+      ]
+    },
+    {
+      "name": "SolarProduct",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "brand",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "panelModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "panelWatt",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "systemSize",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 3)"
+        },
+        {
+          "name": "solarStc",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "numOfPanels",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "states",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "status",
+          "type": "SolarProductStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(ACTIVE)"
+        },
+        {
+          "name": "solarRrp",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "solarCommission",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "profit",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "logs",
+          "type": "SolarProductLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([brand])",
+        "@@index([effectiveDate])"
+      ]
+    },
+    {
+      "name": "SolarProductLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "product",
+          "type": "SolarProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [productId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([productId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "InverterProduct",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "brand",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "inverterModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phase",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "systemSize",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 3)"
+        },
+        {
+          "name": "maxPVArray",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 3)"
+        },
+        {
+          "name": "mppt",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "strings",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "states",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "status",
+          "type": "InverterStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(ACTIVE)"
+        },
+        {
+          "name": "logs",
+          "type": "InverterProductLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "compatibleBatteries",
+          "type": "BatteryInverterCompat",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([type])",
+        "@@index([phase])",
+        "@@index([brand])"
+      ]
+    },
+    {
+      "name": "InverterProductLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "product",
+          "type": "InverterProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [productId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([productId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "ExtraProduct",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "itemName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "category",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "unit",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "unitPrice",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "logs",
+          "type": "ExtraProductLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "ExtraProductLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "product",
+          "type": "ExtraProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [productId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([productId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "BatteryProduct",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productName",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "brand",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batteryModel",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batterySize",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(10, 2)"
+        },
+        {
+          "name": "modules",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "batteryStc",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "phase",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "states",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "status",
+          "type": "BatteryStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(ACTIVE)"
+        },
+        {
+          "name": "grossPrice",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "batteryCommission",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "profit",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "logs",
+          "type": "BatteryProductLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "compatibleInverters",
+          "type": "BatteryInverterCompat",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "contextPrices",
+          "type": "BatteryContextPrice",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([brand])",
+        "@@index([effectiveDate])"
+      ]
+    },
+    {
+      "name": "BatteryProductLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "productId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "product",
+          "type": "BatteryProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [productId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([productId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "BatteryInverterCompat",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "inverterId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "inverter",
+          "type": "InverterProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [inverterId], references: [id])"
+        },
+        {
+          "name": "batteryId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "battery",
+          "type": "BatteryProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [batteryId], references: [id])"
+        },
+        {
+          "name": "isActive",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(true)"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "comboPrices",
+          "type": "BatteryComboContextPrice",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([inverterId, batteryId])",
+        "@@index([inverterId])",
+        "@@index([batteryId])"
+      ]
+    },
+    {
+      "name": "BatteryContextPrice",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "batteryId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "battery",
+          "type": "BatteryProduct",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [batteryId], references: [id])"
+        },
+        {
+          "name": "context",
+          "type": "BatteryPriceContext",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "batteryRrp",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "logs",
+          "type": "BatteryContextPriceLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([batteryId, context])",
+        "@@index([batteryId])"
+      ]
+    },
+    {
+      "name": "BatteryContextPriceLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "contextPriceId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "contextPrice",
+          "type": "BatteryContextPrice",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [contextPriceId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([contextPriceId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "BatteryComboContextPrice",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "compatId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "compat",
+          "type": "BatteryInverterCompat",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [compatId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "context",
+          "type": "BatteryPriceContext",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "grossPrice",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "batteryRrp",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "logs",
+          "type": "BatteryComboContextPriceLog",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@unique([compatId, context])",
+        "@@index([compatId])"
+      ]
+    },
+    {
+      "name": "BatteryComboContextPriceLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "comboPriceId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "comboPrice",
+          "type": "BatteryComboContextPrice",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [comboPriceId], references: [id])"
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "oldValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "newValue",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "effectiveDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@db.Date"
+        },
+        {
+          "name": "changedBy",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "changedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([comboPriceId])",
+        "@@index([effectiveDate])",
+        "@@index([changedAt])"
+      ]
+    },
+    {
+      "name": "NovaConversation",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "archived",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(false)"
+        },
+        {
+          "name": "messages",
+          "type": "NovaMessage",
+          "optional": false,
+          "list": true
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([userId])",
+        "@@index([updatedAt])"
+      ]
+    },
+    {
+      "name": "NovaMessage",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "conversationId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "conversation",
+          "type": "NovaConversation",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [conversationId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "role",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "content",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "toolCalls",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "model",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "inputTokens",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "outputTokens",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([conversationId])"
+      ]
+    },
+    {
+      "name": "NovaKnowledgeEntry",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "category",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "question",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "answer",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "tags",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "authority",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "source",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sourceDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(\"active\")"
+        },
+        {
+          "name": "createdBy",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([category])"
+      ]
+    },
+    {
+      "name": "NovaMemory",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "category",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "fact",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "supersedes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "active",
+          "type": "Boolean",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(true)"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([category])",
+        "@@index([active])"
+      ]
+    },
+    {
+      "name": "NovaUsageLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "userId",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "model",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "inputTokens",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "outputTokens",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "toolCalls",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(0)"
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "detail",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([userId])",
+        "@@index([createdAt])"
+      ]
+    },
+    {
+      "name": "NovaSetting",
+      "fields": [
+        {
+          "name": "key",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id"
+        },
+        {
+          "name": "value",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "updatedBy",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "IntegrationSetting",
+      "fields": [
+        {
+          "name": "key",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id"
+        },
+        {
+          "name": "value",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "updatedBy",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ]
+    },
+    {
+      "name": "LeadChecklist",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "lead",
+          "type": "Lead",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(fields: [leadId], references: [id], onDelete: Cascade)"
+        },
+        {
+          "name": "status",
+          "type": "ChecklistStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(DRAFT)"
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "nmi",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "roofType",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "storeys",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "orientation",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "shadingNotes",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "phase",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "switchboard",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "spendAmount",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "spendPeriod",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "usageSplit",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "drivers",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "budgetPosture",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "category",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "priorSystem",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "preferredBrands",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "excludedBrands",
+          "type": "String",
+          "optional": false,
+          "list": true,
+          "attributes": "@default([])"
+        },
+        {
+          "name": "batteryPref",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "evChargerPref",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "budgetCeiling",
+          "type": "Decimal",
+          "optional": true,
+          "list": false,
+          "attributes": "@db.Decimal(12, 2)"
+        },
+        {
+          "name": "result",
+          "type": "Json",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "recommendedOptionId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "selectedOptionId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "generatedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdById",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "attributes": "@relation(\"ChecklistCreatedBy\", fields: [createdById], references: [id])"
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([status])",
+        "@@index([createdById])"
+      ]
+    },
+    {
+      "name": "SmsMessage",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "direction",
+          "type": "SmsDirection",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(OUTBOUND)"
+        },
+        {
+          "name": "status",
+          "type": "SmsStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(QUEUED)"
+        },
+        {
+          "name": "toNumber",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "fromNumber",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "body",
+          "type": "String",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sentById",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "brand",
+          "type": "Company",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "senderId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "providerMessageId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "messagePrice",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "errorCode",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "errorText",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "segments",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "sentAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "deliveredAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([leadId])",
+        "@@index([sentById])",
+        "@@index([status])",
+        "@@index([providerMessageId])",
+        "@@index([toNumber])"
+      ]
+    },
+    {
+      "name": "CallLog",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@id @default(uuid())"
+        },
+        {
+          "name": "direction",
+          "type": "CallDirection",
+          "optional": false,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "CallStatus",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(INITIAL)"
+        },
+        {
+          "name": "fromNumber",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "toNumber",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "leadId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "agentId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "providerCallId",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "attributes": "@unique"
+        },
+        {
+          "name": "aircallUserEmail",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "aircallNumberId",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "durationSeconds",
+          "type": "Int",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "recordingUrl",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "voicemailUrl",
+          "type": "String",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "startedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "answeredAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "endedAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@default(now())"
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "attributes": "@updatedAt"
+        }
+      ],
+      "blockAttributes": [
+        "@@index([leadId])",
+        "@@index([agentId])",
+        "@@index([status])",
+        "@@index([direction])"
+      ]
+    }
+  ]
+}

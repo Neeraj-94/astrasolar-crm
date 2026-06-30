@@ -2,6 +2,7 @@
 
 import { useApi } from "@/lib/api/use-api";
 import { useRowReorder } from "@/lib/api/use-reorder";
+import { titleCase } from "@/lib/utils";
 import {
   DataTable,
   THead,
@@ -79,7 +80,7 @@ export function AdminAuditLogTab() {
                     {r.entityId.slice(0, 8)}
                   </span>
                 </TD>
-                <TD className="text-muted-foreground">{r.source}</TD>
+                <TD className="text-muted-foreground">{titleCase(r.source)}</TD>
               </TR>
             ))}
           </TBody>

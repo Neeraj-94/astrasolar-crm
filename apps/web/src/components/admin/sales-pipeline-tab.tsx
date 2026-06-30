@@ -60,7 +60,7 @@ const HEADERS = [
   "Lead Gen",
   "Product",
   "Price",
-  "Payment",
+  "Finance",
   "Finance Status",
   "Pre-Approvals Status",
   "Meter Change",
@@ -153,7 +153,7 @@ const COL_FILTERS: ColFilter[] = [
   { col: 1, key: "consultant", getVal: (s) => s.consultantName },
   { col: 2, key: "company", getVal: (s) => (s.companyType === "dcnt" ? "DC" : "Astra") },
   { col: 5, key: "state", getVal: (s) => s.state },
-  { col: 9, key: "payment", getVal: (s) => (resolvePayment(s) === "cash" ? "Cash" : "Finance") },
+  { col: 9, key: "finance", getVal: (s) => (s.financeLenders && s.financeLenders.length ? s.financeLenders.join(" / ") : "Cash") },
   { col: 10, key: "financeStatus", getVal: (s) => FINANCE_STATUS[s.status.financeStatus || ""] || "" },
   { col: 11, key: "adminStatus", getVal: (s) => PREAPPROVAL_STATUS[s.status.adminStatus || ""] || "" },
   { col: 13, key: "installation", getVal: (s) => INSTALLATION_STATE[s.status.installation || ""] || "" },
@@ -704,12 +704,19 @@ export function AdminSalesPipelineTab() {
                             </div>
                           )}
                         </td>
-                        {/* 9 Payment */}
+                        {/* 9 Finance — lenders from the sale's finance legs */}
                         <td>
-                          <PaySelect
-                            value={pay}
-                            onChange={(v) => updateField(s.key, "paymentMethods", v)}
-                          />
+                          {s.financeLenders && s.financeLenders.length > 0 ? (
+                            <div className="pipe-finance-lenders" title={s.financeLenders.join(", ")}>
+                              {s.financeLenders.map((l, i) => (
+                                <span key={i} className="pipe-badge finance">
+                                  {l}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="pipe-badge cash">Cash</span>
+                          )}
                         </td>
                         {/* 10 Finance Status */}
                         <td>

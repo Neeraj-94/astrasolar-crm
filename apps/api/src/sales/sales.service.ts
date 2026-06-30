@@ -324,6 +324,15 @@ export class SalesService {
     if (saleDate !== undefined) {
       data.saleDate = saleDate ? new Date(saleDate) : null;
     }
+    // Keep `difference` (soldPrice - totalRRP) in sync when either side is edited.
+    if (dto.soldPrice !== undefined || dto.totalRRP !== undefined) {
+      const soldPrice =
+        dto.soldPrice !== undefined ? dto.soldPrice : (sale.soldPrice != null ? Number(sale.soldPrice) : null);
+      const totalRRP =
+        dto.totalRRP !== undefined ? dto.totalRRP : (sale.totalRRP != null ? Number(sale.totalRRP) : null);
+      data.difference =
+        soldPrice != null && totalRRP != null ? Number(soldPrice) - Number(totalRRP) : null;
+    }
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.sale.update({ where: { id }, data });
       const changes = Object.keys(dto).map((field) => ({

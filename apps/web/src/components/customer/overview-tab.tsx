@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Clock, MinusCircle, Home, Calendar } from "lucide
 import { useApi } from "@/lib/api/use-api";
 import { Section, Kpi, KpiRow } from "@/components/leads/shared";
 import { money0, shortDate } from "@/components/dashboards/financials/format";
+import { titleCase } from "@/lib/utils";
 
 interface OverviewResponse {
   customerName: string;
@@ -97,10 +98,10 @@ export function CustomerOverviewTab() {
               value={money0(d.sale!.soldPrice)}
               tone="success"
             />
-            <Kpi label="Sale Status" value={d.sale!.status.replace(/_/g, " ")} tone="primary" />
+            <Kpi label="Sale Status" value={titleCase(d.sale!.status)} tone="primary" />
             <Kpi
               label="Install Status"
-              value={d.install?.status?.replace(/_/g, " ") ?? "Pending"}
+              value={d.install?.status ? titleCase(d.install.status) : "Pending"}
               tone="info"
               icon={<Calendar className="h-4 w-4" />}
               hint={
@@ -127,7 +128,7 @@ export function CustomerOverviewTab() {
                   <StageIcon status={t.status} />
                   <span className="flex-1 text-sm font-medium">{t.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {t.status.replace(/_/g, " ")}
+                    {titleCase(t.status)}
                   </span>
                 </li>
               ))}
