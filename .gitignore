@@ -26,3 +26,6 @@ out/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# DB backups written by replace-leads (contain real lead/sale PII — never commit)
+apps/api/prisma/backups/

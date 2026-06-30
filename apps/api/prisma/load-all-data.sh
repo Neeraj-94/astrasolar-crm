@@ -19,6 +19,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."           # -> apps/api
 W="--workspace=@astra/api"
 PREVIEW="${PREVIEW:-0}"
+PROD="${PROD:-0}"   # PROD=1 → use forward-only `migrate deploy` (never `migrate dev`)
 
 run() { echo; echo "▶ $*"; eval "$@"; }
 
@@ -37,7 +38,13 @@ fi
 
 # 1. Schema + Prisma client
 run "npx prisma generate"
-if [ "$PREVIEW" != "1" ]; then run "npm run db:migrate $W"; fi
+if [ "$PREVIEW" != "1" ]; then
+  if [ "$PROD" = "1" ]; then
+    run "npm run db:deploy $W"   # forward-only, prod-safe (applies committed migrations)
+  else
+    run "npm run db:migrate $W"  # dev: creates/applies migrations
+  fi
+fi
 
 # 2. Roles, permissions, super admin
 run "npm run db:seed $W"

@@ -1,21 +1,10 @@
 {
   "_meta": {
-    "source": "astra-solar-app-default-rtdb-export \u2014 staff/<id>/availability",
-    "extractedAt": "2026-06-22T04:34:57.441875+00:00",
-    "workingHours": {
-      "firstStartHour": 8,
-      "lastStartHour": 19
-    },
-    "shape": "Each week is a saveWeek() payload: days[].availableHours are integer start-hours; days absent from source are emitted with availableHours:[] (consultant offered nothing). holiday is always false (source has no holiday concept).",
-    "notes": [
-      "ernest: dropped 1 hour(s) outside working window 08\u201319: ['2026-04-07 20:00']",
-      "zane: dropped 1 hour(s) outside working window 08\u201319: ['2026-04-29 20:00']"
-    ],
-    "totals": {
-      "consultants": 7,
-      "weekSubmissions": 69,
-      "availableHourSlots": 2099
-    }
+    "generatedAt": "2026-06-30T04:24:32.930459+00:00",
+    "source": "staff/[id]/availability (Firebase RTDB export)",
+    "consultants": 9,
+    "weeks": 72,
+    "availableHourSlots": 2249
   },
   "consultants": [
     {
@@ -62,26 +51,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-14",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-15",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -100,36 +69,6 @@
                 8
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-19",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-20",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-21",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-22",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-23",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         }
@@ -139,7 +78,7 @@
       "staffKey": "ernest",
       "email": "ernest@astrasolar.com.au",
       "name": "Ernest L",
-      "weekCount": 13,
+      "weekCount": 10,
       "weeks": [
         {
           "weekStart": "2026-03-23",
@@ -204,16 +143,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-03-28",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-03-29",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -276,16 +205,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-04",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-05",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -298,11 +217,6 @@
           "submittedAt": "2026-04-08T00:09:20.144000+00:00",
           "slotsCount": 25,
           "days": [
-            {
-              "date": "2026-04-06",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-07",
               "availableHours": [
@@ -350,16 +264,6 @@
                 16,
                 17
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-11",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-12",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -432,16 +336,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-19",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -511,16 +405,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-25",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-26",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -593,16 +477,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -615,11 +489,6 @@
           "submittedAt": "2026-04-28T22:24:41.093000+00:00",
           "slotsCount": 24,
           "days": [
-            {
-              "date": "2026-05-04",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-05-05",
               "availableHours": [
@@ -666,16 +535,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-10",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -745,16 +604,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -828,16 +677,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-23",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -894,154 +733,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-30",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-31",
-              "availableHours": [],
-              "holiday": false
-            }
-          ]
-        },
-        {
-          "weekStart": "2026-06-01",
-          "weekEnd": "2026-06-07",
-          "submitted": true,
-          "submittedBy": "daniel",
-          "submittedByName": "Daniel L",
-          "submittedAt": "2026-06-03T01:04:07.539000+00:00",
-          "slotsCount": 0,
-          "days": [
-            {
-              "date": "2026-06-01",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-03",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-04",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-05",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-07",
-              "availableHours": [],
-              "holiday": false
-            }
-          ]
-        },
-        {
-          "weekStart": "2026-06-08",
-          "weekEnd": "2026-06-14",
-          "submitted": true,
-          "submittedBy": "daniel",
-          "submittedByName": "Daniel L",
-          "submittedAt": "2026-06-09T04:06:07.041000+00:00",
-          "slotsCount": 0,
-          "days": [
-            {
-              "date": "2026-06-08",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-10",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-11",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-12",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-13",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-14",
-              "availableHours": [],
-              "holiday": false
-            }
-          ]
-        },
-        {
-          "weekStart": "2026-06-15",
-          "weekEnd": "2026-06-21",
-          "submitted": true,
-          "submittedBy": "daniel",
-          "submittedByName": "Daniel L",
-          "submittedAt": "2026-06-09T04:05:58.221000+00:00",
-          "slotsCount": 0,
-          "days": [
-            {
-              "date": "2026-06-15",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-17",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-19",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-20",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-21",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         }
@@ -1051,7 +742,7 @@
       "staffKey": "justin",
       "email": "justin.parle@astrasolar.com.au",
       "name": "Justin P",
-      "weekCount": 14,
+      "weekCount": 15,
       "weeks": [
         {
           "weekStart": "2026-03-23",
@@ -1127,16 +818,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-03-28",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-03-29",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1205,21 +886,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-03",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-04",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-05",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1232,11 +898,6 @@
           "submittedAt": "2026-03-29T21:58:39.398000+00:00",
           "slotsCount": 30,
           "days": [
-            {
-              "date": "2026-04-06",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-07",
               "availableHours": [
@@ -1289,16 +950,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-11",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-12",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -1380,16 +1031,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-19",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1468,16 +1109,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-25",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-26",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1547,16 +1178,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -1636,16 +1257,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-10",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1723,16 +1334,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -1812,16 +1413,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-23",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -1899,16 +1490,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-30",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-31",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -1989,16 +1570,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-07",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2011,11 +1582,6 @@
           "submittedAt": "2026-06-01T00:00:39.764000+00:00",
           "slotsCount": 29,
           "days": [
-            {
-              "date": "2026-06-08",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-06-09",
               "availableHours": [
@@ -2067,16 +1633,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-13",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-14",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -2156,16 +1712,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-20",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-21",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2244,15 +1790,239 @@
                 16
               ],
               "holiday": false
-            },
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-29",
+          "weekEnd": "2026-07-05",
+          "submitted": true,
+          "submittedBy": "justin",
+          "submittedByName": "Justin P",
+          "submittedAt": "2026-06-21T23:47:56.690000+00:00",
+          "slotsCount": 37,
+          "days": [
             {
-              "date": "2026-06-27",
-              "availableHours": [],
+              "date": "2026-06-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
               "holiday": false
             },
             {
-              "date": "2026-06-28",
-              "availableHours": [],
+              "date": "2026-06-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-02",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-03",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "justinpr",
+      "email": "justin.prestage@astrasolar.com.au",
+      "name": "Justin Prestage",
+      "weekCount": 2,
+      "weeks": [
+        {
+          "weekStart": "2026-06-29",
+          "weekEnd": "2026-07-05",
+          "submitted": true,
+          "submittedBy": "neeraj",
+          "submittedByName": "Neeraj",
+          "submittedAt": "2026-06-29T01:05:03.060000+00:00",
+          "slotsCount": 32,
+          "days": [
+            {
+              "date": "2026-06-30",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-01",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-02",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-03",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-07-06",
+          "weekEnd": "2026-07-12",
+          "submitted": true,
+          "submittedBy": "neeraj",
+          "submittedByName": "Neeraj",
+          "submittedAt": "2026-06-29T01:32:59.509000+00:00",
+          "slotsCount": 40,
+          "days": [
+            {
+              "date": "2026-07-06",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-07",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-08",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-09",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-10",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
               "holiday": false
             }
           ]
@@ -2343,16 +2113,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-03-28",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-03-29",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2424,21 +2184,6 @@
                 18
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-03",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-04",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-05",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2451,16 +2196,6 @@
           "submittedAt": "2026-03-29T22:37:27.161000+00:00",
           "slotsCount": 32,
           "days": [
-            {
-              "date": "2026-04-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-07",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-08",
               "availableHours": [
@@ -2510,16 +2245,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-11",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-12",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2545,16 +2270,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-14",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-15",
-              "availableHours": [],
               "holiday": false
             },
             {
@@ -2587,16 +2302,6 @@
                 18,
                 19
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-19",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -2698,11 +2403,6 @@
                 13
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-26",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2715,11 +2415,6 @@
           "submittedAt": "2026-04-21T07:35:47.615000+00:00",
           "slotsCount": 36,
           "days": [
-            {
-              "date": "2026-04-27",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-28",
               "availableHours": [
@@ -2778,16 +2473,6 @@
                 16,
                 17
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -2873,16 +2558,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-10",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -2895,11 +2570,6 @@
           "submittedAt": "2026-05-03T23:03:36.376000+00:00",
           "slotsCount": 35,
           "days": [
-            {
-              "date": "2026-05-11",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-05-12",
               "availableHours": [
@@ -2957,16 +2627,6 @@
                 16,
                 17
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -3036,16 +2696,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-23",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3079,11 +2729,6 @@
               "holiday": false
             },
             {
-              "date": "2026-05-27",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
               "date": "2026-05-28",
               "availableHours": [
                 9,
@@ -3105,16 +2750,6 @@
                 13,
                 14
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-30",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-31",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -3182,16 +2817,6 @@
                 13
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-07",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3258,16 +2883,6 @@
                 13
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-13",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-14",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3311,16 +2926,6 @@
               "holiday": false
             },
             {
-              "date": "2026-06-17",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
               "date": "2026-06-19",
               "availableHours": [
                 9,
@@ -3349,11 +2954,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-21",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3361,10 +2961,10 @@
           "weekStart": "2026-06-22",
           "weekEnd": "2026-06-28",
           "submitted": true,
-          "submittedBy": "lachlan",
-          "submittedByName": "Lachlan M",
-          "submittedAt": "2026-06-18T10:51:26.555000+00:00",
-          "slotsCount": 43,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-25T07:31:03.872000+00:00",
+          "slotsCount": 23,
           "days": [
             {
               "date": "2026-06-22",
@@ -3406,48 +3006,31 @@
                 13
               ],
               "holiday": false
-            },
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "staffKey": "mattie",
+      "email": "support@astrasolar.com.au",
+      "name": "Mattie H",
+      "weekCount": 1,
+      "weeks": [
+        {
+          "weekStart": "2026-06-22",
+          "weekEnd": "2026-06-28",
+          "submitted": true,
+          "submittedBy": "mattie",
+          "submittedByName": "Mattie H",
+          "submittedAt": "2026-06-22T05:22:49.658000+00:00",
+          "slotsCount": 1,
+          "days": [
             {
-              "date": "2026-06-25",
+              "date": "2026-06-23",
               "availableHours": [
-                9,
-                10,
-                11,
-                12,
-                13
-              ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-26",
-              "availableHours": [
-                9,
-                12,
-                13,
-                14,
-                15,
-                16,
                 17
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-27",
-              "availableHours": [
-                9,
-                10,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16
-              ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-28",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -3508,16 +3091,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         }
@@ -3527,7 +3100,7 @@
       "staffKey": "stephen",
       "email": "stephen@astrasolar.com.au",
       "name": "Stephen N",
-      "weekCount": 14,
+      "weekCount": 15,
       "weeks": [
         {
           "weekStart": "2026-03-23",
@@ -3605,16 +3178,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-03-28",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-03-29",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3680,21 +3243,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-03",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-04",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-05",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3707,11 +3255,6 @@
           "submittedAt": "2026-03-29T21:46:21.924000+00:00",
           "slotsCount": 31,
           "days": [
-            {
-              "date": "2026-04-06",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-07",
               "availableHours": [
@@ -3765,16 +3308,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-11",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-12",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -3852,16 +3385,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-18",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-19",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -3942,16 +3465,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-25",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-26",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -3964,11 +3477,6 @@
           "submittedAt": "2026-04-21T07:14:54.488000+00:00",
           "slotsCount": 30,
           "days": [
-            {
-              "date": "2026-04-27",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-28",
               "availableHours": [
@@ -4021,16 +3529,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -4111,16 +3609,6 @@
                 17
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-10",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -4199,16 +3687,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-16",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -4285,16 +3763,6 @@
                 14,
                 15
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-23",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -4374,16 +3842,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-30",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-31",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -4462,16 +3920,6 @@
                 16
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-07",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -4484,11 +3932,6 @@
           "submittedAt": "2026-06-09T04:05:12.791000+00:00",
           "slotsCount": 31,
           "days": [
-            {
-              "date": "2026-06-08",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-06-09",
               "availableHours": [
@@ -4542,16 +3985,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-13",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-14",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -4629,16 +4062,6 @@
                 15,
                 16
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-20",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-21",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -4718,15 +4141,52 @@
                 16
               ],
               "holiday": false
-            },
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-29",
+          "weekEnd": "2026-07-05",
+          "submitted": true,
+          "submittedBy": "daniel",
+          "submittedByName": "Daniel L",
+          "submittedAt": "2026-06-29T01:39:06.563000+00:00",
+          "slotsCount": 18,
+          "days": [
             {
-              "date": "2026-06-27",
-              "availableHours": [],
+              "date": "2026-06-29",
+              "availableHours": [
+                10,
+                11,
+                12,
+                13,
+                16,
+                17,
+                18
+              ],
               "holiday": false
             },
             {
-              "date": "2026-06-28",
-              "availableHours": [],
+              "date": "2026-06-30",
+              "availableHours": [
+                11,
+                12,
+                13,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-01",
+              "availableHours": [
+                10,
+                11,
+                12
+              ],
               "holiday": false
             }
           ]
@@ -4737,7 +4197,7 @@
       "staffKey": "zane",
       "email": "zane@astrasolar.com.au",
       "name": "Zane A",
-      "weekCount": 11,
+      "weekCount": 12,
       "weeks": [
         {
           "weekStart": "2026-04-13",
@@ -4748,11 +4208,6 @@
           "submittedAt": "2026-04-16T03:11:21.544000+00:00",
           "slotsCount": 19,
           "days": [
-            {
-              "date": "2026-04-13",
-              "availableHours": [],
-              "holiday": false
-            },
             {
               "date": "2026-04-14",
               "availableHours": [
@@ -4785,11 +4240,6 @@
               "holiday": false
             },
             {
-              "date": "2026-04-17",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
               "date": "2026-04-18",
               "availableHours": [
                 10,
@@ -4799,11 +4249,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-04-19",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -4893,11 +4338,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-04-26",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -4985,11 +4425,6 @@
                 12
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-03",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -5052,21 +4487,6 @@
                 18,
                 19
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-08",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-09",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-10",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -5160,11 +4580,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-17",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -5245,11 +4660,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-05-24",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -5284,16 +4694,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-27",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-05-28",
-              "availableHours": [],
               "holiday": false
             },
             {
@@ -5338,16 +4738,6 @@
           "slotsCount": 18,
           "days": [
             {
-              "date": "2026-06-01",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-02",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
               "date": "2026-06-03",
               "availableHours": [
                 13,
@@ -5381,16 +4771,6 @@
                 17,
                 18
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-06",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-07",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -5468,16 +4848,6 @@
                 19
               ],
               "holiday": false
-            },
-            {
-              "date": "2026-06-13",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-14",
-              "availableHours": [],
-              "holiday": false
             }
           ]
         },
@@ -5553,16 +4923,6 @@
                 18,
                 19
               ],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-20",
-              "availableHours": [],
-              "holiday": false
-            },
-            {
-              "date": "2026-06-21",
-              "availableHours": [],
               "holiday": false
             }
           ]
@@ -5640,15 +5000,100 @@
                 19
               ],
               "holiday": false
-            },
+            }
+          ]
+        },
+        {
+          "weekStart": "2026-06-29",
+          "weekEnd": "2026-07-05",
+          "submitted": true,
+          "submittedBy": "zane",
+          "submittedByName": "Zane A",
+          "submittedAt": "2026-06-22T04:13:19.853000+00:00",
+          "slotsCount": 42,
+          "days": [
             {
-              "date": "2026-06-27",
-              "availableHours": [],
+              "date": "2026-06-29",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
               "holiday": false
             },
             {
-              "date": "2026-06-28",
-              "availableHours": [],
+              "date": "2026-06-30",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-01",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-02",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-03",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-04",
+              "availableHours": [
+                13,
+                14,
+                15,
+                16
+              ],
+              "holiday": false
+            },
+            {
+              "date": "2026-07-05",
+              "availableHours": [
+                13,
+                14,
+                15
+              ],
               "holiday": false
             }
           ]
